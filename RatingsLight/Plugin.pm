@@ -86,6 +86,10 @@ sub initPlugin {
 
 		Slim::Control::Request::addDispatch(['ratingslight','setrating', '_trackid', '_rating'], [1, 0, 1, \&setRating]);
 
+		# faking of TrackStat API is required for compatibility with Material Skin ◔_◔
+		Slim::Control::Request::addDispatch(['trackstat','getrating', '_trackid'], [0, 1, 0, \&getRating]);
+		Slim::Control::Request::addDispatch(['trackstat','setrating', '_trackid', '_rating'], [1, 0, 1, \&setRating]);
+
 		Slim::Control::Request::addDispatch(['ratingslight','manualimport'], [0, 0, 0, \&importRatingsFromCommentTags]);
 
 		Slim::Control::Request::addDispatch(['ratingslight','exportplayliststofiles'], [0, 0, 0, \&exportRatingsToPlaylistFiles]);
@@ -452,6 +456,37 @@ sub setRating {
 	#	Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
 	#}
 
+	$request->setStatusDone();
+}
+
+sub getRating {
+	my $request = shift;
+
+	if ($request->isNotQuery([['trackstat'],['getrating']])) {
+		$request->setStatusBadDispatch();
+		return;
+	}
+
+  	my $trackId = $request->getParam('_trackid');
+  	if(defined($request->getParam('_trackid'))) {
+  		$trackId = $request->getParam('_trackid');
+  	}
+  	if(!defined $trackId || $trackId eq '') {
+		$request->setStatusBadParams();
+		return;
+  	}
+
+	my $rating100ScaleValue = 0;
+	my $rating5starScaleValue = 0;
+
+	my $track = Slim::Schema->resultset("Track")->find($trackId);
+	$rating100ScaleValue = getRatingFromDB($track);
+	if ($rating100ScaleValue > 0) {
+		$rating5starScaleValue = floor(($rating100ScaleValue + 10) / 20);
+	}
+
+	$request->addResult('rating', $rating5starScaleValue);
+	$request->addResult('ratingpercentage', $rating100ScaleValue);
 	$request->setStatusDone();
 }
 
