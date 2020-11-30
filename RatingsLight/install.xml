@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<extension>
+	<id>afc9f784-9381-2021-5477-479eca380cf5</id>
+	<name>PLUGIN_RATINGSLIGHT</name>
+	<module>Plugins::RatingsLight::Plugin</module>
+	<version>0.9.0</version>
+	<description>PLUGIN_RATINGSLIGHT_DESC</description>
+	<creator>AF</creator>
+	<importmodule>Plugins::RatingsLight::Plugin</importmodule>
+	<optionsURL>plugins/RatingsLight/html/settings.html</optionsURL>
+	<homepageURL>https://github.com/AF-1</homepageURL>
+	<defaultState>enabled</defaultState>
+	<targetApplication>
+		<id>Logitech Media Server</id>
+		<minVersion>7.9</minVersion>
+		<maxVersion>*</maxVersion>
+	</targetApplication>
+</extension>

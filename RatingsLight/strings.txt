@@ -1,0 +1,56 @@
+PLUGIN_RATINGSLIGHT
+	EN	Ratings Light
+
+PLUGIN_RATINGSLIGHT_DESC
+	EN	Helps plugins set, query or display <b>track</b> ratings in LMS. Can import ratings from files (based on comment tag keywords). Includes filters for CustomSkip.
+
+PLUGIN_RATINGSLIGHT_PROGRESS
+	EN	Writing rating values to database
+
+PLUGIN_RATINGSLIGHT_RATING_KEYWORD
+	EN	Rating Keywords
+
+PLUGIN_RATINGSLIGHT_RATING_KEYWORD_DESC
+	EN	At least one field must be filled.<br>Up to 30 letters, case insensitive, no numbers or special characters.<br>Please use <b>integers as rating values</b> in your keywords, no half-star rating values.
+
+PLUGIN_RATINGSLIGHT_RATING
+	EN	Rating:
+
+PLUGIN_RATINGSLIGHT_SDD
+	EN	SDD:
+
+PLUGIN_RATINGSLIGHT_LOG_DESC
+	EN	Log of plugin RatingsLight
+
+PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES
+	EN	Export rated tracks to playlist files
+
+PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_LINK
+	EN	<b>Export now</b>
+	
+PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_DESC
+	EN	Export rated tracks to playlist files, e.g. for import of LMS rated tracks into other apps. Files are exported to the LMS playlist folder and have a m3u.txt-extension so they won't get picked up by LMS scans.
+
+PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_WARNING
+	EN	This will overwrite any previously exported playlists files with the same names.
+
+PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF
+	EN	Export only tracks with rating values different from comment tag ratings
+
+PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF_DESC
+	EN	If set to yes, only those tracks will be exported whose LMS rating differs from the rating value  derived from comment tag keywords.<br> So if you've marked a track as 2-star rated in its comment tag and its rating hasn't changed it won't be part of the exported playlists.
+
+PLUGIN_RATINGSLIGHT_AUTOSCAN
+	EN	Include ratings import in LMS scan
+
+PLUGIN_RATINGSLIGHT_AUTOSCAN_DESC
+	EN	Always import ratings from comment tags when LMS performs a scan.<br>Will <b>reset all ratings</b> to values based on keywords in comment tags.
+
+PLUGIN_RATINGSLIGHT_MANUAL_IMPORT
+	EN	Manual Import
+
+PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_LINK
+	EN	<b>Manually</b> import ratings based on keywords in comment tags <b>now</b>
+
+PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_WARNING
+	EN	This will reset all ratings and overwrite them with rating values based on keywords in the comment tags.
