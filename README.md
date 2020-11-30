@@ -16,7 +16,7 @@ A plugin for [Logitech Media Server](https://github.com/Logitech/slimserver) tha
 ## Installation
 
 1. Go to *LMS* > *Settings* > *Plugins*
-2. At the bottom add this repo URL `https://raw.githubusercontent.com/AF-1/lms-misc/repo/public.xml`
+2. At the bottom add this repo URL `https://raw.githubusercontent.com/AF-1/lms-misc/main/repo/public.xml`
 3. Download and enable *Ratings  Light*
 <br>
 
