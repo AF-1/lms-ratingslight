@@ -7,15 +7,13 @@ function manimport() {
 	let proceed = confirm("[% "PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_WARNING" |string %]");
 
 	if (proceed === true) {
-		const url = "http://127.0.0.1:9000/jsonrpc.js";
+		const url = "http://"+window.location.host+"/jsonrpc.js";
 		const rawdata = {"id":1,"method":"slim.request","params":["",["ratingslight","manualimport"]]};
 		let data = JSON.stringify(rawdata);
 
 		fetch(url, {
-			credentials: "same-origin",
-			mode: "same-origin",
 			method: "post",
-			headers: { "Content-Type": "application/json" },
+			headers: { "Content-Type": "application/json", "Origin": window.location.hostname },
 			body: data
 		})
 			.then(resp => {
@@ -26,7 +24,7 @@ function manimport() {
 				}
 			})
 		document.getElementById("importstatus").innerHTML = "Started import...";
-		sleep(5000).then(() => { document.getElementById("importstatus").innerHTML = ""; });
+		sleep(10000).then(() => { document.getElementById("importstatus").innerHTML = ""; });
 	}
 }
 function exportplayliststofiles() {
@@ -36,15 +34,13 @@ function exportplayliststofiles() {
 	let proceed = confirm("[% "PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_WARNING" |string %]");
 
 	if (proceed === true) {
-		const url = "http://127.0.0.1:9000/jsonrpc.js";
+		const url = "http://"+window.location.host+"/jsonrpc.js";
 		const rawdata = {"id":1,"method":"slim.request","params":["",["ratingslight","exportplayliststofiles"]]};
 		let data = JSON.stringify(rawdata);
 
 		fetch(url, {
-			credentials: "same-origin",
-			mode: "same-origin",
 			method: "post",
-			headers: { "Content-Type": "application/json" },
+			headers: { "Content-Type": "application/json", "Origin": window.location.hostname },
 			body: data
 		})
 			.then(resp => {
@@ -55,7 +51,7 @@ function exportplayliststofiles() {
 				}
 			})
 		document.getElementById("exportstatus").innerHTML = "Started export...";
-		sleep(5000).then(() => { document.getElementById("exportstatus").innerHTML = ""; });
+		sleep(9000).then(() => { document.getElementById("exportstatus").innerHTML = ""; });
 	}
 }
 </script>
