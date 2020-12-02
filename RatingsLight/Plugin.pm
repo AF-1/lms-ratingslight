@@ -17,6 +17,7 @@ use base qw(FileHandle);
 use File::Spec::Functions qw(:ALL);
 use File::Basename;
 use URI::Escape;
+use Time::HiRes qw(time);
 
 use Slim::Schema;
 
@@ -84,7 +85,7 @@ sub initPlugin {
 
 	if (!main::SCANNER) {
 
-		Slim::Control::Request::addDispatch(['ratingslight','setrating', '_trackid', '_rating'], [1, 0, 1, \&setRating]);
+		Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating'], [1, 0, 1, \&setRating]);
 
 		Slim::Control::Request::addDispatch(['ratingslight','manualimport'], [0, 0, 0, \&importRatingsFromCommentTags]);
 
@@ -259,6 +260,7 @@ sub importRatingsFromCommentTags {
 		$log->error('Error: no rating keywords found.');
 		return
 	} else {
+		my $started = time();
 		my $sqlunrate = "UPDATE tracks_persistent
 		  SET rating = NULL
 		WHERE 	(tracks_persistent.rating > 0
@@ -318,6 +320,8 @@ sub importRatingsFromCommentTags {
 			$rating++;
 			$sth->finish();
 		}
+		my $ended = time() - $started;
+		$log->info("Import took ".$ended." seconds.");
 	}
 }
 
@@ -332,6 +336,7 @@ sub exportRatingsToPlaylistFiles {
 	my $rating5starScaleValue = 0;
 	my $rating100ScaleValue = 10;
 
+	my $started = time();
 	until ($rating100ScaleValue > 100) {
 		if ($onlyratingnotmatchcommenttag == 1) {
 			if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
@@ -387,6 +392,9 @@ sub exportRatingsToPlaylistFiles {
 		}
 		$rating100ScaleValue = $rating100ScaleValue + 10;
 	}
+	my $ended = time() - $started;
+	$log->info("Export took ".$ended." seconds.");
+
 }
 
 sub setRating {
@@ -439,6 +447,8 @@ sub setRating {
 	}
 	$sth->finish();
 
+	$request->setStatusDone();
+
 	# refresh virtual libraries
 	#my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RATED');
 	#Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
@@ -447,8 +457,6 @@ sub setRating {
 	#	my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RATED_HIGH');
 	#	Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
 	#}
-
-	$request->setStatusDone();
 }
 
 sub trackInfoHandlerRating {
