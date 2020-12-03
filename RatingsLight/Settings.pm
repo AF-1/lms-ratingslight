@@ -16,7 +16,7 @@ sub page {
 }
 
 sub prefs {
-	return ($prefs, 'rating_keyword_prefix', 'rating_keyword_suffix', 'autoscan', 'onlyratingnotmatchcommenttag');
+	return ($prefs, 'rating_keyword_prefix', 'rating_keyword_suffix', 'autoscan', 'onlyratingnotmatchcommenttag', 'exectime_import', 'exectime_export');
 }
 
 

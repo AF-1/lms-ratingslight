@@ -23,8 +23,8 @@ function manimport() {
 					console.log("Status: " + resp.status)
 				}
 			})
-		document.getElementById("importstatus").innerHTML = "Started import...";
-		sleep(10000).then(() => { document.getElementById("importstatus").innerHTML = ""; });
+		document.getElementById("importstatus").innerHTML = "Importing...";
+		sleep([% prefs.exectime_import %]).then(() => { document.getElementById("importstatus").innerHTML = ""; });
 	}
 }
 function exportplayliststofiles() {
@@ -50,8 +50,8 @@ function exportplayliststofiles() {
 					console.log("Status: " + resp.status)
 				}
 			})
-		document.getElementById("exportstatus").innerHTML = "Started export...";
-		sleep(9000).then(() => { document.getElementById("exportstatus").innerHTML = ""; });
+		document.getElementById("exportstatus").innerHTML = "Exporting...";
+		sleep([% prefs.exectime_export %]).then(() => { document.getElementById("exportstatus").innerHTML = ""; });
 	}
 }
 </script>

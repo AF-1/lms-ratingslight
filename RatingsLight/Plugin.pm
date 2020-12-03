@@ -48,12 +48,22 @@ my $onlyratingnotmatchcommenttag = $prefs->get('onlyratingnotmatchcommenttag');
 if (! defined $onlyratingnotmatchcommenttag) {
 	$prefs->set('onlyratingnotmatchcommenttag', '0');
 }
+my $exectime_import = $prefs->get('exectime_import');
+if (! defined $exectime_import) {
+	$prefs->set('exectime_import', '8000');
+}
+my $exectime_export = $prefs->get('exectime_export');
+if (! defined $exectime_export) {
+	$prefs->set('exectime_export', '6000');
+}
 
 $prefs->init({
 	rating_keyword_prefix => $rating_keyword_prefix,
 	rating_keyword_suffix => $rating_keyword_suffix,
 	autoscan => $autoscan,
 	onlyratingnotmatchcommenttag => $onlyratingnotmatchcommenttag,
+	exectime_import => $exectime_import,
+	exectime_export => $exectime_export,
 });
 
 $prefs->setValidate({
@@ -322,6 +332,8 @@ sub importRatingsFromCommentTags {
 		}
 		my $ended = time() - $started;
 		$log->info("Import took ".$ended." seconds.");
+		$exectime_import = ((floor($ended) + 2) * 1000);
+		$prefs->set('exectime_import', $exectime_import);
 	}
 }
 
@@ -394,7 +406,8 @@ sub exportRatingsToPlaylistFiles {
 	}
 	my $ended = time() - $started;
 	$log->info("Export took ".$ended." seconds.");
-
+	$exectime_export = ((floor($ended) + 2) * 1000);
+	$prefs->set('exectime_export', $exectime_export);
 }
 
 sub setRating {
