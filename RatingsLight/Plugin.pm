@@ -476,7 +476,7 @@ sub trackInfoHandlerRating {
     my ( $client, $url, $track ) = @_;
 	my ($rating100ScaleValue, $rating5starScaleValue, $rating5starScaleValueExact) = 0;
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING');
-	my $ishalfstarrating = 'false';
+	my $ishalfstarrating = '0';
 	$rating100ScaleValue = getRatingFromDB($track);
 
 	# round down half-stars
