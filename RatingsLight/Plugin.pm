@@ -476,7 +476,7 @@ sub trackInfoHandlerRating {
     my ( $client, $url, $track ) = @_;
 	my ($rating100ScaleValue, $rating5starScaleValue, $rating5starScaleValueExact) = 0;
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING');
-
+	my $ishalfstarrating = 'false';
 	$rating100ScaleValue = getRatingFromDB($track);
 
 	# round down half-stars
@@ -486,7 +486,13 @@ sub trackInfoHandlerRating {
 		$rating5starScaleValueExact = $rating100ScaleValue/20;
 		$rating5starScaleValue = floor(($rating100ScaleValue + 10) / 20); # round up half-stars
 		#$rating5starScaleValue = floor($rating100ScaleValue/20); # round down half-stars
-		$text = string('PLUGIN_RATINGSLIGHT_RATING').($RATING_CHARACTER x $rating5starScaleValue)." (".$rating5starScaleValueExact.")";
+		$ishalfstarrating = ($rating5starScaleValueExact - int($rating5starScaleValueExact))?'1':'0';
+		if ($ishalfstarrating == '1') {
+			$text = string('PLUGIN_RATINGSLIGHT_RATING').($RATING_CHARACTER x $rating5starScaleValue).' ('.$rating5starScaleValueExact.')';
+		} else {
+			$text = string('PLUGIN_RATINGSLIGHT_RATING').($RATING_CHARACTER x $rating5starScaleValue);
+			$rating5starScaleValueExact = 0;
+		}
 	}
  		return {
 			type => 'text',
