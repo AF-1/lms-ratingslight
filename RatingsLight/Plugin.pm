@@ -95,7 +95,7 @@ sub initPlugin {
 
 	if (!main::SCANNER) {
 
-		Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating'], [1, 0, 1, \&setRating]);
+		Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating','_incremental'], [1, 0, 1, \&setRating]);
 
 		Slim::Control::Request::addDispatch(['ratingslight','manualimport'], [0, 0, 0, \&importRatingsFromCommentTags]);
 
@@ -331,7 +331,7 @@ sub importRatingsFromCommentTags {
 			$sth->finish();
 		}
 		my $ended = time() - $started;
-		$log->info("Import took ".$ended." seconds.");
+		$log->debug("Import took ".$ended." seconds.");
 		$exectime_import = ((floor($ended) + 2) * 1000);
 		$prefs->set('exectime_import', $exectime_import);
 	}
@@ -347,16 +347,19 @@ sub exportRatingsToPlaylistFiles {
 	my $sth = undef;
 	my $rating5starScaleValue = 0;
 	my $rating100ScaleValue = 10;
-
+	my $rating100ScaleValueCeil = 0;
 	my $started = time();
+	
 	until ($rating100ScaleValue > 100) {
+		$rating100ScaleValueCeil = $rating100ScaleValue + 9;
 		if ($onlyratingnotmatchcommenttag == 1) {
 			if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 				$log->error('Error: no rating keywords found.');
 				return
 			} else {
 				$sql = "SELECT tracks_persistent.url FROM tracks_persistent
-				WHERE (tracks_persistent.rating = $rating100ScaleValue
+				WHERE (tracks_persistent.rating >= $rating100ScaleValue
+						AND tracks_persistent.rating <= $rating100ScaleValueCeil
 						AND tracks_persistent.urlmd5 IN (
 						   SELECT tracks.urlmd5
 							 FROM tracks
@@ -370,7 +373,7 @@ sub exportRatingsToPlaylistFiles {
 				$sth->bind_param(1, $ratingkeyword);
 			}
 		} else {
-			$sql = "SELECT tracks_persistent.url FROM tracks_persistent WHERE tracks_persistent.rating = $rating100ScaleValue";
+			$sql = "SELECT tracks_persistent.url FROM tracks_persistent WHERE (tracks_persistent.rating >= $rating100ScaleValue	AND tracks_persistent.rating <= $rating100ScaleValueCeil)";
 			$sth = $dbh->prepare($sql);
 		}
 		$sth->execute();
@@ -405,7 +408,7 @@ sub exportRatingsToPlaylistFiles {
 		$rating100ScaleValue = $rating100ScaleValue + 10;
 	}
 	my $ended = time() - $started;
-	$log->info("Export took ".$ended." seconds.");
+	$log->debug("Export took ".$ended." seconds.");
 	$exectime_export = ((floor($ended) + 2) * 1000);
 	$prefs->set('exectime_export', $exectime_export);
 }
@@ -413,7 +416,7 @@ sub exportRatingsToPlaylistFiles {
 sub setRating {
 	my $request = shift;
 	my $client = $request->client();
-
+	my $rating100ScaleValue = 0;
 	if ($request->isNotCommand([['ratingslight'],['setrating']])) {
 		$request->setStatusBadDispatch();
 		return;
@@ -423,16 +426,27 @@ sub setRating {
 		return;
 	}
 
-  	my $trackId    = $request->getParam('_trackid');
-  	if(defined($request->getParam('trackid'))) {
-  		$trackId = $request->getParam('trackid');
-  	}
-  	my $rating    = $request->getParam('_rating');
+  	my $trackId = $request->getParam('_trackid');
+	if(defined($trackId) && $trackId =~ /^track_id:(.*)$/) {
+		$trackId = $1;
+	}elsif(defined($request->getParam('_trackid'))) {
+		$trackId = $request->getParam('_trackid');
+	}
+
+  	my $rating = $request->getParam('_rating');
 	if(defined($rating) && $rating =~ /^rating:(.*)$/) {
 		$rating = $1;
-	}elsif(defined($request->getParam('rating'))) {
-		$rating = $request->getParam('rating');
+	}elsif(defined($request->getParam('_rating'))) {
+		$rating = $request->getParam('_rating');
 	}
+
+  	my $incremental = $request->getParam('_incremental');
+	if(defined($incremental) && $incremental =~ /^incremental:(.*)$/) {
+		$incremental = $1;
+	}elsif(defined($request->getParam('_incremental'))) {
+		$incremental = $request->getParam('_incremental');
+	}
+
   	if(!defined $trackId || $trackId eq '' || !defined $rating || $rating eq '') {
 		$request->setStatusBadParams();
 		return;
@@ -442,8 +456,26 @@ sub setRating {
 	my $track = Slim::Schema->resultset("Track")->find($trackId);
 	my $trackURL = $track->url;
 	my $urlmd5 = md5_hex($trackURL);
-
-	my $rating100ScaleValue = ($rating * 20);
+	
+	if(defined($incremental) && (($incremental eq '+') || ($incremental eq '-'))) {
+		my $currentrating = $track->rating;
+		if (!defined $currentrating) {
+			$currentrating = 0;
+		}
+		if ($incremental eq '+') {
+			$rating100ScaleValue = $currentrating + int($rating * 20);
+		} elsif ($incremental eq '-') {
+			$rating100ScaleValue = $currentrating - int($rating * 20);
+		}
+	} else {
+		$rating100ScaleValue = int($rating * 20);
+	}
+	if ($rating100ScaleValue > 100) {
+		$rating100ScaleValue = 100;
+	}
+	if ($rating100ScaleValue < 0) {
+		$rating100ScaleValue = 0;
+	}
 	my $sql = "UPDATE tracks_persistent set rating=$rating100ScaleValue where urlmd5 = ?";
 	my $dbh = getCurrentDBH();
 	my $sth = $dbh->prepare( $sql );
@@ -460,6 +492,9 @@ sub setRating {
 	}
 	$sth->finish();
 
+	my $rating5starScaleValue = floor(($rating100ScaleValue+10)/20);
+	$request->addResult('rating', $rating5starScaleValue);
+	$request->addResult('ratingpercentage', $rating100ScaleValue);
 	$request->setStatusDone();
 
 	# refresh virtual libraries
