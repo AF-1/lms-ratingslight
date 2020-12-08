@@ -59,7 +59,7 @@ function exportplayliststofiles() {
 
 [% PROCESS settings/header.html %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT" desc="" %]
-Helps plugins set, query or display <b>track</b> ratings in LMS. Can import ratings from files (based on comment tag keywords). Includes filters for CustomSkip.[% END %]
+[% "PLUGIN_RATINGSLIGHT_DESC" | string %][% END %]
 <hr><br>
 
 [% WRAPPER setting title="Export Ratings" desc="" %]

@@ -2,7 +2,7 @@ PLUGIN_RATINGSLIGHT
 	EN	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
-	EN	Helps plugins set, query or display <b>track</b> ratings in LMS. Can import ratings from files (based on comment tag keywords). Includes filters for CustomSkip.
+	EN	Set, import and export track ratings. View track ratings in LMS context menu. Skip (un-)rated tracks with CustomSkip.
 
 PLUGIN_RATINGSLIGHT_PROGRESS
 	EN	Writing rating values to database
@@ -27,7 +27,7 @@ PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES
 
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_LINK
 	EN	<b>Export now</b>
-	
+
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_DESC
 	EN	Export rated tracks to playlist files, e.g. for import of LMS rated tracks into other apps. Files are exported to the LMS playlist folder and have a m3u.txt-extension so they won't get picked up by LMS scans.
 
