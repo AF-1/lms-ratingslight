@@ -10,7 +10,7 @@ A plugin for [Logitech Media Server](https://github.com/Logitech/slimserver)<br>
 * Export rated tracks to playlist files (e.g. for import in other apps)
 * Display track ratings in LMS context menu or on older devices using the *Music Information Screen* plugin
 * Skip tracks (unrated or rated below spec. rating) using the *CustomSkip* plugin
-* Browse rated tracks by artist or genre (using *additional browse menus* provided by LMS)
+* Browse rated tracks by artist or genre (using browse menus provided by LMS)
 <br>
 
 ## Installation
