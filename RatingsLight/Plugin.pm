@@ -56,6 +56,14 @@ my $exectime_export = $prefs->get('exectime_export');
 if (! defined $exectime_export) {
 	$prefs->set('exectime_export', '6000');
 }
+my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+if (! defined $showratedtracksmenus) {
+	$prefs->set('showratedtracksmenus', '0');
+}
+my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibraryafterrating');
+if (! defined $autorebuildvirtualibraryafterrating) {
+	$prefs->set('autorebuildvirtualibraryafterrating', '0');
+}
 
 $prefs->init({
 	rating_keyword_prefix => $rating_keyword_prefix,
@@ -64,6 +72,8 @@ $prefs->init({
 	onlyratingnotmatchcommenttag => $onlyratingnotmatchcommenttag,
 	exectime_import => $exectime_import,
 	exectime_export => $exectime_export,
+	showratedtracksmenus => $showratedtracksmenus,
+	autorebuildvirtualibraryafterrating => $autorebuildvirtualibraryafterrating,
 });
 
 $prefs->setValidate({
@@ -116,140 +126,147 @@ sub initPlugin {
 					) );
 		}
 
-# 		foreach ( {
-#
-# 			id => 'RATED_HIGH',
-# 			name => 'Rated - 3 stars+',
-# 			sql => qq{
-# 				INSERT OR IGNORE INTO library_track (library, track)
-# 				SELECT '%s', tracks.id
-# 				FROM tracks
-# 					LEFT JOIN tracks_persistent tracks_persistent ON tracks_persistent.urlmd5 = tracks.urlmd5
-# 						WHERE tracks_persistent.rating >= 60
-# 				GROUP by tracks.id
-# 		  },
-#
-# 			id => 'RATED',
-# 			name => 'Rated',
-# 			sql => qq{
-# 				INSERT OR IGNORE INTO library_track (library, track)
-# 				SELECT '%s', tracks.id
-# 				FROM tracks
-# 					LEFT JOIN tracks_persistent tracks_persistent ON tracks_persistent.urlmd5 = tracks.urlmd5
-# 						WHERE tracks_persistent.rating > 0
-# 				GROUP by tracks.id
-# 		  },
-#
-# 		} ) {
-# 			Slim::Music::VirtualLibraries->unregisterLibrary($_);
-# 			Slim::Music::VirtualLibraries->registerLibrary($_);
-# 			Slim::Music::VirtualLibraries->rebuild($_->{id});
-# 		};
-#
-# 			Slim::Menu::BrowseLibrary->deregisterNode('MyTopLevelMenu');
-#
-# 			Slim::Menu::BrowseLibrary->registerNode({
-# 							type         => 'link',
-# 							name         => 'MY_TEST_MENUS',
-# 							id           => 'MyTopLevelMenu',
-# 							feed         => sub {
-# 								my ($client, $cb, $args, $pt) = @_;
-# 								my @items = ();
-#
-# 								# Artists with tracks rated 3 stars+
-# 								$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RATED_HIGH') };
-# 								push @items,{
-# 									type => 'link',
-# 									name => 'TOP RATED ARTISTS',
-# 									url => \&Slim::Menu::BrowseLibrary::_artists,
-# 									icon => 'html/images/artists.png',
-# 									jiveIcon => 'html/images/artists.png',
-# 									id => string('myMusicArtists_RATED_HIGH_TracksByArtist'),
-# 									condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-# 									weight => 210,
-# 									cache => 1,
-# 									passthrough => [{
-# 										library_id => $pt->{'library_id'},
-# 										searchTags => [
-# 											'library_id:'.$pt->{'library_id'}
-# 										],
-# 									}],
-# 								};
-#
-# 								# Genres with tracks rated 3 stars+
-# 								$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RATED_HIGH') };
-# 								push @items,{
-# 									type => 'link',
-# 									name => 'TOP RATED GENRES',
-# 									url => \&Slim::Menu::BrowseLibrary::_genres,
-# 									icon => 'html/images/genres.png',
-# 									jiveIcon => 'html/images/genres.png',
-# 									id => string('myMusicGenres_RATED_HIGH_TracksByGenres'),
-# 									condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-# 									weight => 211,
-# 									cache => 1,
-# 									passthrough => [{
-# 										library_id => $pt->{'library_id'},
-# 										searchTags => [
-# 											'library_id:'.$pt->{'library_id'}
-# 										],
-# 									}],
-# 								};
-#
-# 								# Artists with rated tracks
-# 								$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RATED') };
-# 								push @items,{
-# 									type => 'link',
-# 									name => 'TOP RATED ARTISTS',
-# 									url => \&Slim::Menu::BrowseLibrary::_artists,
-# 									icon => 'html/images/artists.png',
-# 									jiveIcon => 'html/images/artists.png',
-# 									id => string('myMusicArtists_RATED_TracksByArtist'),
-# 									condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-# 									weight => 210,
-# 									cache => 1,
-# 									passthrough => [{
-# 										library_id => $pt->{'library_id'},
-# 										searchTags => [
-# 											'library_id:'.$pt->{'library_id'}
-# 										],
-# 									}],
-# 								};
-#
-# 								# Genres with rated tracks
-# 								$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RATED') };
-# 								push @items,{
-# 									type => 'link',
-# 									name => 'TOP RATED GENRES',
-# 									url => \&Slim::Menu::BrowseLibrary::_genres,
-# 									icon => 'html/images/genres.png',
-# 									jiveIcon => 'html/images/genres.png',
-# 									id => string('myMusicGenres_RATED_TracksByGenres'),
-# 									condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-# 									weight => 211,
-# 									cache => 1,
-# 									passthrough => [{
-# 										library_id => $pt->{'library_id'},
-# 										searchTags => [
-# 											'library_id:'.$pt->{'library_id'}
-# 										],
-# 									}],
-# 								};
-#
-# 								$cb->({
-# 									items => \@items,
-# 								});
-# 							 },
-#
-# 							weight       => 87,
-# 							cache        => 1,
-# 					});
+		if ($showratedtracksmenus > 0) {
+			my @libraries = ();
+			push @libraries,{
+				id => 'RATED',
+				name => 'Rated',
+				sql => qq{
+					INSERT OR IGNORE INTO library_track (library, track)
+					SELECT '%s', tracks.id
+					FROM tracks
+						JOIN tracks_persistent tracks_persistent ON tracks_persistent.urlmd5 = tracks.urlmd5
+							WHERE tracks_persistent.rating > 0
+					GROUP by tracks.id
+				},
+			};
+			if ($showratedtracksmenus == 2) {
+				push @libraries,{
+					id => 'RATED_HIGH',
+					name => 'Rated - 3 stars+',
+					sql => qq{
+						INSERT OR IGNORE INTO library_track (library, track)
+						SELECT '%s', tracks.id
+						FROM tracks
+							JOIN tracks_persistent tracks_persistent ON tracks_persistent.urlmd5 = tracks.urlmd5
+								WHERE tracks_persistent.rating >= 60
+						GROUP by tracks.id
+					}
+				};
+			}
+			foreach my $library (@libraries) {
+				Slim::Music::VirtualLibraries->unregisterLibrary($library);
+				Slim::Music::VirtualLibraries->registerLibrary($library);
+				Slim::Music::VirtualLibraries->rebuild($library->{id});
+			}
 
+				Slim::Menu::BrowseLibrary->deregisterNode('RatingsLightRatedTracksMenuFolder');
+
+				Slim::Menu::BrowseLibrary->registerNode({
+								type         => 'link',
+								name         => 'PLUGIN_RATINGSLIGHT_RATED_TRACKS_MENU_FOLDER',
+								id           => 'RatingsLightRatedTracksMenuFolder',
+								feed         => sub {
+									my ($client, $cb, $args, $pt) = @_;
+									my @items = ();
+
+									if ($showratedtracksmenus == 2) {
+										# Artists with tracks rated 3 stars+
+										$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RATED_HIGH') };
+										push @items,{
+											type => 'link',
+											name => string('PLUGIN_RATINGSLIGHT_ARTISTMENU_RATEDHIGH'),
+											url => \&Slim::Menu::BrowseLibrary::_artists,
+											icon => 'html/images/artists.png',
+											jiveIcon => 'html/images/artists.png',
+											id => string('myMusicArtists_RATED_HIGH_TracksByArtist'),
+											condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+											weight => 210,
+											cache => 1,
+											passthrough => [{
+												library_id => $pt->{'library_id'},
+												searchTags => [
+													'library_id:'.$pt->{'library_id'}
+												],
+											}],
+										};
+
+										# Genres with tracks rated 3 stars+
+										$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RATED_HIGH') };
+										push @items,{
+											type => 'link',
+											name => string('PLUGIN_RATINGSLIGHT_GENREMENU_RATEDHIGH'),
+											url => \&Slim::Menu::BrowseLibrary::_genres,
+											icon => 'html/images/genres.png',
+											jiveIcon => 'html/images/genres.png',
+											id => string('myMusicGenres_RATED_HIGH_TracksByGenres'),
+											condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+											weight => 212,
+											cache => 1,
+											passthrough => [{
+												library_id => $pt->{'library_id'},
+												searchTags => [
+													'library_id:'.$pt->{'library_id'}
+												],
+											}],
+										};
+									}
+									# Artists with rated tracks
+									$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RATED') };
+									push @items,{
+										type => 'link',
+										name => string('PLUGIN_RATINGSLIGHT_ARTISTMENU_RATED'),
+										url => \&Slim::Menu::BrowseLibrary::_artists,
+										icon => 'html/images/artists.png',
+										jiveIcon => 'html/images/artists.png',
+										id => string('myMusicArtists_RATED_TracksByArtist'),
+										condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+										weight => 209,
+										cache => 1,
+										passthrough => [{
+											library_id => $pt->{'library_id'},
+											searchTags => [
+												'library_id:'.$pt->{'library_id'}
+											],
+										}],
+									};
+
+									# Genres with rated tracks
+									$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RATED') };
+									push @items,{
+										type => 'link',
+										name => string('PLUGIN_RATINGSLIGHT_GENREMENU_RATED'),
+										url => \&Slim::Menu::BrowseLibrary::_genres,
+										icon => 'html/images/genres.png',
+										jiveIcon => 'html/images/genres.png',
+										id => string('myMusicGenres_RATED_TracksByGenres'),
+										condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+										weight => 211,
+										cache => 1,
+										passthrough => [{
+											library_id => $pt->{'library_id'},
+											searchTags => [
+												'library_id:'.$pt->{'library_id'}
+											],
+										}],
+									};
+
+									$cb->({
+										items => \@items,
+									});
+								 },
+
+								weight       => 88,
+								cache        => 1,
+								icon => 'plugins/RatingsLight/html/images/ratedtracksmenuicon.png',
+								jiveIcon => 'plugins/RatingsLight/html/images/ratedtracksmenuicon.png',
+						});
+		}
+		
 		$class->SUPER::initPlugin(@_);
 
 	}
 }
-
 
 sub startScan {
 	my $enableautoscan = $prefs->get('autoscan');
@@ -417,6 +434,9 @@ sub setRating {
 	my $request = shift;
 	my $client = $request->client();
 	my $rating100ScaleValue = 0;
+	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+	my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibraryafterrating');
+
 	if ($request->isNotCommand([['ratingslight'],['setrating']])) {
 		$request->setStatusBadDispatch();
 		return;
@@ -498,13 +518,15 @@ sub setRating {
 	$request->setStatusDone();
 
 	# refresh virtual libraries
-	#my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RATED');
-	#Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
+	if (($showratedtracksmenus > 0) && ($autorebuildvirtualibraryafterrating == 1)) {
+		my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RATED');
+		Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
 
-	#if ($rating100ScaleValue >= 60) {
-	#	my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RATED_HIGH');
-	#	Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
-	#}
+		if ($showratedtracksmenus == 2) {
+		my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RATED_HIGH');
+		Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
+		}
+	}
 }
 
 sub trackInfoHandlerRating {

@@ -2,7 +2,7 @@ PLUGIN_RATINGSLIGHT
 	EN	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
-	EN	Set, import and export track ratings. View track ratings in LMS context menu. Skip (un-)rated tracks with CustomSkip.
+	EN	Set, import and export track ratings. View track ratings in LMS context menu. Skip (un-)rated tracks with CustomSkip. Browse rated tracks by artist or genre.
 
 PLUGIN_RATINGSLIGHT_PROGRESS
 	EN	Writing rating values to database
@@ -54,3 +54,41 @@ PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_LINK
 
 PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_WARNING
 	EN	This will reset all ratings and overwrite them with rating values based on keywords in the comment tags.
+
+PLUGIN_RATINGSLIGHT_RATED_TRACKS_MENU_FOLDER
+	EN	Rated Tracks
+
+PLUGIN_RATINGSLIGHT_ARTISTMENU_RATEDHIGH
+	EN	Artists - with tracks rated 3 stars+
+
+PLUGIN_RATINGSLIGHT_GENREMENU_RATEDHIGH
+	EN	Genres - with tracks rated 3 stars+
+
+PLUGIN_RATINGSLIGHT_ARTISTMENU_RATED
+	EN	Artists - with rated tracks
+
+PLUGIN_RATINGSLIGHT_GENREMENU_RATED
+	EN	Genres - with rated tracks
+
+PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS
+	EN	Show browse menus for rated tracks
+
+PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DESC
+	EN	Browse your rated tracks by artist or genre.<br>Enable <b>Rated + Rated High</b> to get extra menus for tracks rated 3 stars and higher.<br>Please <b>restart LMS</b> for the changed settings to take effect.
+
+PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_HIGH
+	EN	Rated + Rated High
+
+PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_RATED_ONLY
+	EN	Rated
+
+PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DISABLE
+	EN	Disable menus  
+
+PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE
+	EN	Auto-refresh menus
+
+PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE_DESC
+	EN	Keep your enabled <b>Rated Tracks</b> menus up-to-date. Refreshing happens after you have set/changed a track rating.
+	
+

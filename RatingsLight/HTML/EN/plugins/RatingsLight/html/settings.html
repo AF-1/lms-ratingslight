@@ -62,6 +62,25 @@ function exportplayliststofiles() {
 [% "PLUGIN_RATINGSLIGHT_DESC" | string %][% END %]
 <hr><br>
 
+[% WRAPPER setting title="Menus" desc="" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS" desc="PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DESC" %]
+<select name="pref_showratedtracksmenus" id="showratedtracksmenus">
+	<option value="2" [% IF prefs.showratedtracksmenus.value == 2 %]selected[% END %]>[% "PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_HIGH" | string %]</option>
+	<option value="1" [% IF prefs.showratedtracksmenus.value == 1 %]selected[% END %]>[% "PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_RATED_ONLY" | string %]</option>
+	<option value="0" [% IF NOT prefs.showratedtracksmenus %]selected[% END %]>[% "PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DISABLE" | string %]</option>
+</select>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE" desc="PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE_DESC" %]
+<select name="pref_autorebuildvirtualibraryafterrating" id="autorebuildvirtualibraryafterrating">
+	<option value="1" [% IF prefs.autorebuildvirtualibraryafterrating %]selected[% END %]>[% "Yes" | string %]</option>
+	<option value="0" [% IF NOT prefs.autorebuildvirtualibraryafterrating %]selected[% END %]>[% "No" | string %]</option>
+</select>
+[% END %]
+[% END %]
+<hr><br>
+
 [% WRAPPER setting title="Export Ratings" desc="" %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_DESC" %]
 <div><a href="#" onclick='exportplayliststofiles();'>[% "PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_LINK" | string %]</a> <span style="color:red;padding-left:15px;font-weight:600;" id="exportstatus"></span></div>
