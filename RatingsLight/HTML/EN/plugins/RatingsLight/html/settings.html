@@ -65,9 +65,13 @@ function exportplayliststofiles() {
 [% WRAPPER setting title="Menus" desc="" %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS" desc="PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DESC" %]
 <select name="pref_showratedtracksmenus" id="showratedtracksmenus">
-	<option value="2" [% IF prefs.showratedtracksmenus.value == 2 %]selected[% END %]>[% "PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_HIGH" | string %]</option>
-	<option value="1" [% IF prefs.showratedtracksmenus.value == 1 %]selected[% END %]>[% "PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_RATED_ONLY" | string %]</option>
-	<option value="0" [% IF NOT prefs.showratedtracksmenus %]selected[% END %]>[% "PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DISABLE" | string %]</option>
+		[% FOREACH option = {
+			'0' => 'PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DISABLE',
+			'1' => 'PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_RATED_ONLY',
+			'2' => 'PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_HIGH',
+		} %]
+			<option [% IF prefs.showratedtracksmenus == option.key %]selected='selected' [% END %]value="[% option.key %]">[% option.value | string %]</option>
+		[%- END -%]
 </select>
 [% END %]
 <br>
