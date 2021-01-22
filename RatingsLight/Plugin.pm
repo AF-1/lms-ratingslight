@@ -29,6 +29,8 @@ my $log = Slim::Utils::Log->addLogCategory({
 
 my $RATING_CHARACTER = " *";
 
+my $ratingQueue = {};
+
 my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
@@ -65,6 +67,16 @@ if (! defined $autorebuildvirtualibraryafterrating) {
 	$prefs->set('autorebuildvirtualibraryafterrating', '0');
 }
 
+my $ratingcontextmenudisplaymode = $prefs->get('ratingcontextmenudisplaymode'); # 0 = stars & text, 1 = stars only, 2 = text only
+if (! defined $ratingcontextmenudisplaymode) {
+	$prefs->set('ratingcontextmenudisplaymode', '1');
+}
+
+my $ratingcontextmenusethalfstars = $prefs->get('ratingcontextmenusethalfstars');
+if (! defined $ratingcontextmenusethalfstars) {
+	$prefs->set('ratingcontextmenusethalfstars', '0');
+}
+
 $prefs->init({
 	rating_keyword_prefix => $rating_keyword_prefix,
 	rating_keyword_suffix => $rating_keyword_suffix,
@@ -74,6 +86,8 @@ $prefs->init({
 	exectime_export => $exectime_export,
 	showratedtracksmenus => $showratedtracksmenus,
 	autorebuildvirtualibraryafterrating => $autorebuildvirtualibraryafterrating,
+	ratingcontextmenudisplaymode => $ratingcontextmenudisplaymode,
+	ratingcontextmenusethalfstars => $ratingcontextmenusethalfstars,
 });
 
 $prefs->setValidate({
@@ -106,6 +120,10 @@ sub initPlugin {
 	if (!main::SCANNER) {
 
 		Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating','_incremental'], [1, 0, 1, \&setRating]);
+
+		Slim::Control::Request::addDispatch(['ratingslight','setratingpercent', '_trackid', '_rating'], [1, 0, 1, \&setRating]);
+
+		Slim::Control::Request::addDispatch(['ratingslight','ratingmenu','_trackid'], [0, 1, 1, \&getRatingMenu]);
 
 		Slim::Control::Request::addDispatch(['ratingslight','manualimport'], [0, 0, 0, \&importRatingsFromCommentTags]);
 
@@ -437,7 +455,7 @@ sub setRating {
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 	my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibraryafterrating');
 
-	if ($request->isNotCommand([['ratingslight'],['setrating']])) {
+	if (($request->isNotCommand([['ratingslight'],['setrating']])) && ($request->isNotCommand([['ratingslight'],['setratingpercent']]))) {
 		$request->setStatusBadDispatch();
 		return;
 	}
@@ -471,7 +489,7 @@ sub setRating {
 		$request->setStatusBadParams();
 		return;
   	}
-
+	
 	# write rating to LMS persistent database
 	my $track = Slim::Schema->resultset("Track")->find($trackId);
 	my $trackURL = $track->url;
@@ -488,7 +506,10 @@ sub setRating {
 			$rating100ScaleValue = $currentrating - int($rating * 20);
 		}
 	} else {
-		$rating100ScaleValue = int($rating * 20);
+		$rating100ScaleValue = $rating;
+		if($request->isNotCommand([['ratingslight'],['setratingpercent']])) {
+			$rating100ScaleValue = int($rating * 20);
+		}
 	}
 	if ($rating100ScaleValue > 100) {
 		$rating100ScaleValue = 100;
@@ -530,27 +551,69 @@ sub setRating {
 }
 
 sub trackInfoHandlerRating {
-    my ( $client, $url, $track ) = @_;
+    my ( $client, $url, $track, $remoteMeta, $tags ) = @_;
+    $tags ||= {};
 	my ($rating100ScaleValue, $rating5starScaleValue, $rating5starScaleValueExact) = 0;
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING');
+	my ($text1, $text2) = '';
 	my $ishalfstarrating = '0';
+	my $ratingcontextmenudisplaymode = $prefs->get('ratingcontextmenudisplaymode');
 	$rating100ScaleValue = getRatingFromDB($track);
 
-	# round down half-stars
-	# my $rating100ScaleValueFloored = floor((floor($rating100ScaleValue/20))*20);
-
-	if ($rating100ScaleValue > 0) {
-		$rating5starScaleValueExact = $rating100ScaleValue/20;
-		$rating5starScaleValue = floor(($rating100ScaleValue + 10) / 20); # round up half-stars
-		#$rating5starScaleValue = floor($rating100ScaleValue/20); # round down half-stars
-		$ishalfstarrating = ($rating5starScaleValueExact - int($rating5starScaleValueExact))?'1':'0';
-		if ($ishalfstarrating == '1') {
-			$text = string('PLUGIN_RATINGSLIGHT_RATING').($RATING_CHARACTER x $rating5starScaleValue).' ('.$rating5starScaleValueExact.')';
-		} else {
-			$text = string('PLUGIN_RATINGSLIGHT_RATING').($RATING_CHARACTER x $rating5starScaleValue);
-			$rating5starScaleValueExact = 0;
+    if ( $tags->{menuMode} ) {
+		my $jive = {};
+		my $actions = {
+			go => {
+				player => 0,
+				cmd => ['ratingslight', 'ratingmenu', $track->id],
+			},
+		};
+		$jive->{actions} = $actions;
+		$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".string("PLUGIN_RATINGSLIGHT_UNRATED");
+		if ($rating100ScaleValue > 0) {
+			$rating5starScaleValueExact = $rating100ScaleValue/20;
+			my $detecthalfstars = ($rating100ScaleValue/2)%2;
+			if ($detecthalfstars == 1) {
+				my $displayrating5starScaleValueExact = floor($rating5starScaleValueExact);
+				$text1 = ($RATING_CHARACTER x $displayrating5starScaleValueExact)." ½";
+				$text2 = ($displayrating5starScaleValueExact > 0 ? "$displayrating5starScaleValueExact.5 " : "0.5 ")."stars";
+			} else {
+				$text1 = ($RATING_CHARACTER x $rating5starScaleValueExact);
+				$text2 = "$rating5starScaleValueExact ".($rating5starScaleValueExact == 1 ? "star" : "stars");
+			}
+			if ($ratingcontextmenudisplaymode == 1) {
+				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text1;
+			} elsif ($ratingcontextmenudisplaymode == 2) {
+				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text2;
+			} else {		
+				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text1."   (".$text2.")";
+			}
 		}
-	}
+		return {
+			type      => 'redirect',
+			name      => $text,
+			jive      => $jive,
+		};
+	}else {
+		if ($rating100ScaleValue > 0) {
+			$rating5starScaleValueExact = $rating100ScaleValue/20;
+			my $detecthalfstars = ($rating100ScaleValue/2)%2;
+			if ($detecthalfstars == 1) {
+				my $displayrating5starScaleValueExact = floor($rating5starScaleValueExact);
+				$text1 = ($RATING_CHARACTER x $displayrating5starScaleValueExact)." ½";
+				$text2 = ($displayrating5starScaleValueExact > 0 ? "$displayrating5starScaleValueExact.5 " : "0.5 ")."stars";
+			} else {
+				$text1 = ($RATING_CHARACTER x $rating5starScaleValueExact);
+				$text2 = "$rating5starScaleValueExact ".($rating5starScaleValueExact == 1 ? "star" : "stars");
+			}
+			if ($ratingcontextmenudisplaymode == 1) {
+				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text1;
+			} elsif ($ratingcontextmenudisplaymode == 2) {
+				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text2;
+			} else {		
+				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text1."   (".$text2.")";
+			}
+		}
  		return {
 			type => 'text',
 			name => $text,
@@ -562,6 +625,97 @@ sub trackInfoHandlerRating {
 				'value' => 'plugins/RatingsLight/html/trackratinginfo.html'
 			},
 		};
+	}
+}
+
+sub getRatingMenu {
+	my $request = shift;
+	my $client = $request->client();
+
+	my $ratingcontextmenudisplaymode = $prefs->get('ratingcontextmenudisplaymode');
+	my $ratingcontextmenusethalfstars = $prefs->get('ratingcontextmenusethalfstars');
+
+	if (!$request->isQuery([['ratingslight'],['ratingmenu']])) {
+		$log->warn("Incorrect command\n");
+		$request->setStatusBadDispatch();
+		$log->debug("Exiting getRatingMenu\n");
+		return;
+	}
+	if(!defined $client) {
+		$log->warn("Client required\n");
+		$request->setStatusNeedsClient();
+		$log->debug("Exiting cliJiveHandler\n");
+		return;
+	}
+	my $track_id = $request->getParam('_trackid');
+
+	my %baseParams = ();
+	my $baseMenu = {
+		'actions' => {
+			'do' => {
+				'cmd' => ['ratingslight', 'setratingpercent', $track_id],
+				'itemsParams' => 'params',
+			},
+			'play' => {
+				'cmd' => ['ratingslight', 'setratingpercent', $track_id],
+				'itemsParams' => 'params',
+			},
+		}
+	};
+	$request->addResult('base',$baseMenu);
+	my $cnt = 0;
+
+	my @ratingValues = ();
+	if ($ratingcontextmenusethalfstars == 1) {
+		@ratingValues = qw(100 90 80 70 60 50 40 30 20 10);
+	} else {
+		@ratingValues = qw(100 80 60 40 20);
+	}
+	
+	foreach my $rating (@ratingValues) {
+		my %itemParams = (
+			'rating' => $rating,
+		);
+		$request->addResultLoop('item_loop',$cnt,'params',\%itemParams);
+		my $detecthalfstars = ($rating/2)%2;
+		my $ratingStars = $rating/20;
+		my $spacechar = " ";
+		my $maxlength = 22;
+		my $spacescount = 0;
+		my ($text, $text1, $text2) = '';
+		
+		if ($detecthalfstars == 1) {
+			$ratingStars = floor($ratingStars);
+			$text1 = ($RATING_CHARACTER x $ratingStars)." ½";
+			$text2 = ($ratingStars > 0 ? "$ratingStars.5 " : "0.5 ")."stars";
+		} else {
+			$text1 = ($RATING_CHARACTER x $ratingStars);
+			$text2 = "$ratingStars ".($ratingStars == 1 ? "star" : "stars");
+		}
+		if ($ratingcontextmenudisplaymode == 1) {
+			$text = $text1;
+		} elsif ($ratingcontextmenudisplaymode == 2) {
+			$text = $text2;
+		} else {		
+			$spacescount = $maxlength - (length $text1) - (length $text2);
+			$text = $text1.($spacechar x $spacescount)."(".$text2.")";
+		}
+		$request->addResultLoop('item_loop',$cnt,'text',$text);
+
+		$request->addResultLoop('item_loop',$cnt,'nextWindow','parent');
+		$cnt++;
+	}
+	my %itemParams = (
+		'rating' => 0,
+	);
+	$request->addResultLoop('item_loop',$cnt,'params',\%itemParams);
+	$request->addResultLoop('item_loop',$cnt,'text',string("PLUGIN_RATINGSLIGHT_UNRATED"));
+	$request->addResultLoop('item_loop',$cnt,'nextWindow','parent');
+	$cnt++;
+
+	$request->addResult('offset',0);
+	$request->addResult('count',$cnt);
+	$request->setStatusDone();
 }
 
 sub getTitleFormat_Rating {

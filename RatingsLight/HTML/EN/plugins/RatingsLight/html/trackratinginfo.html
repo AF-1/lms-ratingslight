@@ -1,4 +1,92 @@
+<style>
+@charset "UTF-8";
+font-family: sans-serif;
+.rating {
+	display: none;
+	font-weight: bold;
+	color: #000000;
+	white-space: nowrap; }
+
+.rating .star {
+	display: inline-block;
+	position: relative;
+	letter-spacing: 0.05em; }
+
+.rating .star::before {
+	display: inline-block;
+	color: #bfbfbf;
+	content: '\2606'; /* = '☆' */
+	width: 1em;
+	height: 1em; }
+
+.rating .star::after {
+	display: inline-block;
+	position: absolute;
+	content: '\2605'; /* = '★' */
+	top: 0;
+	left: 0;
+	opacity: 0;
+	width: 0;
+	height: 0;
+	overflow: hidden; }
+
+.rating:not([disabled]) .star:hover::after,
+.rating .star.active::after {
+	opacity: 1;
+	width: 1em;
+	height: 1.2em; }
+
+.rating .star.active.half::after {width: 0.5em; }
+
+.unrate_btn {
+	display: inline-block;
+	padding-bottom: 1px;
+	vertical-align: middle;
+	padding-left: 8px;
+	visibility:[% IF item.itemvalue>0 %]visible[% ELSE %]hidden[% END %]; }
+.unrate_btn:before {
+	font-size: 16px !important;
+	content: '\2612';
+	color: #000000;
+	width: 1em;
+	height: 1em; }
+
+</style>
 [% "PLUGIN_RATINGSLIGHT_RATING" |string %]
-	[% FOR ratingstar IN [20,40,60,80,100] %]
-	       [% ratingstarlow = ratingstar - 10 %]
-	        <img style="vertical-align: -19.5%" id="rating[% ratingstar %]" src="[% webroot %]plugins/RatingsLight/html/images/[% IF item.itemvalue<ratingstarlow %]empty_noborder[% ELSE %]star_noborder_dark[% END %].gif">[% END %] [% IF item.itemvalue5starexact>0 %]([% item.itemvalue5starexact %])[% END %]
+	<span class="rating" data-default-rating="[% item.itemvalue5starexact %]"></span>
+	<span id="unrate_button" class="unrate_btn" onclick="r.setDefaultRating(0); clearlmsrating();" title="Unrate"></span>
+
+<script src="[% webroot %]plugins/RatingsLight/html/js/SimpleStarRating.js"></script>
+<script TYPE="text/javascript">
+	var ratings = document.getElementsByClassName('rating');
+
+	for (var i = 0; i < ratings.length; i++) {
+		var r = new SimpleStarRating(ratings[i]);
+
+		ratings[i].addEventListener('rate', function(e) {
+			lmsrating = (e.detail * 20);
+			//console.log('Rating: ' + lmsrating);
+			document.getElementById('unrate_button').style.visibility = 'visible';
+			ajaxRequest('/jsonrpc.js', {
+				   id: 1,
+				   method: "slim.request",
+				   params: [
+						   playerid,
+						   ["ratingslight","setratingpercent",[% item.itemid %],lmsrating],
+				   ]
+			});
+	   });
+	};
+	function clearlmsrating() {
+		document.getElementById('unrate_button').style.visibility = 'hidden';
+		ajaxRequest('/jsonrpc.js', {
+			   id: 1,
+			   method: "slim.request",
+			   params: [
+					   playerid,
+					   ["ratingslight","setratingpercent",[% item.itemid %],0],
+			   ]
+		});
+		//console.log('Rating: 0');
+	};
+</script>

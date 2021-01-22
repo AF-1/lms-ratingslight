@@ -2,7 +2,7 @@ PLUGIN_RATINGSLIGHT
 	EN	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
-	EN	Set, import and export track ratings. View track ratings in LMS context menu. Skip (un-)rated tracks with CustomSkip. Browse rated tracks by artist or genre.
+	EN	Set, display, import and export track ratings (with and without plugins/apps). Skip (un-)rated tracks with CustomSkip. Browse rated tracks by artist or genre.
 
 PLUGIN_RATINGSLIGHT_PROGRESS
 	EN	Writing rating values to database
@@ -15,6 +15,12 @@ PLUGIN_RATINGSLIGHT_RATING_KEYWORD_DESC
 
 PLUGIN_RATINGSLIGHT_RATING
 	EN	Rating:
+
+PLUGIN_RATINGSLIGHT_CONTEXTMENU_RATING
+	EN	Rating
+
+PLUGIN_RATINGSLIGHT_UNRATED
+	EN	Unrated
 
 PLUGIN_RATINGSLIGHT_SDD
 	EN	SDD:
@@ -83,12 +89,31 @@ PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_RATED_ONLY
 	EN	Rated
 
 PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DISABLE
-	EN	Disable menus  
+	EN	Disable menus
 
 PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE
 	EN	Auto-refresh menus
 
 PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE_DESC
 	EN	Keep your enabled <b>Rated Tracks</b> menus up-to-date. Refreshing happens after you have set/changed a track rating.
-	
 
+PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE
+	EN	Display of context menu ratings
+
+PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE_DESC
+	EN	Context menu ratings can be displayed as stars, text or both
+
+PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE_STARS_TEXT
+	EN	Stars and text
+
+PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE_STARS
+	EN	Stars
+
+PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE_TEXT
+	EN	Text
+
+PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS
+	EN	Allow context menu half-star ratings
+
+PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS_DESC
+	EN	Show/hide half-star ratings in the <b>context rating menu</b>. This affects only the context rating menu where you rate tracks.<br>The <b>current track rating</b> in the track context menu will <i>always</i> show the <b>exact</b> track rating incl. half-stars, no matter what.
