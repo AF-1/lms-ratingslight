@@ -117,3 +117,9 @@ PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS
 
 PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS_DESC
 	EN	Show/hide half-star ratings in the <b>context rating menu</b>. This affects only the context rating menu where you rate tracks.<br>The <b>current track rating</b> in the track context menu will <i>always</i> show the <b>exact</b> track rating incl. half-stars, no matter what.
+
+PLUGIN_RATINGSLIGHT_REMOTEBUTTONS
+	EN	Rating with remote buttons
+
+PLUGIN_RATINGSLIGHT_REMOTEBUTTONS_DESC
+	EN	Use the buttons of your Logitech IR remote to rate the track that is currently playing on your device (devices with a VFD display like Squeezebox, Boom, Transporter).<br><br><b>Press and hold</b> the key until you see a message on your display confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5  =  1 to 5 stars<br>0  =  unrate<br>8  =  subtract 0.5 stars from current rating<br>9  =  add 0.5 stars to current rating<br>arrow up  =  add 1 star to current rating<br>arrow down  =  subtract 1 star from current rating<br><br>Use the <b>arrow up</b> and <b>arrow down</b> keys for track rating with the Boom's mini remote.

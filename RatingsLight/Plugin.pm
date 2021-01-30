@@ -5,19 +5,20 @@ use warnings;
 use utf8;
 
 use base qw(Slim::Plugin::Base);
-
+use base qw(FileHandle);
+use Digest::MD5 qw(md5_hex);
+use File::Basename;
+use File::Spec::Functions qw(:ALL);
+use POSIX;
+use Slim::Control::Request;
+use Slim::Utils::DateTime;
 use Slim::Utils::Log;
+use Slim::Utils::Prefs;
 use Slim::Utils::Scanner::API;
 use Slim::Utils::Strings qw(string);
-use Slim::Utils::Prefs;
-use Digest::MD5 qw(md5_hex);
 use Slim::Utils::Text;
-use POSIX qw(floor);
-use base qw(FileHandle);
-use File::Spec::Functions qw(:ALL);
-use File::Basename;
-use URI::Escape;
 use Time::HiRes qw(time);
+use URI::Escape;
 
 use Slim::Schema;
 
@@ -27,8 +28,10 @@ my $log = Slim::Utils::Log->addLogCategory({
 	'description'  => 'PLUGIN_RATINGSLIGHT',
 });
 
-my $RATING_CHARACTER = " *";
+#use Data::Dumper;
 
+my $RATING_CHARACTER = ' *';
+my $fractionchar = ' '.HTML::Entities::decode_entities('&#189;');
 my $ratingQueue = {};
 
 my $prefs = preferences('plugin.ratingslight');
@@ -66,15 +69,17 @@ my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibrarya
 if (! defined $autorebuildvirtualibraryafterrating) {
 	$prefs->set('autorebuildvirtualibraryafterrating', '0');
 }
-
 my $ratingcontextmenudisplaymode = $prefs->get('ratingcontextmenudisplaymode'); # 0 = stars & text, 1 = stars only, 2 = text only
 if (! defined $ratingcontextmenudisplaymode) {
 	$prefs->set('ratingcontextmenudisplaymode', '1');
 }
-
 my $ratingcontextmenusethalfstars = $prefs->get('ratingcontextmenusethalfstars');
 if (! defined $ratingcontextmenusethalfstars) {
 	$prefs->set('ratingcontextmenusethalfstars', '0');
+}
+my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
+if (! defined $enableIRremotebuttons) {
+	$prefs->set('enableIRremotebuttons', '1');
 }
 
 $prefs->init({
@@ -88,6 +93,7 @@ $prefs->init({
 	autorebuildvirtualibraryafterrating => $autorebuildvirtualibraryafterrating,
 	ratingcontextmenudisplaymode => $ratingcontextmenudisplaymode,
 	ratingcontextmenusethalfstars => $ratingcontextmenusethalfstars,
+	enableIRremotebuttons => $enableIRremotebuttons,
 });
 
 $prefs->setValidate({
@@ -98,7 +104,6 @@ $prefs->setValidate({
 		return 1;
 	}
 }, 'rating_keyword_prefix');
-
 $prefs->setValidate({
 	validator => sub {
 		return if $_[1] =~ m|[^a-zA-Z]|;
@@ -119,19 +124,27 @@ sub initPlugin {
 
 	if (!main::SCANNER) {
 
+		my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
+		my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+
+
+		if ($enableIRremotebuttons == 1) {
+			Slim::Control::Request::subscribe( \&newPlayerCheck, [['client']],[['new']]);
+			Slim::Buttons::Common::addMode('PLUGIN.RatingsLight::Plugin', getFunctions(),\&Slim::Buttons::Input::Choice::setMode);
+		}
+
 		Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating','_incremental'], [1, 0, 1, \&setRating]);
-
-		Slim::Control::Request::addDispatch(['ratingslight','setratingpercent', '_trackid', '_rating'], [1, 0, 1, \&setRating]);
-
+		Slim::Control::Request::addDispatch(['ratingslight','setratingpercent', '_trackid', '_rating','_incremental'], [1, 0, 1, \&setRating]);
 		Slim::Control::Request::addDispatch(['ratingslight','ratingmenu','_trackid'], [0, 1, 1, \&getRatingMenu]);
-
 		Slim::Control::Request::addDispatch(['ratingslight','manualimport'], [0, 0, 0, \&importRatingsFromCommentTags]);
-
 		Slim::Control::Request::addDispatch(['ratingslight','exportplayliststofiles'], [0, 0, 0, \&exportRatingsToPlaylistFiles]);
 
+		Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
+		
 		addTitleFormat('RATINGSLIGHT_RATING');
 		Slim::Music::TitleFormatter::addFormat('RATINGSLIGHT_RATING',\&getTitleFormat_Rating);
 
+		
 		if (main::WEBUI) {
 			require Plugins::RatingsLight::Settings;
 			Plugins::RatingsLight::Settings->new();
@@ -143,7 +156,7 @@ sub initPlugin {
 							func     => \&trackInfoHandlerRating,
 					) );
 		}
-
+		
 		if ($showratedtracksmenus > 0) {
 			my @libraries = ();
 			push @libraries,{
@@ -280,9 +293,7 @@ sub initPlugin {
 								jiveIcon => 'plugins/RatingsLight/html/images/ratedtracksmenuicon.png',
 						});
 		}
-		
 		$class->SUPER::initPlugin(@_);
-
 	}
 }
 
@@ -295,11 +306,11 @@ sub startScan {
 }
 
 sub importRatingsFromCommentTags {
-	my $class = shift;
-	my $dbh = getCurrentDBH();
-
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
+
+	my $class = shift;
+	my $dbh = getCurrentDBH();
 
 	if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 		$log->error('Error: no rating keywords found.');
@@ -342,7 +353,6 @@ sub importRatingsFromCommentTags {
 		}
 		$sth->finish();
 
-
 		# rate tracks according to comment tag keyword
 		my $rating = 1;
 
@@ -366,7 +376,7 @@ sub importRatingsFromCommentTags {
 			$sth->finish();
 		}
 		my $ended = time() - $started;
-		$log->debug("Import took ".$ended." seconds.");
+		#$log->debug("Import took ".$ended." seconds.");
 		$exectime_import = ((floor($ended) + 2) * 1000);
 		$prefs->set('exectime_import', $exectime_import);
 	}
@@ -377,14 +387,13 @@ sub exportRatingsToPlaylistFiles {
 	my $onlyratingnotmatchcommenttag = $prefs->get('onlyratingnotmatchcommenttag');
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
-	my $sql = undef;
+	my ($sql, $sth) = undef;
 	my $dbh = getCurrentDBH();
-	my $sth = undef;
-	my $rating5starScaleValue = 0;
+	my ($rating5starScaleValue, $rating100ScaleValueCeil) = 0;
 	my $rating100ScaleValue = 10;
-	my $rating100ScaleValueCeil = 0;
 	my $started = time();
-	
+	my $exporttimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;	
+
 	until ($rating100ScaleValue > 100) {
 		$rating100ScaleValueCeil = $rating100ScaleValue + 9;
 		if ($onlyratingnotmatchcommenttag == 1) {
@@ -402,8 +411,7 @@ sub exportRatingsToPlaylistFiles {
 							WHERE (comments.value NOT LIKE ? OR comments.value IS NULL) )
 						);";
 				$sth = $dbh->prepare($sql);
-				$rating5starScaleValue = floor(($rating100ScaleValue + 10) / 20); # round up half-stars
-				#$rating5starScaleValue = floor($rating100ScaleValue/20); # round down half-stars
+				$rating5starScaleValue = $rating100ScaleValue/20;
 				my $ratingkeyword = "%%".$rating_keyword_prefix.$rating5starScaleValue.$rating_keyword_suffix."%%";
 				$sth->bind_param(1, $ratingkeyword);
 			}
@@ -424,7 +432,7 @@ sub exportRatingsToPlaylistFiles {
 
 		if (@trackURLs) {
 			$rating5starScaleValue = $rating100ScaleValue/20;
-			my $PLfilename = ($rating5starScaleValue == 1 ? 'Rated_'.$rating5starScaleValue.'_star.m3u.txt' : 'Rated_'.$rating5starScaleValue.'_stars.m3u.txt');
+			my $PLfilename = ($rating5starScaleValue == 1 ? 'RL_Export_Rated_'.$rating5starScaleValue.'_star.m3u.txt' : 'RL_Export_Rated_'.$rating5starScaleValue.'_stars.m3u.txt');
 
 			my $filename = catfile($playlistDir,$PLfilename);
 			my $output = FileHandle->new($filename, ">") or do {
@@ -432,6 +440,7 @@ sub exportRatingsToPlaylistFiles {
 				return;
 			};
 			print $output '#EXTM3U'."\n";
+			print $output '# exported with \'Ratings Light\' LMS plugin ('.$exporttimestamp.")s\n";
 
 			for my $PLtrackURL (@trackURLs) {
 				print $output "#EXTURL:".$PLtrackURL."\n";
@@ -443,22 +452,23 @@ sub exportRatingsToPlaylistFiles {
 		$rating100ScaleValue = $rating100ScaleValue + 10;
 	}
 	my $ended = time() - $started;
-	$log->debug("Export took ".$ended." seconds.");
+	#$log->debug("Export took ".$ended." seconds.");
 	$exectime_export = ((floor($ended) + 2) * 1000);
 	$prefs->set('exectime_export', $exectime_export);
 }
 
 sub setRating {
-	my $request = shift;
-	my $client = $request->client();
 	my $rating100ScaleValue = 0;
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 	my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibraryafterrating');
+
+	my $request = shift;
 
 	if (($request->isNotCommand([['ratingslight'],['setrating']])) && ($request->isNotCommand([['ratingslight'],['setratingpercent']]))) {
 		$request->setStatusBadDispatch();
 		return;
 	}
+	my $client = $request->client();
 	if(!defined $client) {
 		$request->setStatusNeedsClient();
 		return;
@@ -490,10 +500,8 @@ sub setRating {
 		return;
   	}
 	
-	# write rating to LMS persistent database
 	my $track = Slim::Schema->resultset("Track")->find($trackId);
 	my $trackURL = $track->url;
-	my $urlmd5 = md5_hex($trackURL);
 	
 	if(defined($incremental) && (($incremental eq '+') || ($incremental eq '-'))) {
 		my $currentrating = $track->rating;
@@ -501,14 +509,23 @@ sub setRating {
 			$currentrating = 0;
 		}
 		if ($incremental eq '+') {
-			$rating100ScaleValue = $currentrating + int($rating * 20);
+			if($request->isNotCommand([['ratingslight'],['setratingpercent']])) {
+				$rating100ScaleValue = $currentrating + int($rating * 20);
+			} else {
+				$rating100ScaleValue = $currentrating + int($rating);
+			}
 		} elsif ($incremental eq '-') {
-			$rating100ScaleValue = $currentrating - int($rating * 20);
+			if($request->isNotCommand([['ratingslight'],['setratingpercent']])) {
+				$rating100ScaleValue = $currentrating - int($rating * 20);
+			} else {
+				$rating100ScaleValue = $currentrating - int($rating);
+			}
 		}
 	} else {
-		$rating100ScaleValue = $rating;
 		if($request->isNotCommand([['ratingslight'],['setratingpercent']])) {
 			$rating100ScaleValue = int($rating * 20);
+		} else {
+			$rating100ScaleValue = $rating;
 		}
 	}
 	if ($rating100ScaleValue > 100) {
@@ -517,23 +534,10 @@ sub setRating {
 	if ($rating100ScaleValue < 0) {
 		$rating100ScaleValue = 0;
 	}
-	my $sql = "UPDATE tracks_persistent set rating=$rating100ScaleValue where urlmd5 = ?";
-	my $dbh = getCurrentDBH();
-	my $sth = $dbh->prepare( $sql );
-	eval {
-		$sth->bind_param(1, $urlmd5);
-		$sth->execute();
-		commit($dbh);
-	};
-	if( $@ ) {
-		$log->warn("Database error: $DBI::errstr\n");
-		eval {
-			rollback($dbh);
-		};
-	}
-	$sth->finish();
+	my $rating5starScaleValue = (($rating100ScaleValue+10)/20);
 
-	my $rating5starScaleValue = floor(($rating100ScaleValue+10)/20);
+	writeRatingToDB($trackURL, $rating100ScaleValue);
+
 	$request->addResult('rating', $rating5starScaleValue);
 	$request->addResult('ratingpercentage', $rating100ScaleValue);
 	$request->setStatusDone();
@@ -550,14 +554,154 @@ sub setRating {
 	}
 }
 
+our %menuFunctions = (
+	'saveremoteratings' => sub {
+		my $rating = undef;
+		my $client = shift;
+		my $button = shift;
+		my $digit = shift;
+
+		return unless $digit>='0' && $digit<='9';
+
+		my $song = Slim::Player::Playlist::song($client);
+		my $curtrackinfo = $song->{_column_data};
+		#$log->debug(Dumper($curtrackinfo));
+
+		my $curtrackURL = @$curtrackinfo{url};
+		my $curtrackid = @$curtrackinfo{id};
+
+		if ($digit == 0) {
+			$rating = 0;
+		}
+		
+		if ($digit > 0 && $digit <=5) {
+			$rating = $digit*20;
+		}
+
+		if ($digit >= 6 && $digit <= 9) {
+			my $track = Slim::Schema->resultset("Track")->find($curtrackid);			
+			my $currentrating = $track->rating;
+			if (!defined $currentrating) {
+				$currentrating = 0;
+			}
+			if ($digit == 6) {
+				$rating = $currentrating - 20;
+			}
+			if ($digit == 7) {
+				$rating = $currentrating + 20;
+			}
+			if ($digit == 8) {
+				$rating = $currentrating - 10;
+			}
+			if ($digit == 9) {
+				$rating = $currentrating + 10;
+			}
+			if ($rating > 100) {
+				$rating = 100;
+			}
+			if ($rating < 0) {
+				$rating = 0;
+			}
+		}
+		writeRatingToDB($curtrackURL, $rating);
+		
+		my $detecthalfstars = ($rating/2)%2;
+		my $ratingStars = $rating/20;
+		my $ratingtext = string('PLUGIN_RATINGSLIGHT_UNRATED');
+		if ($rating > 0) {
+			if ($detecthalfstars == 1) {
+				$ratingStars = floor($ratingStars);
+				$ratingtext = ($RATING_CHARACTER x $ratingStars).' '.$fractionchar;
+			} else {
+				$ratingtext = ($RATING_CHARACTER x $ratingStars);
+			}
+		}
+		$client->showBriefly({
+			'line' => [$client->string('PLUGIN_RATINGSLIGHT'),$client->string('PLUGIN_RATINGSLIGHT_RATING').' '.($ratingtext)]},
+			3);
+	},
+);
+
+sub getFunctions {
+	return \%menuFunctions;
+}
+
+sub newPlayerCheck {
+	my ($request) = @_;
+	my $client = $request->client();
+	
+	if ( defined($client) && $request->{_requeststr} eq "client,new" ) {
+		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '1', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_1');
+		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '2', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_2');
+		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '3', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_3');
+		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '4', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_4');
+		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '5', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_5');
+		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '8', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_8');
+		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '9', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_9');
+		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '0', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_0');
+		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, 'arrow_down', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_6');
+		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, 'arrow_up', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_7');
+	}
+}
+
+sub mapKeyHold {
+	# from Peter Watkins' plugin AllQuiet
+	my $client = shift;
+	my $baseKeyName = shift;
+	my $function = shift;
+	if ( defined($client) ) {
+		my $mapsAltered = 0;
+		my @maps  = @{$client->irmaps};
+		for (my $i = 0; $i < scalar(@maps) ; ++$i) {
+			if (ref($maps[$i]) eq 'HASH') {
+				my %mHash = %{$maps[$i]};
+				foreach my $key (keys %mHash) {
+					if (ref($mHash{$key}) eq 'HASH') {
+						my %mHash2 = %{$mHash{$key}};
+						# if no $baseKeyName.hold
+						if ( (!defined($mHash2{$baseKeyName.'.hold'})) || ($mHash2{$baseKeyName.'.hold'} eq 'dead') ) { 
+							#$log->debug("mapping $function to ${baseKeyName}.hold for $i-$key");
+							if ( (defined($mHash2{$baseKeyName}) || (defined($mHash2{$baseKeyName.'.*'}))) && 
+								 (!defined($mHash2{$baseKeyName.'.single'})) ) {
+								# make baseKeyName.single = baseKeyName
+								$mHash2{$baseKeyName.'.single'} = $mHash2{$baseKeyName};
+							}
+							# make baseKeyName.hold = $function
+							$mHash2{$baseKeyName.'.hold'} = $function;
+							# make baseKeyName.repeat = "dead"
+							$mHash2{$baseKeyName.'.repeat'} = 'dead';
+							# make baseKeyName.release = "dead"
+							$mHash2{$baseKeyName.'.hold_release'} = 'dead';
+							# delete unqualified baseKeyName
+							$mHash2{$baseKeyName} = undef;
+							# delete baseKeyName.*
+							$mHash2{$baseKeyName.'.*'} = undef;
+							++$mapsAltered;
+						#} else {
+							#$log->debug("${baseKeyName}.hold mapping already exists for $i-$key");
+						}
+						$mHash{$key} = \%mHash2;
+					}
+				}
+				$maps[$i] = \%mHash;
+			}
+		}
+		if ( $mapsAltered > 0 ) {
+			#$log->info("mapping ${baseKeyName}.hold to $function for \"".$client->name()."\" in $mapsAltered modes");
+			$client->irmaps(\@maps);
+		}
+	}
+}
+
 sub trackInfoHandlerRating {
-    my ( $client, $url, $track, $remoteMeta, $tags ) = @_;
-    $tags ||= {};
-	my ($rating100ScaleValue, $rating5starScaleValue, $rating5starScaleValueExact) = 0;
+	my $ratingcontextmenudisplaymode = $prefs->get('ratingcontextmenudisplaymode');
+ 	my ($rating100ScaleValue, $rating5starScaleValue, $rating5starScaleValueExact) = 0;
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING');
 	my ($text1, $text2) = '';
 	my $ishalfstarrating = '0';
-	my $ratingcontextmenudisplaymode = $prefs->get('ratingcontextmenudisplaymode');
+
+	my ( $client, $url, $track, $remoteMeta, $tags ) = @_;
+    $tags ||= {};
 	$rating100ScaleValue = getRatingFromDB($track);
 
     if ( $tags->{menuMode} ) {
@@ -569,24 +713,24 @@ sub trackInfoHandlerRating {
 			},
 		};
 		$jive->{actions} = $actions;
-		$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".string("PLUGIN_RATINGSLIGHT_UNRATED");
+		$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.string('PLUGIN_RATINGSLIGHT_UNRATED');
 		if ($rating100ScaleValue > 0) {
 			$rating5starScaleValueExact = $rating100ScaleValue/20;
 			my $detecthalfstars = ($rating100ScaleValue/2)%2;
 			if ($detecthalfstars == 1) {
 				my $displayrating5starScaleValueExact = floor($rating5starScaleValueExact);
-				$text1 = ($RATING_CHARACTER x $displayrating5starScaleValueExact)." ½";
-				$text2 = ($displayrating5starScaleValueExact > 0 ? "$displayrating5starScaleValueExact.5 " : "0.5 ")."stars";
+				$text1 = ($RATING_CHARACTER x $displayrating5starScaleValueExact).$fractionchar;
+				$text2 = ($displayrating5starScaleValueExact > 0 ? '$displayrating5starScaleValueExact.5 ' : '0.5 ').'stars';
 			} else {
 				$text1 = ($RATING_CHARACTER x $rating5starScaleValueExact);
-				$text2 = "$rating5starScaleValueExact ".($rating5starScaleValueExact == 1 ? "star" : "stars");
+				$text2 = '$rating5starScaleValueExact '.($rating5starScaleValueExact == 1 ? 'star' : 'stars');
 			}
 			if ($ratingcontextmenudisplaymode == 1) {
-				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text1;
+				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text1;
 			} elsif ($ratingcontextmenudisplaymode == 2) {
-				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text2;
+				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text2;
 			} else {		
-				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text1."   (".$text2.")";
+				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text1.'   ('.$text2.')';
 			}
 		}
 		return {
@@ -600,18 +744,18 @@ sub trackInfoHandlerRating {
 			my $detecthalfstars = ($rating100ScaleValue/2)%2;
 			if ($detecthalfstars == 1) {
 				my $displayrating5starScaleValueExact = floor($rating5starScaleValueExact);
-				$text1 = ($RATING_CHARACTER x $displayrating5starScaleValueExact)." ½";
-				$text2 = ($displayrating5starScaleValueExact > 0 ? "$displayrating5starScaleValueExact.5 " : "0.5 ")."stars";
+				$text1 = ($RATING_CHARACTER x $displayrating5starScaleValueExact).$fractionchar;
+				$text2 = ($displayrating5starScaleValueExact > 0 ? '$displayrating5starScaleValueExact.5 ' : '0.5 ').'stars';
 			} else {
 				$text1 = ($RATING_CHARACTER x $rating5starScaleValueExact);
-				$text2 = "$rating5starScaleValueExact ".($rating5starScaleValueExact == 1 ? "star" : "stars");
+				$text2 = '$rating5starScaleValueExact '.($rating5starScaleValueExact == 1 ? 'star' : 'stars');
 			}
 			if ($ratingcontextmenudisplaymode == 1) {
-				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text1;
+				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text1;
 			} elsif ($ratingcontextmenudisplaymode == 2) {
-				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text2;
+				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text2;
 			} else {		
-				$text = string('PLUGIN_RATINGSLIGHT_RATING')." ".$text1."   (".$text2.")";
+				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text1.'   ('.$text2.')';
 			}
 		}
  		return {
@@ -686,7 +830,7 @@ sub getRatingMenu {
 		
 		if ($detecthalfstars == 1) {
 			$ratingStars = floor($ratingStars);
-			$text1 = ($RATING_CHARACTER x $ratingStars)." ½";
+			$text1 = ($RATING_CHARACTER x $ratingStars).$fractionchar;
 			$text2 = ($ratingStars > 0 ? "$ratingStars.5 " : "0.5 ")."stars";
 		} else {
 			$text1 = ($RATING_CHARACTER x $ratingStars);
@@ -720,25 +864,27 @@ sub getRatingMenu {
 
 sub getTitleFormat_Rating {
 	my $track = shift;
-	my $string = HTML::Entities::decode_entities('&nbsp;');
+	my $ratingtext = HTML::Entities::decode_entities('&nbsp;');
 	my $rating100ScaleValue = 0;
 	my $rating5starScaleValue = 0;
 
 	$rating100ScaleValue = getRatingFromDB($track);
 	if ($rating100ScaleValue > 0) {
-		$rating5starScaleValue = floor(($rating100ScaleValue + 10) / 20); # round up half-stars
-		#$rating5starScaleValue = floor($rating100ScaleValue/20); # round down half-stars
+		my $detecthalfstars = ($rating100ScaleValue/2)%2;
+		my $ratingStars = $rating100ScaleValue/20;
+		
+		if ($detecthalfstars == 1) {
+			$ratingStars = floor($ratingStars);
+			$ratingtext = ($RATING_CHARACTER x $ratingStars).$fractionchar;
+		} else {
+			$ratingtext = ($RATING_CHARACTER x $ratingStars);
+		}
 	}
-
-	if ($rating5starScaleValue > 0) {
-		$string = ($RATING_CHARACTER x $rating5starScaleValue);
-	}
-	return $string;
+	return $ratingtext;
 }
 
 sub getCustomSkipFilterTypes {
 	my @result = ();
-
 	my %rated = (
 		'id' => 'ratingslight_rated',
 		'name' => 'Rated low',
@@ -795,6 +941,26 @@ sub checkCustomSkipFilterType {
 	return 0;
 }
 
+sub writeRatingToDB {
+	my ($trackURL, $rating100ScaleValue) = @_;
+	my $urlmd5 = md5_hex($trackURL);
+	
+	my $sql = "UPDATE tracks_persistent set rating=$rating100ScaleValue where urlmd5 = ?";
+	my $dbh = getCurrentDBH();
+	my $sth = $dbh->prepare( $sql );
+	eval {
+		$sth->bind_param(1, $urlmd5);
+		$sth->execute();
+		commit($dbh);
+	};
+	if( $@ ) {
+		$log->warn("Database error: $DBI::errstr\n");
+		eval {
+			rollback($dbh);
+		};
+	}
+	$sth->finish();
+}
 
 sub getRatingFromDB {
 	my $track = shift;
