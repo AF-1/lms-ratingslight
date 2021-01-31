@@ -80,7 +80,7 @@ PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS
 	EN	Show browse menus for rated tracks
 
 PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DESC
-	EN	Browse your rated tracks by artist or genre.<br>Enable <b>Rated + Rated High</b> to get extra menus for tracks rated 3 stars and higher.<br>Please <b>restart LMS</b> for the changed settings to take effect.
+	EN	Browse your rated tracks by artist or genre.<br>Enable <b>Rated + Rated High</b> to get extra menus for tracks rated 3 stars and higher.<br>Please <b>restart LMS</b> for the changed settings to take effect.<br><br>Requires LMS version 7.9 or higher.
 
 PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_HIGH
 	EN	Rated + Rated High
@@ -95,7 +95,7 @@ PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE
 	EN	Auto-refresh menus
 
 PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE_DESC
-	EN	Keep your enabled <b>Rated Tracks</b> menus up-to-date. Refreshing happens after you have set/changed a track rating.
+	EN	Keep your enabled <b>Rated Tracks</b> menus up-to-date. Refreshing happens after you have set/changed a track rating.<br><br>Requires LMS version 7.9 or higher.
 
 PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE
 	EN	Display of context menu ratings

@@ -7,22 +7,14 @@ function manimport() {
 	let proceed = confirm("[% "PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_WARNING" |string %]");
 
 	if (proceed === true) {
-		const url = "http://"+window.location.host+"/jsonrpc.js";
-		const rawdata = {"id":1,"method":"slim.request","params":["",["ratingslight","manualimport"]]};
-		let data = JSON.stringify(rawdata);
-
-		fetch(url, {
-			method: "post",
-			headers: { "Content-Type": "application/json", "Origin": window.location.hostname },
-			body: data
-		})
-			.then(resp => {
-				if (resp.status === 200) {
-					console.log("success");
-				} else {
-					console.log("Status: " + resp.status)
-				}
-			})
+		ajaxRequest('/jsonrpc.js', {
+			   id: 1,
+			   method: "slim.request",
+			   params: [
+					   playerid,
+					   ["ratingslight","manualimport"],
+			   ]
+		});
 		document.getElementById("importstatus").innerHTML = "Importing...";
 		sleep([% prefs.exectime_import %]).then(() => { document.getElementById("importstatus").innerHTML = ""; });
 	}
@@ -34,22 +26,14 @@ function exportplayliststofiles() {
 	let proceed = confirm("[% "PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_WARNING" |string %]");
 
 	if (proceed === true) {
-		const url = "http://"+window.location.host+"/jsonrpc.js";
-		const rawdata = {"id":1,"method":"slim.request","params":["",["ratingslight","exportplayliststofiles"]]};
-		let data = JSON.stringify(rawdata);
-
-		fetch(url, {
-			method: "post",
-			headers: { "Content-Type": "application/json", "Origin": window.location.hostname },
-			body: data
-		})
-			.then(resp => {
-				if (resp.status === 200) {
-					console.log("success");
-				} else {
-					console.log("Status: " + resp.status)
-				}
-			})
+		ajaxRequest('/jsonrpc.js', {
+			   id: 1,
+			   method: "slim.request",
+			   params: [
+					   playerid,
+					   ["ratingslight","exportplayliststofiles"],
+			   ]
+		});
 		document.getElementById("exportstatus").innerHTML = "Exporting...";
 		sleep([% prefs.exectime_export %]).then(() => { document.getElementById("exportstatus").innerHTML = ""; });
 	}

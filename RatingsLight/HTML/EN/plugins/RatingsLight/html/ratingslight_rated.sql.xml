@@ -1,0 +1,24 @@
+-- PlaylistName:* Rated
+-- PlaylistGroups:
+
+select tracks.url from tracks
+	join tracks_persistent on
+		tracks.url=tracks_persistent.url and tracks_persistent.rating > 0
+	left join comments as excludecomments on
+		tracks.id=excludecomments.track and excludecomments.value like '%%never%%'
+	left join dynamicplaylist_history on
+		tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='PlaylistPlayer'
+	where
+		audio=1
+		and dynamicplaylist_history.id is null
+		and excludecomments.id is null
+		and tracks.secs>90
+		and not exists (select * from tracks t2,genre_track,genres
+						where
+							t2.id=tracks.id and
+							tracks.id=genre_track.track and 
+							genre_track.genre=genres.id and
+							genres.name in ('Classical','Classical - Opera','Classical - BR','Soundtrack - TV & Movie Themes'))
+	group by tracks.id
+	order by random()
+	limit 20;
