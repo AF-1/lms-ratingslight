@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use utf8;
 
+use Slim::Player::Client;
 use base qw(Slim::Plugin::Base);
 use base qw(FileHandle);
 use Digest::MD5 qw(md5_hex);
@@ -28,7 +29,7 @@ my $log = Slim::Utils::Log->addLogCategory({
 	'description'  => 'PLUGIN_RATINGSLIGHT',
 });
 
-#use Data::Dumper;
+use Data::Dumper;
 
 my $RATING_CHARACTER = ' *';
 my $fractionchar = ' '.HTML::Entities::decode_entities('&#189;');
@@ -79,7 +80,7 @@ if (! defined $ratingcontextmenusethalfstars) {
 }
 my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
 if (! defined $enableIRremotebuttons) {
-	$prefs->set('enableIRremotebuttons', '1');
+	$prefs->set('enableIRremotebuttons', '0');
 }
 
 $prefs->init({
@@ -633,7 +634,9 @@ sub getFunctions {
 sub newPlayerCheck {
 	my ($request) = @_;
 	my $client = $request->client();
-	
+	my $clientID = $client->id;
+	my $model = Slim::Player::Client::getClient($clientID)->model;
+
 	if ( defined($client) && $request->{_requeststr} eq "client,new" ) {
 		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '1', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_1');
 		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '2', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_2');
@@ -643,8 +646,10 @@ sub newPlayerCheck {
 		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '8', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_8');
 		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '9', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_9');
 		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '0', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_0');
-		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, 'arrow_down', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_6');
-		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, 'arrow_up', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_7');
+		if ($model eq 'boom') {
+			Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, 'arrow_down', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_6');
+			Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, 'arrow_up', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_7');
+		}
 	}
 }
 
