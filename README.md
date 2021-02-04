@@ -5,20 +5,21 @@ A plugin for [Logitech Media Server](https://github.com/Logitech/slimserver)<br>
 
 ## Features:
 
-* Set track ratings (using the default LMS context menu or apps/plugins like [Material Skin](https://github.com/CDrummond/lms-material))
-* (auto-)import track ratings using keywords in comment tags of files
-* Export rated tracks to playlist files (e.g. for import in other apps)
-* Display track ratings in LMS context menu or on older devices using the *Music Information Screen* plugin
-* Skip tracks (unrated or rated below spec. rating) using the *CustomSkip* plugin
-* Browse rated tracks by artist or genre (using browse menus provided by LMS)
+* **Set track ratings** (with or without apps/plugins like [Material Skin](https://github.com/CDrummond/lms-material))
+* (auto-)**import track ratings** using keywords in comment tags
+* **Export rated tracks to playlist files** (e.g. for backups or to import them in other apps)
+* **Display track ratings** in context menus or on older devices using the *Music Information Screen* plugin
+* Comes with a set of ratings-based **smart playlists** ready for use with the *Dynamic Playlists* plugin
+* Make LMS **skip tracks** (unrated or rated below spec. rating) using the *CustomSkip* plugin
+* **Browse rated tracks by artist or genre** (using browse menus provided by LMS)
 <br>
 
 ## Installation
 
-1. Go to *LMS* > *Settings* > *Plugins*
-2. At the bottom add this repo URL `https://raw.githubusercontent.com/AF-1/lms-misc/main/repo/public.xml`
-3. Download and enable *Ratings  Light*
-<br>
+You should be able to install *Ratings Light* from *LMS* > *Settings* > *Plugins*
+
+Or you could download the latest (source code) zip from this repository and put the *RatingsLight* folder into your local LMS plugin folder.
+<br><br>
 
 
 I'd like to thank [mherger](https://github.com/mherger) for his invaluable support and [erland](https://github.com/erland) for his plugins, a great source of inspiration.
