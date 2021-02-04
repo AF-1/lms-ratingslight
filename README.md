@@ -5,7 +5,7 @@ A plugin for [Logitech Media Server](https://github.com/Logitech/slimserver)<br>
 
 ## Features:
 
-* **Set track ratings** (with or without apps/plugins like [Material Skin](https://github.com/CDrummond/lms-material))
+* **Set track ratings** (with or without apps/plugins or with IR remote)
 * (auto-)**import track ratings** using keywords in comment tags
 * **Export rated tracks to playlist files** (e.g. for backups or to import them in other apps)
 * **Display track ratings** in context menus or on older devices using the *Music Information Screen* plugin
