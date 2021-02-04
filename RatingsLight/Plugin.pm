@@ -647,7 +647,6 @@ sub getDynamicPlayLists {
 		#### playlists ###
 		my %playlist1 = (
 			'name' => 'Rated',
-			'url' => 'plugins/RatingsLight/html/rated.html',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist2 = (
