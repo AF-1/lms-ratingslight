@@ -2,7 +2,7 @@ PLUGIN_RATINGSLIGHT
 	EN	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
-	EN	Set, display, import and export track ratings (with and without plugins/apps or with IR remote). Includes ratings-based smart playlists for DynamicPlaylists. Skip (un-)rated tracks with CustomSkip. Browse rated tracks by artist or genre.
+	EN	Set track ratings (also with plugins/apps and IR remote). Display, import and export track ratings. Includes ratings-based smart playlists for DynamicPlaylists. Skip (un-)rated tracks with CustomSkip. Browse rated tracks by artist or genre.
 
 PLUGIN_RATINGSLIGHT_PROGRESS
 	EN	Writing rating values to database
