@@ -12,11 +12,11 @@ sub name {
 }
 
 sub page {
-	return Slim::Web::HTTP::CSRF->protectURI('plugins/RatingsLight/html/settings.html');
+	return Slim::Web::HTTP::CSRF->protectURI('plugins/RatingsLight/settings/settings.html');
 }
 
 sub prefs {
-	return ($prefs, 'rating_keyword_prefix', 'rating_keyword_suffix', 'autoscan', 'onlyratingnotmatchcommenttag', 'exectime_import', 'exectime_export', 'showratedtracksmenus', 'autorebuildvirtualibraryafterrating', 'ratingcontextmenudisplaymode', 'ratingcontextmenusethalfstars', 'enableIRremotebuttons');
+	return ($prefs, 'rating_keyword_prefix', 'rating_keyword_suffix', 'autoscan', 'onlyratingnotmatchcommenttag', 'exectime_import', 'exectime_export', 'showratedtracksmenus', 'autorebuildvirtualibraryafterrating', 'ratingcontextmenudisplaymode', 'ratingcontextmenusethalfstars', 'enableIRremotebuttons', 'DPLintegration');
 }
 
 1;

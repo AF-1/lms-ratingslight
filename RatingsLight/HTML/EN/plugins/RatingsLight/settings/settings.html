@@ -46,11 +46,19 @@ function exportplayliststofiles() {
 [% "PLUGIN_RATINGSLIGHT_DESC" | string %][% END %]
 <hr><br>
 
-[% WRAPPER setting title="Remote Buttons" desc="" %]
+[% WRAPPER setting title="Misc. Settings" desc="" %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_REMOTEBUTTONS" desc="PLUGIN_RATINGSLIGHT_REMOTEBUTTONS_DESC" %]
 <select name="pref_enableIRremotebuttons" id="enableIRremotebuttons">
 	<option value="1" [% IF prefs.enableIRremotebuttons %]selected[% END %]>[% "Yes" | string %]</option>
 	<option value="0" [% IF NOT prefs.enableIRremotebuttons %]selected[% END %]>[% "No" | string %]</option>
+</select>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DYNAMICPLAYLISTINTEGRATION" desc="PLUGIN_RATINGSLIGHT_DYNAMICPLAYLISTINTEGRATION_DESC" %]
+<select name="pref_DPLintegration" id="DPLintegration">
+	<option value="1" [% IF prefs.DPLintegration %]selected[% END %]>[% "Yes" | string %]</option>
+	<option value="0" [% IF NOT prefs.DPLintegration %]selected[% END %]>[% "No" | string %]</option>
 </select>
 [% END %]
 [% END %]
