@@ -120,9 +120,9 @@ sub initPlugin {
 	my $class = shift;
 
 	Slim::Music::Import->addImporter('Plugins::RatingsLight::Plugin', {
-		'type'         => 'post',
-		'weight'       => 99,
-		'use'          => 1,
+		'type'   => 'post',
+		'weight' => 99,
+		'use'    => 1,
 	});
 
 	if (!main::SCANNER) {
@@ -141,7 +141,7 @@ sub initPlugin {
 		Slim::Control::Request::addDispatch(['ratingslight','exportplayliststofiles'], [0, 0, 0, \&exportRatingsToPlaylistFiles]);
 
 		Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
-
+		
 		addTitleFormat('RATINGSLIGHT_RATING');
 		Slim::Music::TitleFormatter::addFormat('RATINGSLIGHT_RATING',\&getTitleFormat_Rating);
 
@@ -152,8 +152,8 @@ sub initPlugin {
 
 		if(UNIVERSAL::can("Slim::Menu::TrackInfo","registerInfoProvider")) {
 					Slim::Menu::TrackInfo->registerInfoProvider( ratingslightrating => (
-							before    => 'artwork',
-							func     => \&trackInfoHandlerRating,
+							before => 'artwork',
+							func   => \&trackInfoHandlerRating,
 					) );
 		}
 
@@ -195,10 +195,10 @@ sub initPlugin {
 					Slim::Menu::BrowseLibrary->deregisterNode('RatingsLightRatedTracksMenuFolder');
 
 					Slim::Menu::BrowseLibrary->registerNode({
-									type         => 'link',
-									name         => 'PLUGIN_RATINGSLIGHT_RATED_TRACKS_MENU_FOLDER',
-									id           => 'RatingsLightRatedTracksMenuFolder',
-									feed         => sub {
+									type => 'link',
+									name => 'PLUGIN_RATINGSLIGHT_RATED_TRACKS_MENU_FOLDER',
+									id   => 'RatingsLightRatedTracksMenuFolder',
+									feed => sub {
 										my ($client, $cb, $args, $pt) = @_;
 										my @items = ();
 
@@ -515,10 +515,10 @@ sub setRating {
 		$request->setStatusBadParams();
 		return;
   	}
-
+	
 	my $track = Slim::Schema->resultset("Track")->find($trackId);
 	my $trackURL = $track->url;
-
+	
 	if(!defined($incremental)) {
 		if($request->isNotCommand([['ratingslight'],['setratingpercent']])) {
 			$rating100ScaleValue = int($rating * 20);
@@ -576,7 +576,7 @@ sub setRating {
 
 sub getDynamicPlayLists {
 	my $DPLintegration = $prefs->get('DPLintegration');
-
+	
 	if ($DPLintegration == 1) {
 		my ($client) = @_;
 		my %result = ();
@@ -647,50 +647,62 @@ sub getDynamicPlayLists {
 		#### playlists ###
 		my %playlist1 = (
 			'name' => 'Rated',
+			'url' => 'plugins/RatingsLight/html/dpldesc/rated.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist2 = (
 			'name' => 'Rated (with % of rated 3 stars+)',
+			'url' => 'plugins/RatingsLight/html/dpldesc/rated_top.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist3 = (
 			'name' => 'Rated - by DECADE',
+			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist4 = (
 			'name' => 'Rated - by DECADE (with % of rated 3 stars+)',
+			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade_top.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist5 = (
 			'name' => 'Rated - by GENRE',
+			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_genre.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist6 = (
 			'name' => 'Rated - by GENRE (with % of rated 3 stars+)',
+			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_genre_top.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist7 = (
 			'name' => 'Rated - by GENRE + DECADE',
+			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade_and_genre.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist8 = (
 			'name' => 'Rated - by GENRE + DECADE (with % of rated 3 stars+)',
+			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade_and_genre_top.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist9 = (
-			'name' => 'UNrated (with % of RATED Songs)',
+			'name' => 'UNrated (with % of RATED songs)',
+			'url' => 'plugins/RatingsLight/html/dpldesc/unrated_top.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist10 = (
-			'name' => 'UNrated by DECADE (with % of RATED Songs)',
+			'name' => 'UNrated by DECADE (with % of RATED songs)',
+			'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_decade_top.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist11 = (
 			'name' => 'UNrated by GENRE (with % of RATED songs)',
+			'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_genre_top.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 		my %playlist12 = (
 			'name' => 'UNrated by GENRE + DECADE (with % of RATED songs)',
+			'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_decade_and_genre_top.html?dummyparam=1',
 			'groups' => [['Ratings Light ']]
 		);
 
@@ -751,14 +763,14 @@ sub getDynamicPlayLists {
 		$playlist8{'parameters'} = \%parametersPL8;
 		$result{'ratingslight_rated-by_genre_and_decade_with_top_percentage'} = \%playlist8;
 
-		# Playlist9: "UNrated (with % of RATED Songs)"
+		# Playlist9: "UNrated (with % of RATED songs)"
 		my %parametersPL9 = (
 			1 => \%parameterrated1
 		);
 		$playlist9{'parameters'} = \%parametersPL9;
 		$result{'ratingslight_unrated-with_rated_percentage'} = \%playlist9;
 
-		# Playlist10: "UNrated by DECADE (with % of RATED Songs)"
+		# Playlist10: "UNrated by DECADE (with % of RATED songs)"
 		my %parametersPL10 = (
 			1 => \%parameterdec1,
 			2 => \%parameterrated2
@@ -997,7 +1009,7 @@ our %menuFunctions = (
 		if ($digit == 0) {
 			$rating = 0;
 		}
-
+	
 		if ($digit > 0 && $digit <=5) {
 			$rating = $digit*20;
 		}
@@ -1028,7 +1040,7 @@ our %menuFunctions = (
 			}
 		}
 		writeRatingToDB($curtrackURL, $rating);
-
+	
 		my $detecthalfstars = ($rating/2)%2;
 		my $ratingStars = $rating/20;
 		my $ratingtext = string('PLUGIN_RATINGSLIGHT_UNRATED');
@@ -1087,9 +1099,9 @@ sub mapKeyHold {
 					if (ref($mHash{$key}) eq 'HASH') {
 						my %mHash2 = %{$mHash{$key}};
 						# if no $baseKeyName.hold
-						if ( (!defined($mHash2{$baseKeyName.'.hold'})) || ($mHash2{$baseKeyName.'.hold'} eq 'dead') ) {
+						if ( (!defined($mHash2{$baseKeyName.'.hold'})) || ($mHash2{$baseKeyName.'.hold'} eq 'dead') ) { 
 							#$log->debug("mapping $function to ${baseKeyName}.hold for $i-$key");
-							if ( (defined($mHash2{$baseKeyName}) || (defined($mHash2{$baseKeyName.'.*'}))) &&
+							if ( (defined($mHash2{$baseKeyName}) || (defined($mHash2{$baseKeyName.'.*'}))) && 
 								 (!defined($mHash2{$baseKeyName.'.single'})) ) {
 								# make baseKeyName.single = baseKeyName
 								$mHash2{$baseKeyName.'.single'} = $mHash2{$baseKeyName};
@@ -1135,9 +1147,9 @@ sub trackInfoHandlerRating {
 		if ( $tags->{menuMode} ) {
 			my $jive = {};
 			return {
-				type      => '',
-				name      => $text." ".string('PLUGIN_RATINGSLIGHT_BLOCKED'),
-				jive      => $jive,
+				type => '',
+				name => $text." ".string('PLUGIN_RATINGSLIGHT_BLOCKED'),
+				jive => $jive,
 			};
 		}else {
 			return {
@@ -1179,9 +1191,9 @@ sub trackInfoHandlerRating {
 			}
 		}
 		return {
-			type      => 'redirect',
-			name      => $text,
-			jive      => $jive,
+			type => 'redirect',
+			name => $text,
+			jive => $jive,
 		};
 	}else {
 		if ($rating100ScaleValue > 0) {
@@ -1209,7 +1221,7 @@ sub trackInfoHandlerRating {
 			itemvalue => $rating100ScaleValue,
 			itemvalue5starexact => $rating5starScaleValueExact,
 			itemid => $track->id,
-			web      => {
+			web => {
 				'type' => 'htmltemplate',
 				'value' => 'plugins/RatingsLight/html/trackratinginfo.html'
 			},
@@ -1259,7 +1271,7 @@ sub getRatingMenu {
 	} else {
 		@ratingValues = qw(100 80 60 40 20);
 	}
-
+	
 	foreach my $rating (@ratingValues) {
 		my %itemParams = (
 			'rating' => $rating,
@@ -1271,7 +1283,7 @@ sub getRatingMenu {
 		my $maxlength = 22;
 		my $spacescount = 0;
 		my ($text, $text1, $text2) = '';
-
+		
 		if ($detecthalfstars == 1) {
 			$ratingStars = floor($ratingStars);
 			$text1 = ($RATING_CHARACTER x $ratingStars).$fractionchar;
@@ -1316,7 +1328,7 @@ sub getTitleFormat_Rating {
 	if ($rating100ScaleValue > 0) {
 		my $detecthalfstars = ($rating100ScaleValue/2)%2;
 		my $ratingStars = $rating100ScaleValue/20;
-
+		
 		if ($detecthalfstars == 1) {
 			$ratingStars = floor($ratingStars);
 			$ratingtext = ($RATING_CHARACTER x $ratingStars).$fractionchar;
@@ -1388,7 +1400,7 @@ sub checkCustomSkipFilterType {
 sub writeRatingToDB {
 	my ($trackURL, $rating100ScaleValue) = @_;
 	my $urlmd5 = md5_hex($trackURL);
-
+	
 	my $sql = "UPDATE tracks_persistent set rating=$rating100ScaleValue where urlmd5 = ?";
 	my $dbh = getCurrentDBH();
 	my $sth = $dbh->prepare( $sql );
