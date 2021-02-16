@@ -598,7 +598,7 @@ sub exportRatingsToPlaylistFiles {
 			my $PLfilename = ($rating5starScaleValue == 1 ? 'RL_Export_'.$filename_timestamp.'__Rated_'.$rating5starScaleValue.'_star.m3u.txt' : 'RL_Export_'.$filename_timestamp.'__Rated_'.$rating5starScaleValue.'_stars.m3u.txt');
 
 			my $filename = catfile($exportDir,$PLfilename);
-			my $output = FileHandle->new($filename, ">") or do {
+			my $output = FileHandle->new($filename, ">:utf8") or do {
 				$log->warn("Could not open $filename for writing.\n");
 				return;
 			};
@@ -772,7 +772,7 @@ sub createBackup {
 		my $PLfilename = 'RL_Backup_'.$filename_timestamp.'.xml';
 
 		my $filename = catfile($backupDir,$PLfilename);
-		my $output = FileHandle->new($filename, ">") or do {
+		my $output = FileHandle->new($filename, ">:utf8") or do {
 			$log->warn("Could not open $filename for writing.\n");
 			return;
 		};
@@ -1975,7 +1975,7 @@ sub logRatedTrack {
 	my $newRating = $rating100ScaleValue/20;
 
 	my $filename = catfile($logDir,$logFileName);
-	my $output = FileHandle->new($filename, ">>") or do {
+	my $output = FileHandle->new($filename, ">>:utf8") or do {
 		$log->warn("Could not open $filename for writing.\n");
 		return;
 	};
