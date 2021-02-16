@@ -8,7 +8,9 @@ use base qw(Slim::Plugin::Base);
 use base qw(FileHandle);
 use Digest::MD5 qw(md5_hex);
 use File::Basename;
+use File::Copy qw(move);
 use File::Spec::Functions qw(:ALL);
+use File::stat;
 use FindBin qw($Bin);
 use POSIX qw(strftime ceil floor);
 use Slim::Control::Request;
@@ -20,10 +22,16 @@ use Slim::Utils::Scanner::API;
 use Slim::Utils::Strings qw(string);
 use Slim::Utils::Text;
 use Time::HiRes qw(time);
-use URI::Escape;
 use Slim::Schema;
+use URI::Escape;
+use XML::Parser;
 
-#use Data::Dumper;
+use Data::Dumper;
+
+use Plugins::RatingsLight::Settings::Basic;
+use Plugins::RatingsLight::Settings::Backup;
+use Plugins::RatingsLight::Settings::ImportExport;
+use Plugins::RatingsLight::Settings::Menus;
 
 my $log = Slim::Utils::Log->addLogCategory({
 	'category'     => 'plugin.ratingslight',
@@ -53,14 +61,6 @@ my $onlyratingnotmatchcommenttag = $prefs->get('onlyratingnotmatchcommenttag');
 if (! defined $onlyratingnotmatchcommenttag) {
 	$prefs->set('onlyratingnotmatchcommenttag', '0');
 }
-my $exectime_import = $prefs->get('exectime_import');
-if (! defined $exectime_import) {
-	$prefs->set('exectime_import', '8000');
-}
-my $exectime_export = $prefs->get('exectime_export');
-if (! defined $exectime_export) {
-	$prefs->set('exectime_export', '6000');
-}
 my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 if (! defined $showratedtracksmenus) {
 	$prefs->set('showratedtracksmenus', '0');
@@ -85,20 +85,94 @@ my $DPLintegration = $prefs->get('DPLintegration');
 if (! defined $DPLintegration) {
 	$prefs->set('DPLintegration', '1');
 }
+my $scheduledbackups = $prefs->get('scheduledbackups');
+if (! defined $scheduledbackups) {
+	$prefs->set('scheduledbackups', '0');
+}
+my $backuptime = $prefs->get('backuptime');
+if (! defined $backuptime) {
+	$prefs->set('backuptime', '05:28');
+}
+my $backup_lastday = $prefs->get('backup_lastday');
+if (! defined $backup_lastday) {
+	$prefs->set('backup_lastday', '');
+}
+my $backupsdaystokeep = $prefs->get('backupsdaystokeep');
+if (! defined $backupsdaystokeep) {
+	$prefs->set('backupsdaystokeep', '10');
+}
+my $clearallbeforerestore = $prefs->get('clearallbeforerestore');
+if (! defined $clearallbeforerestore) {
+	$prefs->set('clearallbeforerestore', '0');
+}
+my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
+if (! defined $rlparentfolderpath) {
+	my $playlistdir = $serverPrefs->get('playlistdir');
+	$prefs->set('rlparentfolderpath', $playlistdir);
+}
+my $uselogfile = $prefs->get('uselogfile');
+if (! defined $uselogfile) {
+	$prefs->set('uselogfile', '0');
+}
+my $userecentlyaddedplaylist = $prefs->get('userecentlyaddedplaylist');
+if (! defined $userecentlyaddedplaylist) {
+	$prefs->set('userecentlyaddedplaylist', '0');
+}
+my $recentlymaxcount = $prefs->get('recentlymaxcount');
+if (! defined $recentlymaxcount) {
+	$prefs->set('recentlymaxcount', '30');
+}
+
+my $importingfromcommenttags;
+$prefs->set('importingfromcommenttags', '0');
+
+my $restoringfrombackup;
+$prefs->set('restoringfrombackup', '0');
+
+my $batchratingplaylisttracks;
+$prefs->set('batchratingplaylisttracks', '0');
+
+my $ratethisplaylistid;
+$prefs->set('ratethisplaylistid', '');
+
+my $ratethisplaylistrating;
+$prefs->set('ratethisplaylistrating', '');
+
+my $restorefile;
+$prefs->set('restorefile', '');
+
+my (%restoreitem, $currentKey, $inTrack, $inValue);
+my $backupParser;
+my $backupParserNB;
+my $backupFile;
+my $opened = 0;
+my $restorestarted;
 
 $prefs->init({
 	rating_keyword_prefix => $rating_keyword_prefix,
 	rating_keyword_suffix => $rating_keyword_suffix,
 	autoscan => $autoscan,
 	onlyratingnotmatchcommenttag => $onlyratingnotmatchcommenttag,
-	exectime_import => $exectime_import,
-	exectime_export => $exectime_export,
 	showratedtracksmenus => $showratedtracksmenus,
 	autorebuildvirtualibraryafterrating => $autorebuildvirtualibraryafterrating,
 	ratingcontextmenudisplaymode => $ratingcontextmenudisplaymode,
 	ratingcontextmenusethalfstars => $ratingcontextmenusethalfstars,
 	enableIRremotebuttons => $enableIRremotebuttons,
 	DPLintegration => $DPLintegration,
+	scheduledbackups => $scheduledbackups,
+	backuptime => $backuptime,
+	backup_lastday => $backup_lastday,
+	backupsdaystokeep => $backupsdaystokeep,
+	restorefile => $restorefile,
+	importingfromcommenttags => $importingfromcommenttags,
+	restoringfrombackup => $restoringfrombackup,
+	clearallbeforerestore => $clearallbeforerestore,
+	uselogfile => $uselogfile,
+	batchratingplaylisttracks => $batchratingplaylisttracks,
+	ratethisplaylistid => $ratethisplaylistid,
+	ratethisplaylistrating => $ratethisplaylistrating,
+	userecentlyaddedplaylist => $userecentlyaddedplaylist,
+	recentlymaxcount => $recentlymaxcount,
 });
 
 $prefs->setValidate({
@@ -115,6 +189,9 @@ $prefs->setValidate({
 		return 1;
 	}
 }, 'rating_keyword_suffix');
+$prefs->setValidate({ 'validator' => \&isTimeOrEmpty }, 'backuptime');
+$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 365 }, 'backupsdaystokeep');
+$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 2, 'high' => 200 }, 'recentlymaxcount');
 
 sub initPlugin {
 	my $class = shift;
@@ -137,17 +214,17 @@ sub initPlugin {
 		Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating','_incremental'], [1, 0, 1, \&setRating]);
 		Slim::Control::Request::addDispatch(['ratingslight','setratingpercent', '_trackid', '_rating','_incremental'], [1, 0, 1, \&setRating]);
 		Slim::Control::Request::addDispatch(['ratingslight','ratingmenu','_trackid'], [0, 1, 1, \&getRatingMenu]);
-		Slim::Control::Request::addDispatch(['ratingslight','manualimport'], [0, 0, 0, \&importRatingsFromCommentTags]);
-		Slim::Control::Request::addDispatch(['ratingslight','exportplayliststofiles'], [0, 0, 0, \&exportRatingsToPlaylistFiles]);
 
 		Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
-		
+
 		addTitleFormat('RATINGSLIGHT_RATING');
 		Slim::Music::TitleFormatter::addFormat('RATINGSLIGHT_RATING',\&getTitleFormat_Rating);
 
 		if (main::WEBUI) {
-			require Plugins::RatingsLight::Settings;
-			Plugins::RatingsLight::Settings->new();
+			Plugins::RatingsLight::Settings::Basic->new($class);
+			Plugins::RatingsLight::Settings::Backup->new($class);
+			Plugins::RatingsLight::Settings::ImportExport->new($class);
+			Plugins::RatingsLight::Settings::Menus->new($class);
 		}
 
 		if(UNIVERSAL::can("Slim::Menu::TrackInfo","registerInfoProvider")) {
@@ -295,6 +372,9 @@ sub initPlugin {
 							});
 			}
 		}
+
+		backupScheduler();
+
 		$class->SUPER::initPlugin(@_);
 	}
 }
@@ -308,17 +388,27 @@ sub startScan {
 }
 
 sub importRatingsFromCommentTags {
+	my $class = shift;
+	my $importingfromcommenttags = $prefs->get('importingfromcommenttags');
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
+	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+	my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibraryafterrating');
 
-	my $class = shift;
+	if ($importingfromcommenttags == 1) {
+		$log->warn("Import is already in progress, please wait for the previous import to finish");
+		return;
+	}
+
+	$prefs->set('importingfromcommenttags', 1);
+	my $started = time();
+
 	my $dbh = getCurrentDBH();
 
 	if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 		$log->error('Error: no rating keywords found.');
 		return
 	} else {
-		my $started = time();
 		my $sqlunrate = "UPDATE tracks_persistent
 		  SET rating = NULL
 		WHERE 	(tracks_persistent.rating > 0
@@ -377,18 +467,85 @@ sub importRatingsFromCommentTags {
 			$rating++;
 			$sth->finish();
 		}
-		my $ended = time() - $started;
-		#$log->debug("Import took ".$ended." seconds.");
-		$exectime_import = ((floor($ended) + 2) * 1000);
-		$prefs->set('exectime_import', $exectime_import);
 	}
+
+	my $ended = time() - $started;
+
+	# refresh virtual libraries
+	if($::VERSION ge '7.9') {
+		if (($showratedtracksmenus > 0) && ($autorebuildvirtualibraryafterrating == 1)) {
+			my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RATED');
+			Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
+
+			if ($showratedtracksmenus == 2) {
+			my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RATED_HIGH');
+			Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
+			}
+		}
+	}
+
+	$log->info("Import completed after ".$ended." seconds.");
+	$prefs->set('importingfromcommenttags', 0);
+}
+
+sub importRatingsFromPlaylist {
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn("Warning: access to rating values blocked until library scan is completed");
+		return;
+	}
+
+	my $playlistid = $prefs->get('ratethisplaylistid');
+	my $rating = $prefs->get('ratethisplaylistrating');
+	my $batchratingplaylisttracks = $prefs->get('batchratingplaylisttracks');
+	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+	my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibraryafterrating');
+
+	if ($batchratingplaylisttracks == 1) {
+		$log->warn("Import is already in progress, please wait for the previous import to finish");
+		return;
+	}
+	$prefs->set('batchratingplaylisttracks', 1);
+	my $started = time();
+
+	my $queryresult = Slim::Control::Request::executeRequest(undef, ['playlists', 'tracks', '0', '1000', 'playlist_id:'.$playlistid, 'tags:u']);
+
+	my $playlisttrackcount = $queryresult->{_results}{count};
+	if ($playlisttrackcount > 0) {
+		my $trackURL;
+		my $playlisttracksarray = $queryresult->{_results}{playlisttracks_loop};
+
+		for my $playlisttrack (@$playlisttracksarray) {
+			$trackURL = $playlisttrack->{url};
+			writeRatingToDB($trackURL, $rating);
+		}
+	}
+	my $ended = time() - $started;
+
+	# refresh virtual libraries
+	if($::VERSION ge '7.9') {
+		if (($showratedtracksmenus > 0) && ($autorebuildvirtualibraryafterrating == 1)) {
+			my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RATED');
+			Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
+
+			if ($showratedtracksmenus == 2) {
+			my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RATED_HIGH');
+			Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
+			}
+		}
+	}
+
+	$log->info("Rating playlist tracks completed after ".$ended." seconds.");
+	$prefs->set('ratethisplaylistid', '');
+	$prefs->set('ratethisplaylistrating', '');
+	$prefs->set('batchratingplaylisttracks', 0);
 }
 
 sub exportRatingsToPlaylistFiles {
-	my $playlistDir = $serverPrefs->get('playlistdir');
-	my $exportDir = $playlistDir."/RatingsLight";
+	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
+	my $exportDir = $rlparentfolderpath."/RatingsLight";
+	my $started = time();
 	mkdir($exportDir, 0755) unless(-d $exportDir );
-	chdir($exportDir) or $exportDir = $playlistDir;
+	chdir($exportDir) or $exportDir = $rlparentfolderpath;
 
 	my $onlyratingnotmatchcommenttag = $prefs->get('onlyratingnotmatchcommenttag');
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
@@ -397,7 +554,6 @@ sub exportRatingsToPlaylistFiles {
 	my $dbh = getCurrentDBH();
 	my ($rating5starScaleValue, $rating100ScaleValueCeil) = 0;
 	my $rating100ScaleValue = 10;
-	my $started = time();
 	my $exporttimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
 
@@ -439,7 +595,7 @@ sub exportRatingsToPlaylistFiles {
 
 		if (@trackURLs) {
 			$rating5starScaleValue = $rating100ScaleValue/20;
-			my $PLfilename = ($rating5starScaleValue == 1 ? 'RL_Export_Rated_'.$rating5starScaleValue.'_star__'.$filename_timestamp.'.m3u.txt' : 'RL_Export_Rated_'.$rating5starScaleValue.'_stars__'.$filename_timestamp.'.m3u.txt');
+			my $PLfilename = ($rating5starScaleValue == 1 ? 'RL_Export_'.$filename_timestamp.'__Rated_'.$rating5starScaleValue.'_star.m3u.txt' : 'RL_Export_'.$filename_timestamp.'__Rated_'.$rating5starScaleValue.'_stars.m3u.txt');
 
 			my $filename = catfile($exportDir,$PLfilename);
 			my $output = FileHandle->new($filename, ">") or do {
@@ -462,9 +618,7 @@ sub exportRatingsToPlaylistFiles {
 		$rating100ScaleValue = $rating100ScaleValue + 10;
 	}
 	my $ended = time() - $started;
-	#$log->debug("Export took ".$ended." seconds.");
-	$exectime_export = ((floor($ended) + 2) * 1000);
-	$prefs->set('exectime_export', $exectime_export);
+	$log->info("Export completed after ".$ended." seconds.");
 }
 
 sub setRating {
@@ -478,7 +632,8 @@ sub setRating {
 	my $rating100ScaleValue = 0;
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 	my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibraryafterrating');
-
+	my $uselogfile = $prefs->get('uselogfile');
+	my $userecentlyaddedplaylist = $prefs->get('userecentlyaddedplaylist');
 
 	if (($request->isNotCommand([['ratingslight'],['setrating']])) && ($request->isNotCommand([['ratingslight'],['setratingpercent']]))) {
 		$request->setStatusBadDispatch();
@@ -515,10 +670,10 @@ sub setRating {
 		$request->setStatusBadParams();
 		return;
   	}
-	
+
 	my $track = Slim::Schema->resultset("Track")->find($trackId);
 	my $trackURL = $track->url;
-	
+
 	if(!defined($incremental)) {
 		if($request->isNotCommand([['ratingslight'],['setratingpercent']])) {
 			$rating100ScaleValue = int($rating * 20);
@@ -554,7 +709,16 @@ sub setRating {
 	}
 	my $rating5starScaleValue = ($rating100ScaleValue/20);
 
+	if ($userecentlyaddedplaylist == 1) {
+		addToRecentlyRatedPlaylist($trackURL);
+	}
+
+	if ($uselogfile == 1) {
+		logRatedTrack($trackURL, $rating100ScaleValue);
+	}
 	writeRatingToDB($trackURL, $rating100ScaleValue);
+
+	Slim::Music::Info::clearFormatDisplayCache();
 
 	$request->addResult('rating', $rating5starScaleValue);
 	$request->addResult('ratingpercentage', $rating100ScaleValue);
@@ -574,9 +738,306 @@ sub setRating {
 	}
 }
 
+sub createBackup {
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn("Warning: access to rating values blocked until library scan is completed");
+		return;
+	}
+
+	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
+	my $backupDir = $rlparentfolderpath."/RatingsLight";
+	mkdir($backupDir, 0755) unless(-d $backupDir );
+	chdir($backupDir) or $backupDir = $rlparentfolderpath;
+
+	my ($sql, $sth) = undef;
+	my $dbh = getCurrentDBH();
+	my ($trackURL, $rating100ScaleValue, $track);
+	my $started = time();
+	my $backuptimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
+	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
+
+	$sql = "SELECT tracks_persistent.url FROM tracks_persistent WHERE tracks_persistent.rating > 0";
+	$sth = $dbh->prepare($sql);
+	$sth->execute();
+
+	$sth->bind_col(1,\$trackURL);
+
+	my @trackURLs = ();
+	while( $sth->fetch()) {
+		push @trackURLs,$trackURL;
+	}
+	$sth->finish();
+
+	if (@trackURLs) {
+		my $PLfilename = 'RL_Backup_'.$filename_timestamp.'.xml';
+
+		my $filename = catfile($backupDir,$PLfilename);
+		my $output = FileHandle->new($filename, ">") or do {
+			$log->warn("Could not open $filename for writing.\n");
+			return;
+		};
+
+		print $output "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
+		print $output "<!-- Backup of Rating Values -->\n";
+		print $output "<!-- ".$backuptimestamp." -->\n";
+		print $output "<RatingsLight>\n";
+		for my $BACKUPtrackURL (@trackURLs) {
+			$track = Slim::Schema->resultset("Track")->objectForUrl($BACKUPtrackURL);
+			$rating100ScaleValue = getRatingFromDB($track);
+			$BACKUPtrackURL = escape($BACKUPtrackURL);
+			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t</track>\n";
+		}
+		print $output "</RatingsLight>\n";
+		close $output;
+		my $ended = time() - $started;
+		$log->info("Backup completed after ".$ended." seconds.");
+	} else {
+		$log->info("Info: no rated tracks in database")
+	}
+	cleanupBackups();
+}
+
+sub backupScheduler {
+	my $scheduledbackups = $prefs->get('scheduledbackups');
+	if ($scheduledbackups == 1) {
+		my $backuptime = $prefs->get("backuptime");
+		my $day = $prefs->get("backup_lastday");
+		if(!defined($day)) {
+			$day = '';
+		}
+
+		if(defined($backuptime) && $backuptime ne '') {
+			my $time = 0;
+			$backuptime =~ s{
+				^(0?[0-9]|1[0-9]|2[0-4]):([0-5][0-9])\s*(P|PM|A|AM)?$
+			}{
+				if (defined $3) {
+					$time = ($1 == 12?0:$1 * 60 * 60) + ($2 * 60) + ($3 =~ /P/?12 * 60 * 60:0);
+				} else {
+					$time = ($1 * 60 * 60) + ($2 * 60);
+				}
+			}iegsx;
+			my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
+
+			my $currenttime = $hour * 60 * 60 + $min * 60;
+
+			if(($day ne $mday) && $currenttime>$time) {
+				eval {
+					createBackup();
+				};
+				if ($@) {
+					$log->error("Scheduled backup failed: $@\n");
+				}
+				$prefs->set("backup_lastday",$mday);
+			}else {
+				my $timesleft = $time-$currenttime;
+				if($day eq $mday) {
+					$timesleft = $timesleft + 60*60*24;
+				}
+				$log->debug(parse_duration($timesleft)." ($timesleft seconds) left until next scheduled backup\n");
+			}
+		}
+		Slim::Utils::Timers::setTimer(0, Time::HiRes::time() + 3600, \&backupScheduler);
+	}
+}
+
+sub cleanupBackups {
+	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
+	my $backupDir = $rlparentfolderpath."/RatingsLight";
+ 	return unless(-d $backupDir );
+	my $backupsdaystokeep = $prefs->get('backupsdaystokeep');
+	my $maxkeeptime = $backupsdaystokeep * 24 * 60 * 60; # in seconds
+	my @files;
+	opendir(my $DH, $backupDir) or die "Error opening $backupDir: $!";
+	@files = grep(/^RL_Backup_.*$/, readdir($DH));
+	closedir($DH);
+	my $mtime;
+	my $etime = int(time());
+	foreach my $file (@files) {
+		$mtime = stat($file)->mtime;
+		if (($etime - $mtime) > $maxkeeptime) {
+			unlink($file) or die "Can't delete $file: $!";
+		}
+	}
+}
+
+sub restoreFromBackup {
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn("Warning: access to rating values blocked until library scan is completed");
+		return;
+	}
+
+	my $restoringfrombackup = $prefs->get('restoringfrombackup');
+	my $clearallbeforerestore = $prefs->get('clearallbeforerestore');
+
+	if ($restoringfrombackup == 1) {
+		$log->warn("Restore is already in progress, please wait for the previous restore to finish");
+		return;
+	}
+
+	$prefs->set('restoringfrombackup', 1);
+	$restorestarted = time();
+	my $restorefile = $prefs->get("restorefile");
+
+	if($restorefile) {
+
+		if ($clearallbeforerestore == 1) {
+			clearAllRatings();
+		}
+
+	initRestore();
+	Slim::Utils::Scheduler::add_task(\&scanFunction);
+
+	}else {
+		$log->error("Error: No backup file specified\n");
+	}
+
+}
+
+sub initRestore {
+	if(defined($backupParserNB)) {
+		eval { $backupParserNB->parse_done };
+		$backupParserNB = undef;
+	}
+	$backupParser = XML::Parser->new(
+		'ErrorContext'     => 2,
+		'ProtocolEncoding' => 'UTF-8',
+		'NoExpand'         => 1,
+		'NoLWP'            => 1,
+		'Handlers'         => {
+
+			'Start' => \&handleStartElement,
+			'Char'  => \&handleCharElement,
+			'End'   => \&handleEndElement,
+		},
+	);
+}
+
+sub doneScanning {
+	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+	my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibraryafterrating');
+
+	if (defined $backupParserNB) {
+		eval { $backupParserNB->parse_done };
+	}
+
+	$backupParserNB = undef;
+	$backupParser   = undef;
+	$opened = 0;
+	close(BACKUPFILE);
+
+	my $ended = time() - $restorestarted;
+	$log->debug("Restore completed after ".$ended." seconds.");
+
+	Slim::Utils::Scheduler::remove_task(\&scanFunction);
+
+	# refresh virtual libraries
+	if($::VERSION ge '7.9') {
+		if (($showratedtracksmenus > 0) && ($autorebuildvirtualibraryafterrating == 1)) {
+			my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RATED');
+			Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
+
+			if ($showratedtracksmenus == 2) {
+			my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RATED_HIGH');
+			Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
+			}
+		}
+	}
+	$prefs->set('restoringfrombackup', 0);
+}
+
+sub scanFunction {
+	my $restorefile = $prefs->get("restorefile");
+	if ($opened != 1) {
+		open(BACKUPFILE, $restorefile) || do {
+			$log->warn("Couldn't open backup file: $restorefile");
+			return 0;
+		};
+		$opened = 1;
+		$inTrack = 0;
+		$inValue = 0;
+		%restoreitem = ();
+		$currentKey = undef;
+
+		if (defined $backupParser) {
+			$backupParserNB = $backupParser->parse_start();
+		} else {
+			$log->warn("No backupParser was defined!\n");
+		}
+	}
+
+	if (defined $backupParserNB) {
+		local $/ = '>';
+		my $line;
+
+		for (my $i = 0; $i < 5; ) {  # change back to 25 LATER !!!!!!!
+			my $singleLine = <BACKUPFILE>;
+			if(defined($singleLine)) {
+				$line .= $singleLine;
+				if($singleLine =~ /(<\/track>)$/) {
+					$i++;
+				}
+			}else {
+				last;
+			}
+		}
+		$line =~ s/&#(\d*);/escape(chr($1))/ge;
+
+		$backupParserNB->parse_more($line);
+
+		return 1;
+	}
+
+	$log->warn("No backupParserNB defined!\n");
+	return 0;
+}
+
+sub handleStartElement {
+	my ($p, $element) = @_;
+
+	if ($inTrack) {
+		$currentKey = $element;
+		$inValue = 1;
+	}
+	if ($element eq 'track') {
+		$inTrack = 1;
+	}
+}
+
+sub handleCharElement {
+	my ($p, $value) = @_;
+
+	if ($inValue && $currentKey) {
+		$restoreitem{$currentKey} = $value;
+	}
+}
+
+sub handleEndElement {
+	my ($p, $element) = @_;
+	$inValue = 0;
+
+	if ($inTrack && $element eq 'track') {
+		$inTrack = 0;
+
+		my $curTrack = \%restoreitem;
+		my $trackURL = $curTrack->{'url'};
+		$trackURL = unescape($trackURL);
+		my $rating = $curTrack->{'rating'};
+
+		writeRatingToDB($trackURL, $rating);
+
+		%restoreitem = ();
+	}
+
+	if ($element eq 'RatingsLight') {
+		doneScanning();
+		return 0;
+	}
+}
+
 sub getDynamicPlayLists {
 	my $DPLintegration = $prefs->get('DPLintegration');
-	
+
 	if ($DPLintegration == 1) {
 		my ($client) = @_;
 		my %result = ();
@@ -806,8 +1267,6 @@ sub getNextDynamicPlayListTracks {
 	my @result = ();
 	my ($items, $sqlstatement, $track);
 	my $dbh = getCurrentDBH();
-	#$log->debug("DPLid: #### ".$DPLid." ####");
-	#$log->debug("parameters: ".Dumper($parameters));
 
 	# Playlist1: "Rated"
 	if ($DPLid eq 'ratingslight_rated') {
@@ -968,11 +1427,11 @@ DROP TABLE randomweightedratingscombined;";
 				$sql = undef;
 			};
 			if ($sql =~ /^\(*SELECT+/oi) {
-				my $url;
-				$sth->bind_col(1,\$url);
+				my $trackURL;
+				$sth->bind_col(1,\$trackURL);
 
 				while( $sth->fetch()) {
-					$track = Slim::Schema->resultset("Track")->objectForUrl($url);
+					$track = Slim::Schema->resultset("Track")->objectForUrl($trackURL);
 					push @result,$track;
 				}
 			}
@@ -997,11 +1456,15 @@ our %menuFunctions = (
 			return;
 		}
 
+		my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+		my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibraryafterrating');
+		my $uselogfile = $prefs->get('uselogfile');
+		my $userecentlyaddedplaylist = $prefs->get('userecentlyaddedplaylist');
+
 		return unless $digit>='0' && $digit<='9';
 
 		my $song = Slim::Player::Playlist::song($client);
 		my $curtrackinfo = $song->{_column_data};
-		#$log->debug(Dumper($curtrackinfo));
 
 		my $curtrackURL = @$curtrackinfo{url};
 		my $curtrackid = @$curtrackinfo{id};
@@ -1009,7 +1472,7 @@ our %menuFunctions = (
 		if ($digit == 0) {
 			$rating = 0;
 		}
-	
+
 		if ($digit > 0 && $digit <=5) {
 			$rating = $digit*20;
 		}
@@ -1039,8 +1502,16 @@ our %menuFunctions = (
 				$rating = 0;
 			}
 		}
+
+		if ($userecentlyaddedplaylist == 1) {
+			addToRecentlyRatedPlaylist($curtrackURL);
+		}
+
+		if ($uselogfile == 1) {
+			logRatedTrack($curtrackURL, $rating);
+		}
 		writeRatingToDB($curtrackURL, $rating);
-	
+
 		my $detecthalfstars = ($rating/2)%2;
 		my $ratingStars = $rating/20;
 		my $ratingtext = string('PLUGIN_RATINGSLIGHT_UNRATED');
@@ -1055,8 +1526,30 @@ our %menuFunctions = (
 		$client->showBriefly({
 			'line' => [$client->string('PLUGIN_RATINGSLIGHT'),$client->string('PLUGIN_RATINGSLIGHT_RATING').' '.($ratingtext)]},
 			3);
+
+		Slim::Music::Info::clearFormatDisplayCache();
+
+		# refresh virtual libraries
+		if($::VERSION ge '7.9') {
+			if (($showratedtracksmenus > 0) && ($autorebuildvirtualibraryafterrating == 1)) {
+				my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RATED');
+				Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
+
+				if ($showratedtracksmenus == 2) {
+				my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RATED_HIGH');
+				Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
+				}
+			}
+		}
 	},
 );
+
+sub shutdownPlugin {
+	my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
+	if ($enableIRremotebuttons == 1) {
+		Slim::Control::Request::unsubscribe( \&newPlayerCheck, [['client']],[['new']]);
+	}
+}
 
 sub getFunctions {
 	return \%menuFunctions;
@@ -1065,8 +1558,11 @@ sub getFunctions {
 sub newPlayerCheck {
 	my ($request) = @_;
 	my $client = $request->client();
-	my $clientID = $client->id;
-	my $model = Slim::Player::Client::getClient($clientID)->model;
+	my $model;
+	if (defined($client)) {
+		my $clientID = $client->id;
+		$model = Slim::Player::Client::getClient($clientID)->model;
+	}
 
 	if ( defined($client) && $request->{_requeststr} eq "client,new" ) {
 		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '1', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_1');
@@ -1099,9 +1595,9 @@ sub mapKeyHold {
 					if (ref($mHash{$key}) eq 'HASH') {
 						my %mHash2 = %{$mHash{$key}};
 						# if no $baseKeyName.hold
-						if ( (!defined($mHash2{$baseKeyName.'.hold'})) || ($mHash2{$baseKeyName.'.hold'} eq 'dead') ) { 
+						if ( (!defined($mHash2{$baseKeyName.'.hold'})) || ($mHash2{$baseKeyName.'.hold'} eq 'dead') ) {
 							#$log->debug("mapping $function to ${baseKeyName}.hold for $i-$key");
-							if ( (defined($mHash2{$baseKeyName}) || (defined($mHash2{$baseKeyName.'.*'}))) && 
+							if ( (defined($mHash2{$baseKeyName}) || (defined($mHash2{$baseKeyName.'.*'}))) &&
 								 (!defined($mHash2{$baseKeyName.'.single'})) ) {
 								# make baseKeyName.single = baseKeyName
 								$mHash2{$baseKeyName.'.single'} = $mHash2{$baseKeyName};
@@ -1271,7 +1767,7 @@ sub getRatingMenu {
 	} else {
 		@ratingValues = qw(100 80 60 40 20);
 	}
-	
+
 	foreach my $rating (@ratingValues) {
 		my %itemParams = (
 			'rating' => $rating,
@@ -1283,7 +1779,7 @@ sub getRatingMenu {
 		my $maxlength = 22;
 		my $spacescount = 0;
 		my ($text, $text1, $text2) = '';
-		
+
 		if ($detecthalfstars == 1) {
 			$ratingStars = floor($ratingStars);
 			$text1 = ($RATING_CHARACTER x $ratingStars).$fractionchar;
@@ -1328,7 +1824,7 @@ sub getTitleFormat_Rating {
 	if ($rating100ScaleValue > 0) {
 		my $detecthalfstars = ($rating100ScaleValue/2)%2;
 		my $ratingStars = $rating100ScaleValue/20;
-		
+
 		if ($detecthalfstars == 1) {
 			$ratingStars = floor($ratingStars);
 			$ratingtext = ($RATING_CHARACTER x $ratingStars).$fractionchar;
@@ -1397,10 +1893,142 @@ sub checkCustomSkipFilterType {
 	return 0;
 }
 
+sub addToRecentlyRatedPlaylist {
+	my $trackURL = shift;
+	my $playlistname = "Recently Rated Tracks (Ratings Light)";
+	my $recentlymaxcount = $prefs->get('recentlymaxcount');
+	my $request = Slim::Control::Request::executeRequest(undef, ['playlists', 0, 1, 'search:'.$playlistname]);
+	my $existsPL = $request->getResult('count');
+	my $playlistid;
+
+ 	if ($existsPL == 1) {
+ 		my $playlistidhash = $request->getResult('playlists_loop');
+		foreach my $hashref (@$playlistidhash) {
+			$playlistid = $hashref->{id};
+		}
+
+		my $trackcountRequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'tracks', '0', '1000', 'playlist_id:'.$playlistid, 'tags:count']);
+		my $trackcount = $trackcountRequest->getResult('count');
+		if ($trackcount > ($recentlymaxcount - 1)) {
+			Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:delete', 'playlist_id:'.$playlistid, 'index:0']);
+		}
+
+ 	}elsif ($existsPL == 0){
+ 		my $createplaylistrequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'new', 'name:'.$playlistname]);
+ 		$playlistid = $createplaylistrequest->getResult('playlist_id');
+		$log->debug("playlistid = ".$playlistid);
+ 	}
+
+	Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:add', 'playlist_id:'.$playlistid, 'url:'.$trackURL]);
+}
+
+sub logRatedTrack {
+	my ($trackURL, $rating100ScaleValue) = @_;
+
+	my ($previousRating, $newRatring) = 0;
+	my $ratingtimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
+
+	my $logFileName = 'RL_Rating-Log.txt';
+	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
+	my $logDir = $rlparentfolderpath."/RatingsLight";
+	mkdir($logDir, 0755) unless(-d $logDir );
+	chdir($logDir) or $logDir = $rlparentfolderpath;
+
+	# log rotation
+	my $fullfilepath = $logDir."/".$logFileName;
+	if (-f $fullfilepath) {
+		my $logfilesize = stat($logFileName)->size;
+		if ($logfilesize > 102400) {
+			my $filename_oldlogfile = "RL_Rating-Log.1.txt";
+			my $fullpath_oldlogfile = $logDir."/".$filename_oldlogfile;
+				if (-f $fullpath_oldlogfile) {
+					unlink $fullpath_oldlogfile;
+				}
+			move $fullfilepath, $fullpath_oldlogfile;
+		}
+	}
+
+	my ($title, $artist, $album, $previousRating100ScaleValue);
+	my $query = Slim::Control::Request::executeRequest(undef, ['songinfo', '0', '100', 'url:'.$trackURL, 'tags:alR']);
+	my $songinfohash = $query->getResult('songinfo_loop');
+
+	foreach my $elem ( @{$songinfohash} ){
+		foreach my $key ( keys %{ $elem } ){
+			if ($key eq 'title') {
+				$title = $elem->{$key};
+			}
+			if ($key eq 'artist') {
+				$artist = $elem->{$key};
+			}
+			if ($key eq 'album') {
+				$album = $elem->{$key};
+			}
+			if ($key eq 'rating') {
+				$previousRating100ScaleValue = $elem->{$key};
+			}
+		}
+	}
+
+	if (defined $previousRating100ScaleValue) {
+		$previousRating = $previousRating100ScaleValue/20;
+	}
+	my $newRating = $rating100ScaleValue/20;
+
+	my $filename = catfile($logDir,$logFileName);
+	my $output = FileHandle->new($filename, ">>") or do {
+		$log->warn("Could not open $filename for writing.\n");
+		return;
+	};
+
+	print $output $ratingtimestamp."\n";
+	print $output "Artist: ".$artist." ## Title: ".$title." ## Album: ".$album."\n";
+	print $output "Previous Rating: ".$previousRating." --> New Rating: ".$newRating."\n\n";
+
+	close $output;
+}
+
+sub clearAllRatings {
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn("Warning: access to rating values blocked until library scan is completed");
+		return;
+	}
+
+	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+	my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibraryafterrating');
+	my $restoringfrombackup = $prefs->get('restoringfrombackup');
+	my $sqlunrateall = "UPDATE tracks_persistent SET rating = NULL WHERE tracks_persistent.rating > 0;";
+	my $dbh = getCurrentDBH();
+	my $sth = $dbh->prepare( $sqlunrateall );
+	eval {
+		$sth->execute();
+		commit($dbh);
+	};
+	if( $@ ) {
+		$log->warn("Database error: $DBI::errstr\n");
+		eval {
+			rollback($dbh);
+		};
+	}
+	$sth->finish();
+
+	# refresh virtual libraries
+	if(($::VERSION ge '7.9') && ($restoringfrombackup != 1)) {
+		if (($showratedtracksmenus > 0) && ($autorebuildvirtualibraryafterrating == 1)) {
+			my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RATED');
+			Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
+
+			if ($showratedtracksmenus == 2) {
+			my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RATED_HIGH');
+			Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
+			}
+		}
+	}
+}
+
 sub writeRatingToDB {
 	my ($trackURL, $rating100ScaleValue) = @_;
 	my $urlmd5 = md5_hex($trackURL);
-	
+
 	my $sql = "UPDATE tracks_persistent set rating=$rating100ScaleValue where urlmd5 = ?";
 	my $dbh = getCurrentDBH();
 	my $sth = $dbh->prepare( $sql );
@@ -1416,9 +2044,6 @@ sub writeRatingToDB {
 		};
 	}
 	$sth->finish();
-	if (!main::SCANNER) {
-		Slim::Music::Info::clearFormatDisplayCache();
-	}
 }
 
 sub getRatingFromDB {
@@ -1449,6 +2074,17 @@ sub addTitleFormat {
 	$serverPrefs->set('titleFormat',$titleFormats);
 }
 
+sub isTimeOrEmpty {
+        my $name = shift;
+        my $arg = shift;
+        if(!$arg || $arg eq '') {
+                return 1;
+        }elsif ($arg =~ m/^([0\s]?[0-9]|1[0-9]|2[0-4]):([0-5][0-9])\s*(P|PM|A|AM)?$/isg) {
+                return 1;
+        }
+	return 0;
+}
+
 sub getCurrentDBH {
 	return Slim::Schema->storage->dbh();
 }
@@ -1465,6 +2101,23 @@ sub rollback {
 	if (!$dbh->{'AutoCommit'}) {
 		$dbh->rollback();
 	}
+}
+
+sub parse_duration {
+	use integer;
+	sprintf("%02dh:%02dm", $_[0]/3600, $_[0]/60%60);
+}
+
+*escape = \&URI::Escape::uri_escape_utf8;
+
+sub unescape {
+	my $in = shift;
+	my $isParam = shift;
+
+	$in =~ s/\+/ /g if $isParam;
+	$in =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
+
+	return $in;
 }
 
 1;

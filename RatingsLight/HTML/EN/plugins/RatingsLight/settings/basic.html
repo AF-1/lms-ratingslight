@@ -1,0 +1,52 @@
+[% page = "PLUGIN_RATINGSLIGHT" %]
+[% PROCESS settings/header.html %]
+
+[% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_REMOTEBUTTONS" desc="PLUGIN_RATINGSLIGHT_REMOTEBUTTONS_DESC" %]
+<select name="pref_enableIRremotebuttons" id="enableIRremotebuttons">
+	<option value='1' [% IF prefs.enableIRremotebuttons %]selected[% END %]>[% "Yes" | string %]</option>
+	<option value='0' [% IF NOT prefs.enableIRremotebuttons %]selected[% END %]>[% "No" | string %]</option>
+</select>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DYNAMICPLAYLISTINTEGRATION" desc="PLUGIN_RATINGSLIGHT_DYNAMICPLAYLISTINTEGRATION_DESC" %]
+<select name="pref_DPLintegration" id="DPLintegration">
+	<option value='1' [% IF prefs.DPLintegration %]selected[% END %]>[% "Yes" | string %]</option>
+	<option value='0' [% IF NOT prefs.DPLintegration %]selected[% END %]>[% "No" | string %]</option>
+</select>
+[% END %]
+<br><br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST" desc="PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_DESC" %]
+<select name="pref_userecentlyaddedplaylist" id="userecentlyaddedplaylist">
+	<option value='1' [% IF prefs.userecentlyaddedplaylist %]selected[% END %]>[% "Yes" | string %]</option>
+	<option value='0' [% IF NOT prefs.userecentlyaddedplaylist %]selected[% END %]>[% "No" | string %]</option>
+</select>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_MAXCOUNT" desc="PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_MAXCOUNT_DESC" %]
+	<input type="text" class="stdedit" name="pref_recentlymaxcount" id="recentlymaxcount" value="[% prefs.recentlymaxcount %]" size="3">
+[% END %]
+<br><br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_USELOGFILE" desc="PLUGIN_RATINGSLIGHT_USELOGFILE_DESC" %]
+<select name="pref_uselogfile" id="uselogfile">
+	<option value='1' [% IF prefs.uselogfile %]selected[% END %]>[% "Yes" | string %]</option>
+	<option value='0' [% IF NOT prefs.uselogfile %]selected[% END %]>[% "No" | string %]</option>
+</select>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RATINGSLIGHT_PARENTFOLDERPATH" desc="PLUGIN_RATINGSLIGHT_RATINGSLIGHT_PARENTFOLDERPATH_DESC" %]
+	<input type="text" class="stdedit selectFolder" name="pref_rlparentfolderpath" id="rlparentfolderpath" value="[% prefs.rlparentfolderpath %]" size="40">
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW" desc="PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_DESC" %]
+<div><input style="margin-top:-1px;" name="clearallratingsnow" type="submit" class="stdclick" onClick="return confirm('[% "PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_WARNING" | string %]')" value="[% "PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_BUTTON" | string %]"> <span style="color:red;padding-left:15px;font-weight:600;" id="clearallratingsnowstatus"></span></div>
+[% END %]
+
+[% PROCESS settings/footer.html %]

@@ -1,0 +1,46 @@
+[% page = "PLUGIN_RATINGSLIGHT" %]
+[% PROCESS settings/header.html %]
+
+[% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
+
+[% WRAPPER setting title="Backup" desc="" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_MANUAL_BACKUP" desc="PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_DESC" %]
+	<div><input name="backup" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_BUTTON" | string %]"> <span style="color:red;padding-left:15px;font-weight:600;" id="backupstatus"></span></div>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS" desc="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_DESC" %]
+<select name="pref_scheduledbackups" id="scheduledbackups">
+	<option value='1' [% IF prefs.scheduledbackups %]selected[% END %]>[% "Yes" | string %]</option>
+	<option value='0' [% IF NOT prefs.scheduledbackups %]selected[% END %]>[% "No" | string %]</option>
+</select>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPTIME" desc="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPTIME_DESC" %]
+<input type="text" class="stdedit" name="pref_backuptime" id="backuptime" value="[% prefs.backuptime %]" size="3">
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP" desc="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP_DESC" %]
+	<input type="text" class="stdedit" name="pref_backupsdaystokeep" id="backupsdaystokeep" value="[% prefs.backupsdaystokeep %]" size="3">
+[% END %]
+[% END %]
+<hr><br>
+
+[% WRAPPER setting title="Restore" desc="" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE" desc="PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE_DESC" %]
+	<input type="text" class="stdedit selectFile" name="pref_restorefile" id="restorefile" value="[% prefs.restorefile %]" size="40"><br><br>
+	<div><input name="restore" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_RESTORE_BUTTON" | string %]"> <span style="color:red;padding-left:15px;font-weight:600;" id="restorestatus"></span></div>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE" desc="PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE_DESC" %]
+<select name="pref_clearallbeforerestore" id="clearallbeforerestore">
+	<option value='1' [% IF prefs.clearallbeforerestore %]selected[% END %]>[% "Yes" | string %]</option>
+	<option value='0' [% IF NOT prefs.clearallbeforerestore %]selected[% END %]>[% "No" | string %]</option>
+</select>
+[% END %]
+[% END %]
+
+[% PROCESS settings/footer.html %]

@@ -1,0 +1,91 @@
+[% page = "PLUGIN_RATINGSLIGHT" %]
+[% PROCESS settings/header.html %]
+
+[% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT" desc="" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_DESC" %]
+<div><input name="export" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_BUTTON" | string %]"> <span style='color:red;padding-left:15px;font-weight:600;' id='exportstatus'></span></div>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF_DESC" %]
+<select name="pref_onlyratingnotmatchcommenttag" id="onlyratingnotmatchcommenttag">
+	<option value='1' [% IF prefs.onlyratingnotmatchcommenttag %]selected[% END %]>[% "Yes" | string %]</option>
+	<option value='0' [% IF NOT prefs.onlyratingnotmatchcommenttag %]selected[% END %]>[% "No" | string %]</option>
+</select>
+[% END %]
+[% END %]
+<hr><br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS" desc="" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_BATCHRATING" desc="PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_BATCHRATING_DESC" %]
+<table>
+	<tr>
+		<th style="text-align:center;"><b>[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLNAME" | string %]</b></th>
+		<th style="text-align:center;padding-left:8px;"><b>[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLRATING" | string %]</b></th>
+	</tr>
+	<tr>
+		<th style="height:4px;" colspan="2"></th>
+	</tr>
+	<tr>
+		<td>
+			<select name="pref_ratethisplaylistid" id="ratethisplaylistid">
+				[% FOREACH plist = allplaylists %]
+					<option value="[% plist.id %]">[% plist.playlist %]</option>
+				[% END %]
+			</select>
+		</td>
+		<td style="padding-left:8px;">
+			<select name="pref_ratethisplaylistrating" id="ratethisplaylistrating">
+				[% FOREACH importrating = [0,10,20,30,40,50,60,70,80,90,100] %]
+				[% importrating5starscale = importrating / 20 %]
+				<option value="[% importrating %]">[% importrating5starscale %]</option>
+				[% END %]
+			</select>
+		</td>
+	</tr>
+</table>
+<br>
+<div><input style="margin-top:-1px;" name="rateplaylistnow" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON" | string %]"> <span style="color:red;padding-left:15px;font-weight:600;" id="rateplaylistnowstatus"></span></div>
+[% END %]
+<hr>
+[% END %]
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS" desc="" %]
+<b>Import ratings derived from keywords in the comment tags of your files.</b>
+<br><br>
+<b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx": if a comment tag contains "favstars<b>4</b>xx" -> track rating = <b>4</b> stars
+<br><br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RATING_KEYWORD" desc="PLUGIN_RATINGSLIGHT_RATING_KEYWORD_DESC" %]
+<table style="margin-left:5px;" size="50">
+	<tr>
+		<th style="text-align:center;"><b>Rating Keyword <u>Pre</u>fix</b></th>
+		<th style="text-align:center;padding-left:8px;"><b>Rating Keyword <u>Suf</u>fix</b></th>
+	</tr>
+	<tr>
+		<th style="height:4px;" colspan="2"></th>
+	</tr>
+	<tr>
+		<th><input style="text-align:center;" type="text" name="pref_rating_keyword_prefix" id="rating_keyword_prefix" value="[% prefs.rating_keyword_prefix %]" size="20"></th>
+		<th style="padding-left:8px;"><input style="text-align:center;" type="text" name="pref_rating_keyword_suffix" id="rating_keyword_suffix" value="[% prefs.rating_keyword_suffix %]" size="20"></th>
+	</tr>
+</table>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_AUTOSCAN" desc="PLUGIN_RATINGSLIGHT_AUTOSCAN_DESC" %]
+<select name="pref_autoscan" id="autoscan">
+	<option value='1' [% IF prefs.autoscan %]selected[% END %]>[% "Yes" | string %]</option>
+	<option value='0' [% IF NOT prefs.autoscan %]selected[% END %]>[% "No" | string %]</option>
+</select>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_MANUAL_IMPORT" desc="PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_DESC" %]
+<div><input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onClick="return confirm('[% "PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_WARNING" | string %]')" value="[% "PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_BUTTON" | string %]"> <span style="color:red;padding-left:15px;font-weight:600;" id="importstatus"></span></div>
+[% END %]
+[% END %]
+
+[% PROCESS settings/footer.html %]
