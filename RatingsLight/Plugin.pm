@@ -123,14 +123,23 @@ if (! defined $recentlymaxcount) {
 	$prefs->set('recentlymaxcount', '30');
 }
 
+my $exportingtoplaylistfiles;
+$prefs->set('exportingtoplaylistfiles', '0');
+
 my $importingfromcommenttags;
 $prefs->set('importingfromcommenttags', '0');
+
+my $batchratingplaylisttracks;
+$prefs->set('batchratingplaylisttracks', '0');
+
+my $creatingbackup;
+$prefs->set('creatingbackup', '0');
 
 my $restoringfrombackup;
 $prefs->set('restoringfrombackup', '0');
 
-my $batchratingplaylisttracks;
-$prefs->set('batchratingplaylisttracks', '0');
+my $clearingallratings;
+$prefs->set('clearingallratings', '0');
 
 my $ratethisplaylistid;
 $prefs->set('ratethisplaylistid', '');
@@ -164,15 +173,18 @@ $prefs->init({
 	backup_lastday => $backup_lastday,
 	backupsdaystokeep => $backupsdaystokeep,
 	restorefile => $restorefile,
-	importingfromcommenttags => $importingfromcommenttags,
-	restoringfrombackup => $restoringfrombackup,
 	clearallbeforerestore => $clearallbeforerestore,
 	uselogfile => $uselogfile,
-	batchratingplaylisttracks => $batchratingplaylisttracks,
 	ratethisplaylistid => $ratethisplaylistid,
 	ratethisplaylistrating => $ratethisplaylistrating,
 	userecentlyaddedplaylist => $userecentlyaddedplaylist,
 	recentlymaxcount => $recentlymaxcount,
+	exportingtoplaylistfiles => $exportingtoplaylistfiles,
+	importingfromcommenttags => $importingfromcommenttags,
+	batchratingplaylisttracks => $batchratingplaylisttracks,
+	creatingbackup => $creatingbackup,
+	restoringfrombackup => $restoringfrombackup,
+	clearingallratings => $clearingallratings,
 });
 
 $prefs->setValidate({
@@ -399,12 +411,10 @@ sub importRatingsFromCommentTags {
 		$log->warn("Import is already in progress, please wait for the previous import to finish");
 		return;
 	}
-
 	$prefs->set('importingfromcommenttags', 1);
 	my $started = time();
 
 	my $dbh = getCurrentDBH();
-
 	if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 		$log->error('Error: no rating keywords found.');
 		return
@@ -541,6 +551,13 @@ sub importRatingsFromPlaylist {
 }
 
 sub exportRatingsToPlaylistFiles {
+	my $exportingtoplaylistfiles = $prefs->get('exportingtoplaylistfiles');
+	if ($exportingtoplaylistfiles == 1) {
+		$log->warn("Export is already in progress, please wait for the previous export to finish");
+		return;
+	}
+	$prefs->set('exportingtoplaylistfiles', 1);
+
 	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
 	my $exportDir = $rlparentfolderpath."/RatingsLight";
 	my $started = time();
@@ -617,6 +634,7 @@ sub exportRatingsToPlaylistFiles {
 		}
 		$rating100ScaleValue = $rating100ScaleValue + 10;
 	}
+	$prefs->set('exportingtoplaylistfiles', 0);
 	my $ended = time() - $started;
 	$log->info("Export completed after ".$ended." seconds.");
 }
@@ -744,6 +762,13 @@ sub createBackup {
 		return;
 	}
 
+	my $creatingbackup = $prefs->get('creatingbackup');
+	if ($creatingbackup == 1) {
+		$log->warn("A backup is already in progress, please wait for the previous backup to finish");
+		return;
+	}
+	$prefs->set('creatingbackup', 1);
+
 	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
 	my $backupDir = $rlparentfolderpath."/RatingsLight";
 	mkdir($backupDir, 0755) unless(-d $backupDir );
@@ -791,10 +816,12 @@ sub createBackup {
 		close $output;
 		my $ended = time() - $started;
 		$log->info("Backup completed after ".$ended." seconds.");
+
+		cleanupBackups();
 	} else {
 		$log->info("Info: no rated tracks in database")
 	}
-	cleanupBackups();
+	$prefs->set('creatingbackup', 0);
 }
 
 sub backupScheduler {
@@ -1993,6 +2020,14 @@ sub clearAllRatings {
 		return;
 	}
 
+	my $clearingallratings = $prefs->get('clearingallratings');
+	if ($clearingallratings == 1) {
+		$log->warn("Clearing ratings is already in progress, please wait for the previous action to finish");
+		return;
+	}
+	$prefs->set('clearingallratings', 1);
+	my $started = time();
+
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 	my $autorebuildvirtualibraryafterrating = $prefs->get('autorebuildvirtualibraryafterrating');
 	my $restoringfrombackup = $prefs->get('restoringfrombackup');
@@ -2010,6 +2045,10 @@ sub clearAllRatings {
 		};
 	}
 	$sth->finish();
+
+	my $ended = time() - $started;
+	$log->info("Clearing all ratings completed after ".$ended." seconds.");
+	$prefs->set('clearingallratings', 0);
 
 	# refresh virtual libraries
 	if(($::VERSION ge '7.9') && ($restoringfrombackup != 1)) {

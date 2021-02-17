@@ -5,7 +5,7 @@
 
 [% WRAPPER setting title="Backup" desc="" %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_MANUAL_BACKUP" desc="PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_DESC" %]
-	<div><input name="backup" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_BUTTON" | string %]"> <span style="color:red;padding-left:15px;font-weight:600;" id="backupstatus"></span></div>
+	<input name="backup" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_BUTTON" | string %]">
 [% END %]
 <br>
 
@@ -31,7 +31,7 @@
 [% WRAPPER setting title="Restore" desc="" %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE" desc="PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE_DESC" %]
 	<input type="text" class="stdedit selectFile" name="pref_restorefile" id="restorefile" value="[% prefs.restorefile %]" size="40"><br><br>
-	<div><input name="restore" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_RESTORE_BUTTON" | string %]"> <span style="color:red;padding-left:15px;font-weight:600;" id="restorestatus"></span></div>
+	<input name="restore" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_RESTORE_BUTTON" | string %]">
 [% END %]
 <br>
 

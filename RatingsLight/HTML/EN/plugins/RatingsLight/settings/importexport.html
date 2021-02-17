@@ -5,7 +5,7 @@
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT" desc="" %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_DESC" %]
-<div><input name="export" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_BUTTON" | string %]"> <span style='color:red;padding-left:15px;font-weight:600;' id='exportstatus'></span></div>
+<input name="export" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_BUTTON" | string %]">
 [% END %]
 <br>
 
@@ -47,7 +47,7 @@
 	</tr>
 </table>
 <br>
-<div><input style="margin-top:-1px;" name="rateplaylistnow" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON" | string %]"> <span style="color:red;padding-left:15px;font-weight:600;" id="rateplaylistnowstatus"></span></div>
+<input style="margin-top:-1px;" name="rateplaylistnow" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON" | string %]">
 [% END %]
 <hr>
 [% END %]
@@ -84,7 +84,7 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_MANUAL_IMPORT" desc="PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_DESC" %]
-<div><input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onClick="return confirm('[% "PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_WARNING" | string %]')" value="[% "PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_BUTTON" | string %]"> <span style="color:red;padding-left:15px;font-weight:600;" id="importstatus"></span></div>
+<input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onClick="return confirm('[% "PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_WARNING" | string %]')" value="[% "PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_BUTTON" | string %]">
 [% END %]
 [% END %]
 
