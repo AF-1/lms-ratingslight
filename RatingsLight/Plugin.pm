@@ -692,14 +692,6 @@ sub setRating {
 	my $track = Slim::Schema->resultset("Track")->find($trackId);
 	my $trackURL = $track->url;
 
-	if(!defined($incremental)) {
-		if($request->isNotCommand([['ratingslight'],['setratingpercent']])) {
-			$rating100ScaleValue = int($rating * 20);
-		} else {
-			$rating100ScaleValue = $rating;
-		}
-	}
-
 	if(defined($incremental) && (($incremental eq '+') || ($incremental eq '-'))) {
 		my $currentrating = $track->rating;
 		if (!defined $currentrating) {
@@ -718,7 +710,14 @@ sub setRating {
 				$rating100ScaleValue = $currentrating - int($rating);
 			}
 		}
+	} else {
+		if($request->isNotCommand([['ratingslight'],['setratingpercent']])) {
+			$rating100ScaleValue = int($rating * 20);
+		} else {
+			$rating100ScaleValue = $rating;
+		}
 	}
+
 	if ($rating100ScaleValue > 100) {
 		$rating100ScaleValue = 100;
 	}
