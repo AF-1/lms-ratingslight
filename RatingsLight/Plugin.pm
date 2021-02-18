@@ -226,6 +226,8 @@ sub initPlugin {
 		Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating','_incremental'], [1, 0, 1, \&setRating]);
 		Slim::Control::Request::addDispatch(['ratingslight','setratingpercent', '_trackid', '_rating','_incremental'], [1, 0, 1, \&setRating]);
 		Slim::Control::Request::addDispatch(['ratingslight','ratingmenu','_trackid'], [0, 1, 1, \&getRatingMenu]);
+		Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
+		Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'],[0, 1, 0, undef]);
 
 		Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
 
@@ -736,7 +738,9 @@ sub setRating {
 	writeRatingToDB($trackURL, $rating100ScaleValue);
 
 	Slim::Music::Info::clearFormatDisplayCache();
-
+	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackId, $rating5starScaleValue, $rating100ScaleValue]);
+	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackId, $rating5starScaleValue, $rating100ScaleValue]);
+	
 	$request->addResult('rating', $rating5starScaleValue);
 	$request->addResult('ratingpercentage', $rating100ScaleValue);
 	$request->setStatusDone();
@@ -1540,6 +1544,7 @@ our %menuFunctions = (
 
 		my $detecthalfstars = ($rating/2)%2;
 		my $ratingStars = $rating/20;
+		my $rating5starScaleValue = $ratingStars;
 		my $ratingtext = string('PLUGIN_RATINGSLIGHT_UNRATED');
 		if ($rating > 0) {
 			if ($detecthalfstars == 1) {
@@ -1554,6 +1559,8 @@ our %menuFunctions = (
 			3);
 
 		Slim::Music::Info::clearFormatDisplayCache();
+		Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $curtrackURL, $curtrackid, $rating5starScaleValue, $rating]);
+		Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $curtrackURL, $curtrackid, $rating5starScaleValue, $rating]);
 
 		# refresh virtual libraries
 		if($::VERSION ge '7.9') {
