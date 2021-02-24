@@ -43,5 +43,14 @@
 	<option value='0' [% IF NOT prefs.ratingcontextmenusethalfstars %]selected[% END %]>[% "No" | string %]</option>
 </select>
 [% END %]
+<br><br>
 
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEB_LIMIT" desc="PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEB_LIMIT_DESC" %]
+	<input type="text" class="stdedit" name="pref_moreratedtracksbyartistweblimit" id="moreratedtracksbyartistweblimit" value="[% prefs.moreratedtracksbyartistweblimit %]" size="3">
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT" desc="PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC" %]
+	<input type="text" class="stdedit" name="pref_moreratedtracksbyartistcontextmenulimit" id="moreratedtracksbyartistcontextmenulimit" value="[% prefs.moreratedtracksbyartistcontextmenulimit %]" size="3">
+[% END %]
 [% PROCESS settings/footer.html %]

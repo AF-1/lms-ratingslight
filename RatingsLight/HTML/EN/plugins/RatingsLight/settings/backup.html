@@ -3,7 +3,7 @@
 
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
-[% WRAPPER setting title="Backup" desc="" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP" desc="" %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_MANUAL_BACKUP" desc="PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_DESC" %]
 	<input name="backup" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_BUTTON" | string %]">
 [% END %]
@@ -23,12 +23,12 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP" desc="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP_DESC" %]
-	<input type="text" class="stdedit" name="pref_backupsdaystokeep" id="backupsdaystokeep" value="[% prefs.backupsdaystokeep %]" size="3">
+	<input type="text" class="stdedit" name="pref_backupsdaystokeep" id="backupsdaystokeep" value="[% prefs.backupsdaystokeep %]" size="3"> day(s)
 [% END %]
 [% END %]
 <hr><br>
 
-[% WRAPPER setting title="Restore" desc="" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE" desc="" %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE" desc="PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE_DESC" %]
 	<input type="text" class="stdedit selectFile" name="pref_restorefile" id="restorefile" value="[% prefs.restorefile %]" size="40"><br><br>
 	<input name="restore" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_RESTORE_BUTTON" | string %]">

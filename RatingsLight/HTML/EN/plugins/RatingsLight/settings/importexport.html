@@ -58,7 +58,7 @@
 <b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx": if a comment tag contains "favstars<b>4</b>xx" -> track rating = <b>4</b> stars
 <br><br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RATING_KEYWORD" desc="PLUGIN_RATINGSLIGHT_RATING_KEYWORD_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD" desc="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_DESC" %]
 <table style="margin-left:5px;" size="50">
 	<tr>
 		<th style="text-align:center;"><b>Rating Keyword <u>Pre</u>fix</b></th>
@@ -75,7 +75,7 @@
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_AUTOSCAN" desc="PLUGIN_RATINGSLIGHT_AUTOSCAN_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN" desc="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN_DESC" %]
 <select name="pref_autoscan" id="autoscan">
 	<option value='1' [% IF prefs.autoscan %]selected[% END %]>[% "Yes" | string %]</option>
 	<option value='0' [% IF NOT prefs.autoscan %]selected[% END %]>[% "No" | string %]</option>
@@ -83,8 +83,8 @@
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_MANUAL_IMPORT" desc="PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_DESC" %]
-<input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onClick="return confirm('[% "PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_WARNING" | string %]')" value="[% "PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_BUTTON" | string %]">
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT" desc="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_DESC" %]
+<input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onClick="return confirm('[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON_WARNING" | string %]')" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON" | string %]">
 [% END %]
 [% END %]
 

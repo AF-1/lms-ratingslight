@@ -52,7 +52,7 @@ font-family: sans-serif;
 	height: 1em; }
 
 </style>
-[% "PLUGIN_RATINGSLIGHT_RATING" |string %]
+[% "PLUGIN_RATINGSLIGHT_RATING" | string %]
 	<span class="rating" data-default-rating="[% item.itemvalue5starexact %]"></span>
 	<span id="unrate_button" class="unrate_btn" onclick="r.setDefaultRating(0); clearlmsrating();" title="Unrate"></span>
 
@@ -65,7 +65,6 @@ font-family: sans-serif;
 
 		ratings[i].addEventListener('rate', function(e) {
 			lmsrating = (e.detail * 20);
-			//console.log('Rating: ' + lmsrating);
 			document.getElementById('unrate_button').style.visibility = 'visible';
 			ajaxRequest('/jsonrpc.js', {
 				   id: 1,
@@ -87,6 +86,5 @@ font-family: sans-serif;
 					   ["ratingslight","setratingpercent",[% item.itemid %],0],
 			   ]
 		});
-		//console.log('Rating: 0');
 	};
 </script>

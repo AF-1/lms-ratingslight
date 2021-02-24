@@ -9,13 +9,13 @@ use Slim::Utils::Misc;
 use Slim::Utils::Strings;
 
 my $prefs = preferences('plugin.ratingslight');
-my $log   = logger('plugin.ratingslight');
+my $log = logger('plugin.ratingslight');
 
 my $plugin;
 
 sub new {
 	my $class = shift;
-	$plugin   = shift;
+	$plugin = shift;
 
 	$class->SUPER::new($plugin,1);
 }

@@ -4,38 +4,89 @@ PLUGIN_RATINGSLIGHT
 PLUGIN_RATINGSLIGHT_DESC
 	EN	Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Browse rated tracks by artist or genre. Keep track of your recently rated songs with a dedicated playlist and/or log file. Includes ratings-based smart playlists for DynamicPlaylists. Skip (un-)rated tracks with CustomSkip.
 
-PLUGIN_RATINGSLIGHT_PROGRESS
-	EN	Writing rating values to database
+PLUGIN_RATINGSLIGHT_LOG_DESC
+	EN	Log of plugin RatingsLight
 
-PLUGIN_RATINGSLIGHT_RATING_KEYWORD
-	EN	Set your rating keywords
-
-PLUGIN_RATINGSLIGHT_RATING_KEYWORD_DESC
-	EN	At least one field must be filled.<br>Up to 30 letters, case insensitive, no numbers or special characters.<br>Please use <b>integers as rating values</b> in your keywords, no half-star rating values.
+PLUGIN_RATINGSLIGHT_BLOCKED
+	EN	waiting for library scan to complete
 
 PLUGIN_RATINGSLIGHT_RATING
 	EN	Rating:
 
-PLUGIN_RATINGSLIGHT_CONTEXTMENU_RATING
-	EN	Rating
-
 PLUGIN_RATINGSLIGHT_UNRATED
 	EN	Unrated
 
-PLUGIN_RATINGSLIGHT_SDD
-	EN	SDD:
 
-PLUGIN_RATINGSLIGHT_LOG_DESC
-	EN	Log of plugin RatingsLight
 
-PLUGIN_RATINGSLIGHT_MANUAL_BACKUP
-	EN	Manual Backup
+PLUGIN_RATINGSLIGHT_SUBPAGE
+	EN	Settings Section
 
-PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_DESC
-	EN	Backup your rated tracks and their rating values to a single backup file.
+PLUGIN_RATINGSLIGHT_SUBPAGE_DESC
+	EN	Select a settings section
 
-PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_BUTTON
-	EN	Backup now
+PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS
+	EN	Various
+
+PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP
+	EN	Backup / Restore
+
+PLUGIN_RATINGSLIGHT_SETTINGS_IMPORTEXPORT
+	EN	Import / Export
+
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS
+	EN	Menus
+
+
+
+PLUGIN_RATINGSLIGHT_REMOTEBUTTONS
+	EN	Rating with remote buttons
+
+PLUGIN_RATINGSLIGHT_REMOTEBUTTONS_DESC
+	EN	Use the buttons of your Logitech IR remote to rate the track that is currently playing on your device (devices with a VFD display like Squeezebox, Boom, Transporter).<br><br><b>Press and hold</b> the key until you see a message on your display confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5  =  1 to 5 stars<br>0  =  unrate<br>8  =  subtract 0.5 stars from current rating<br>9  =  add 0.5 stars to current rating<br>arrow up  =  add 1 star to current rating<br>arrow down  =  subtract 1 star from current rating<br><br><b>Boom only:</b><br>Use the <b>arrow up</b> and <b>arrow down</b> keys for track rating with the Boom's mini remote.
+
+PLUGIN_RATINGSLIGHT_DYNAMICPLAYLISTINTEGRATION
+	EN	DynamicPlaylists integration
+
+PLUGIN_RATINGSLIGHT_DYNAMICPLAYLISTINTEGRATION_DESC
+	EN	If enabled <i>Ratings Light</i> will provide a set of <b>ratings-based smart playlists</b> ready for use with the <i>DynamicPlaylists</i> plugin.
+
+PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST
+	EN	Recently rated playlist
+
+PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_DESC
+	EN	Keeps a playlist of recently rated tracks.<br>Ignores batch rating actions (imports (playlist/comment tags) and restores from backup).
+
+PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_MAXCOUNT
+	EN	Max. number of tracks<br>in Recently Rated playlist
+
+PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_MAXCOUNT_DESC
+	EN	Limits the number of tracks in the <i>Recently Rated playlist</i> (between 2 and 200).
+
+PLUGIN_RATINGSLIGHT_USELOGFILE
+	EN	Log changed ratings
+
+PLUGIN_RATINGSLIGHT_USELOGFILE_DESC
+	EN	Keep track of your recently rated songs with a plain text log file.
+
+PLUGIN_RATINGSLIGHT_RATINGSLIGHT_PARENTFOLDERPATH
+	EN	Location of the Ratings Light folder
+
+PLUGIN_RATINGSLIGHT_RATINGSLIGHT_PARENTFOLDERPATH_DESC
+	EN	Choose a location (<b>parent</b> folder) for the <i>Ratings Light</i> folder where this plugin stores exported playlist files, (scheduled) backups, and rating logs.
+
+PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW
+	EN	Clear all ratings
+
+PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_DESC
+	EN	This will clear all ratings in your database.
+
+PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_BUTTON
+	EN	Clear ratings now
+
+PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_WARNING
+	EN	This will clear all ratings!
+
+
 
 PLUGIN_RATINGSLIGHT_EXPORT
 	EN	Export
@@ -55,26 +106,7 @@ PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF_DESC
 	EN	If set to yes, only those tracks will be exported whose LMS rating differs from the rating value derived from comment tag keywords.<br> So if you've marked a track as 2-star rated in its comment tag and its rating hasn't changed it won't be part of the exported playlists.
 
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS
-	EN	Import - Comment Tags
 
-PLUGIN_RATINGSLIGHT_AUTOSCAN
-	EN	Include ratings import in LMS scan
-
-PLUGIN_RATINGSLIGHT_AUTOSCAN_DESC
-	EN	Always import ratings from comment tags when LMS performs a scan.<br>This will <b>reset all ratings</b> to values based on keywords in comment tags.
-
-PLUGIN_RATINGSLIGHT_MANUAL_IMPORT
-	EN	Manual Import
-
-PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_DESC
-	EN	<b>Manually</b> import ratings based on keywords in comment tags <b>now</b>.<br>This will <b>reset all ratings to values derived from the keywords in the comment tags.</b>
-
-PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_BUTTON
-	EN	Import now
-
-PLUGIN_RATINGSLIGHT_MANUAL_IMPORT_WARNING
-	EN	This will reset all ratings and overwrite them with rating values derived from the keywords in the comment tags.
 
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS
 	EN	Import - Playlists
@@ -93,6 +125,93 @@ PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLRATING
 
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON
 	EN	Rate Playlist Now
+
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS
+	EN	Import - Comment Tags
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD
+	EN	Set your rating keywords
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_DESC
+	EN	At least one field must be filled.<br>Up to 30 letters, case insensitive, no numbers or special characters.<br>Please use <b>integers as rating values</b> in your keywords, no half-star rating values.
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN
+	EN	Include ratings import in LMS scan
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN_DESC
+	EN	Always import ratings from comment tags when LMS performs a scan.<br>This will <b>reset all ratings</b> to values based on keywords in comment tags.
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT
+	EN	Manual Import
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_DESC
+	EN	<b>Manually</b> import ratings based on keywords in comment tags <b>now</b>.<br>This will <b>reset all ratings to values derived from the keywords in the comment tags.</b>
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON
+	EN	Import now
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON_WARNING
+	EN	This will reset all ratings and overwrite them with rating values derived from the keywords in the comment tags.
+
+
+
+PLUGIN_RATINGSLIGHT_BACKUP
+	EN	Backup
+
+PLUGIN_RATINGSLIGHT_MANUAL_BACKUP
+	EN	Manual Backup
+
+PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_DESC
+	EN	Backup your rated tracks and their rating values to a single backup file.
+
+PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_BUTTON
+	EN	Backup now
+
+PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS
+	EN	Scheduled Backups
+
+PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_DESC
+	EN	Enable scheduled daily backups
+
+PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPTIME
+	EN	Backup Time
+
+PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPTIME_DESC
+	EN	Set the time for your daily backup. If you leave this empty no scheduled backups will occur.
+
+PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP
+	EN	Delete backups older than
+
+PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP_DESC
+	EN	Set the number of days after which old backups will be deleted.
+
+
+PLUGIN_RATINGSLIGHT_RESTORE
+	EN	Restore
+
+PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE
+	EN	Select a backup file to restore from
+
+PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE_DESC
+	EN	Select a backup file (created with <i>Ratings Light</i>) to restore your ratings values from.
+
+PLUGIN_RATINGSLIGHT_RESTORE_NOW
+	EN	Restore from backup file now
+
+PLUGIN_RATINGSLIGHT_RESTORE_NOW_DESC
+	EN	Restore ratings from the backup file you chose above.<br><br><b>All ratings will be reset to the values of the backup file.</b>
+
+PLUGIN_RATINGSLIGHT_RESTORE_BUTTON
+	EN	Restore now
+
+PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE
+	EN	Clear all ratings before restore
+
+PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE_DESC
+	EN	This will clear all ratings in the database before starting the restore process. All ratings values in your database will be reset to the values from the backup. In other words, ratings not contained in the backup will be lost.
+
+
 
 PLUGIN_RATINGSLIGHT_RATED_TRACKS_MENU_FOLDER
 	EN	Rated Tracks
@@ -151,110 +270,33 @@ PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS
 PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS_DESC
 	EN	Show/hide half-star ratings in the <b>context rating menu</b>. This affects only the context rating menu where you rate tracks.<br>The <b>current track rating</b> in the track context menu will <i>always</i> show the <b>exact</b> track rating incl. half-stars, no matter what.
 
-PLUGIN_RATINGSLIGHT_REMOTEBUTTONS
-	EN	Rating with remote buttons
 
-PLUGIN_RATINGSLIGHT_REMOTEBUTTONS_DESC
-	EN	Use the buttons of your Logitech IR remote to rate the track that is currently playing on your device (devices with a VFD display like Squeezebox, Boom, Transporter).<br><br><b>Press and hold</b> the key until you see a message on your display confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5  =  1 to 5 stars<br>0  =  unrate<br>8  =  subtract 0.5 stars from current rating<br>9  =  add 0.5 stars to current rating<br>arrow up  =  add 1 star to current rating<br>arrow down  =  subtract 1 star from current rating<br><br><b>Boom only:</b><br>Use the <b>arrow up</b> and <b>arrow down</b> keys for track rating with the Boom's mini remote.
+PLUGIN_RATINGSLIGHT_RATEDTRACKSBYARTIST
+	EN	Show rated tracks by
 
-PLUGIN_RATINGSLIGHT_BLOCKED
-	EN	waiting for library scan to complete
+PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST
+	EN	Show more rated tracks by
 
-PLUGIN_RATINGSLIGHT_DYNAMICPLAYLISTINTEGRATION
-	EN	DynamicPlaylists integration
+PLUGIN_RATINGSLIGHT_RATEDTRACKSBYARTIST_LISTHEADER
+	EN	Rated tracks by
 
-PLUGIN_RATINGSLIGHT_DYNAMICPLAYLISTINTEGRATION_DESC
-	EN	If enabled <i>Ratings Light</i> will provide a set of <b>ratings-based smart playlists</b> ready for use with the <i>DynamicPlaylists</i> plugin.
+PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_LISTHEADER
+	EN	More rated tracks by
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS
-	EN	Scheduled Backups
+PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEB_LIMIT
+	EN	Show more rated tracks - web limit
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_DESC
-	EN	Enable scheduled daily backups
+PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEB_LIMIT_DESC
+	EN	Limits the number of tracks in the <b>LMS web UI</b> menu called "<i>Show more rated tracks by this artist</i>".<br>(min. 5, max. 200)
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPTIME
-	EN	Backup Time
+PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
+	EN	Show more rated tracks - menu limit
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPTIME_DESC
-	EN	Set the time for your daily backup. If you leave this empty no scheduled backups will occur.
+PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
+	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show more rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>Material skin, SB Touch, SB Radio, piCorePlayer</b>.
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP
-	EN	Days to keep old backups
+PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEBMENU_ALLSONGS
+	EN	All songs
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP_DESC
-	EN	Set the number of days after which old backups will be deleted.
-
-PLUGIN_RATINGSLIGHT_SUBPAGE
-	EN	Settings Section
-
-PLUGIN_RATINGSLIGHT_SUBPAGE_DESC
-	EN	Select a settings section
-
-PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS
-	EN	Various
-
-PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP
-	EN	Backup / Restore
-
-PLUGIN_RATINGSLIGHT_SETTINGS_IMPORTEXPORT
-	EN	Import / Export
-
-PLUGIN_RATINGSLIGHT_SETTINGS_MENUS
-	EN	Menus
-
-PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE
-	EN	Select a backup file to restore from
-
-PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE_DESC
-	EN	Select a backup file (created with <i>Ratings Light</i>) to restore your ratings values from.
-
-PLUGIN_RATINGSLIGHT_RESTORE_NOW
-	EN	Restore from backup file now
-
-PLUGIN_RATINGSLIGHT_RESTORE_NOW_DESC
-	EN	Restore ratings from the backup file you chose above.<br><br><b>All ratings will be reset to the values of the backup file.</b>
-
-PLUGIN_RATINGSLIGHT_RESTORE_BUTTON
-	EN	Restore now
-
-PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE
-	EN	Clear all ratings before restore
-
-PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE_DESC
-	EN	This will clear all ratings in the database before starting the restore process. All ratings values in your database will be reset to the values from the backup. In other words, ratings not contained in the backup will be lost.
-
-PLUGIN_RATINGSLIGHT_RATINGSLIGHT_PARENTFOLDERPATH
-	EN	Location of the Ratings Light folder
-
-PLUGIN_RATINGSLIGHT_RATINGSLIGHT_PARENTFOLDERPATH_DESC
-	EN	Choose a location (<b>parent</b> folder) for the <i>Ratings Light</i> folder where this plugin stores exported playlist files, (scheduled) backups, and rating logs.
-
-PLUGIN_RATINGSLIGHT_USELOGFILE
-	EN	Log changed ratings
-
-PLUGIN_RATINGSLIGHT_USELOGFILE_DESC
-	EN	Keep track of your recently rated songs with a plain text log file.
-
-PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW
-	EN	Clear all ratings
-
-PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_DESC
-	EN	This will clear all ratings in your database.
-
-PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_BUTTON
-	EN	Clear ratings now
-
-PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_WARNING
-	EN	This will clear all ratings!
-
-PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST
-	EN	Recently rated playlist
-
-PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_DESC
-	EN	Keeps a playlist of recently rated tracks.<br>Ignores batch rating actions (imports (playlist/comment tags) and restores from backup).
-
-PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_MAXCOUNT
-	EN	Max. number of tracks<br>in Recently Rated playlist
-
-PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_MAXCOUNT_DESC
-	EN	Limits the number of tracks in the <i>Recently Rated playlist</i> (between 2 and 200).
+PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_ALLSONGS
+	EN	Insert all songs
