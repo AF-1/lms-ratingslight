@@ -11,6 +11,7 @@ A plugin for [Logitech Media Server](https://github.com/Logitech/slimserver)<br>
 * *Create* (scheduled) **backups**, *restore* from backups
 * Keep track of your **recently rated songs** with a dedicated *playlist* or *log file*
 * **Browse rated tracks by artist or genre** (using browse menus provided by LMS)
+* *Show (more) rated songs by an artist* from the song details page (webUI, Material) or the track context menu (Radio, Touch, piCorePlayer)
 * **Display track ratings** in context menus or on older devices using the *Music Information Screen* plugin
 * Comes with a set of ratings-based **smart playlists** ready for use with the *Dynamic Playlists* plugin
 * Make LMS **skip tracks** (unrated or rated below spec. rating) using the *CustomSkip* plugin
