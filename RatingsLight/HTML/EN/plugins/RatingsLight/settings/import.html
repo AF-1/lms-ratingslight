@@ -26,14 +26,14 @@
 			<select name="pref_ratethisplaylistrating" id="ratethisplaylistrating">
 				[% FOREACH importrating = [0,10,20,30,40,50,60,70,80,90,100] %]
 				[% importrating5starscale = importrating / 20 %]
-				<option value="[% importrating %]">[% importrating5starscale %]</option>
+					<option value="[% importrating %]">[% importrating5starscale %]</option>
 				[% END %]
 			</select>
 		</td>
 	</tr>
 </table>
 <br>
-<input style="margin-top:-1px;" name="rateplaylistnow" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON" | string %]">
+	<input style="margin-top:-1px;" name="rateplaylistnow" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON" | string %]">
 [% END %]
 <br><br><br>
 
@@ -61,12 +61,12 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN" desc="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN_DESC" %]
-<input name="pref_autoscan" id="autoscan" type="checkbox" [% IF prefs.autoscan %] checked [% END %]>
+	<input name="pref_autoscan" id="autoscan" type="checkbox" [% IF prefs.autoscan %] checked [% END %]>
 [% END %]
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT" desc="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_DESC" %]
-<input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onClick="return confirm('[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON_WARNING" | string %]')" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON" | string %]">
+	<input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onClick="return confirm('[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON_WARNING" | string %]')" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON" | string %]">
 [% END %]
 [% END %]
 

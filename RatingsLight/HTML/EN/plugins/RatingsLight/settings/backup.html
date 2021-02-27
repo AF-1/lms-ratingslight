@@ -10,12 +10,12 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS" desc="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_DESC" %]
-<input name="pref_scheduledbackups" id="scheduledbackups" type="checkbox" [% IF prefs.scheduledbackups %] checked [% END %]>
+	<input name="pref_scheduledbackups" id="scheduledbackups" type="checkbox" [% IF prefs.scheduledbackups %] checked [% END %]>
 [% END %]
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPTIME" desc="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPTIME_DESC" %]
-<input type="text" class="stdedit" name="pref_backuptime" id="backuptime" value="[% prefs.backuptime %]" size="3">
+	<input type="text" class="stdedit" name="pref_backuptime" id="backuptime" value="[% prefs.backuptime %]" size="3">
 [% END %]
 <br>
 
@@ -33,7 +33,7 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE" desc="PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE_DESC" %]
-<input name="pref_clearallbeforerestore" id="clearallbeforerestore" type="checkbox" [% IF prefs.clearallbeforerestore %] checked [% END %]>
+	<input name="pref_clearallbeforerestore" id="clearallbeforerestore" type="checkbox" [% IF prefs.clearallbeforerestore %] checked [% END %]>
 [% END %]
 [% END %]
 

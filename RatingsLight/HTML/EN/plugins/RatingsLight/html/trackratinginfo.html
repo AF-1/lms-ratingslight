@@ -67,24 +67,24 @@ font-family: sans-serif;
 			lmsrating = (e.detail * 20);
 			document.getElementById('unrate_button').style.visibility = 'visible';
 			ajaxRequest('/jsonrpc.js', {
-				   id: 1,
-				   method: "slim.request",
-				   params: [
-						   playerid,
-						   ["ratingslight","setratingpercent",[% item.itemid %],lmsrating],
-				   ]
+				id: 1,
+				method: "slim.request",
+				params: [
+					playerid,
+					["ratingslight","setratingpercent",[% item.itemid %],lmsrating],
+				]
 			});
-	   });
+		});
 	};
 	function clearlmsrating() {
 		document.getElementById('unrate_button').style.visibility = 'hidden';
 		ajaxRequest('/jsonrpc.js', {
-			   id: 1,
-			   method: "slim.request",
-			   params: [
-					   playerid,
-					   ["ratingslight","setratingpercent",[% item.itemid %],0],
-			   ]
+			id: 1,
+			method: "slim.request",
+			params: [
+				playerid,
+				["ratingslight","setratingpercent",[% item.itemid %],0],
+			]
 		});
 	};
 </script>

@@ -4,7 +4,7 @@
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS" desc="PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DESC" %]
-<select name="pref_showratedtracksmenus" id="showratedtracksmenus">
+	<select name="pref_showratedtracksmenus" id="showratedtracksmenus">
 		[% FOREACH option = {
 			'0' => 'PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DISABLE',
 			'1' => 'PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_RATED_ONLY',
@@ -12,17 +12,17 @@
 		} %]
 			<option [% IF prefs.showratedtracksmenus == option.key %]selected='selected' [% END %]value="[% option.key %]">[% option.value | string %]</option>
 		[%- END -%]
-</select>
+	</select>
 [% END %]
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE" desc="PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE_DESC" %]
-        <input name="pref_autorebuildvirtualibraryafterrating" id="autorebuildvirtualibraryafterrating" type="checkbox" [% IF prefs.autorebuildvirtualibraryafterrating %] checked [% END %]>
+	<input name="pref_autorebuildvirtualibraryafterrating" id="autorebuildvirtualibraryafterrating" type="checkbox" [% IF prefs.autorebuildvirtualibraryafterrating %] checked [% END %]>
 [% END %]
 <br><br><br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE" desc="PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE_DESC" %]
-<select name="pref_ratingcontextmenudisplaymode" id="ratingcontextmenudisplaymode">
+	<select name="pref_ratingcontextmenudisplaymode" id="ratingcontextmenudisplaymode">
 		[% FOREACH option = {
 			'0' => 'PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE_STARS_TEXT',
 			'1' => 'PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE_STARS',
@@ -30,12 +30,12 @@
 		} %]
 			<option [% IF prefs.ratingcontextmenudisplaymode == option.key %]selected='selected' [% END %]value="[% option.key %]">[% option.value | string %]</option>
 		[%- END -%]
-</select>
+	</select>
 [% END %]
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS" desc="PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS_DESC" %]
-        <input name="pref_ratingcontextmenusethalfstars" id="ratingcontextmenusethalfstars" type="checkbox" [% IF prefs.ratingcontextmenusethalfstars %] checked [% END %]>
+	<input name="pref_ratingcontextmenusethalfstars" id="ratingcontextmenusethalfstars" type="checkbox" [% IF prefs.ratingcontextmenusethalfstars %] checked [% END %]>
 [% END %]
 <br><br>
 
@@ -47,4 +47,5 @@
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT" desc="PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC" %]
 	<input type="text" class="stdedit" name="pref_moreratedtracksbyartistcontextmenulimit" id="moreratedtracksbyartistcontextmenulimit" value="[% prefs.moreratedtracksbyartistcontextmenulimit %]" size="3">
 [% END %]
+
 [% PROCESS settings/footer.html %]

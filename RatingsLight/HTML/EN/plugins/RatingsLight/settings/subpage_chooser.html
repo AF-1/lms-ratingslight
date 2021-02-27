@@ -5,12 +5,9 @@
 [% WRAPPER settingGroup title="PLUGIN_RATINGSLIGHT_SUBPAGE" desc="PLUGIN_RATINGSLIGHT_SUBPAGE_DESC" %]
 	<select class="stdedit" name="subpage" id="subpage" onchange="location.href=options[selectedIndex].value">
 		[% FOREACH option = subpages.keys.sort %]
-	
 			<option [% IF subpage == option %]selected[% END %] value="[% subpages.$option %]">[% option | getstring %]</option>
 		[%- END -%]
 	</select>
 [% END %]
 <br>
 [% END %]
-
-

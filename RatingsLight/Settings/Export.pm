@@ -11,14 +11,13 @@ use Slim::Utils::Strings;
 use Data::Dumper;
 
 my $prefs = preferences('plugin.ratingslight');
-my $log   = logger('plugin.ratingslight');
+my $log = logger('plugin.ratingslight');
 
 my $plugin;
 
 sub new {
 	my $class = shift;
-	$plugin   = shift;
-
+	$plugin = shift;
 	$class->SUPER::new($plugin);
 }
 
@@ -56,8 +55,8 @@ sub handler {
 		my %lmsbasepathDone;
 
 		for (my $n = 0; $n <= 10; $n++) {
-			my $lmsbasepath = trim( $paramRef->{"pref_lmsbasepath_$n"} // '' );
-			my $substitutebasepath   = trim( $paramRef->{"pref_substitutebasepath_$n"}   // '' );
+			my $lmsbasepath = trim($paramRef->{"pref_lmsbasepath_$n"} // '');
+			my $substitutebasepath = trim($paramRef->{"pref_substitutebasepath_$n"} // '');
 
 			if ((length($lmsbasepath) > 0) && !$lmsbasepathDone{$lmsbasepath} && (length($substitutebasepath) > 0)) {
 				push(@exportbasefilepathmatrix, {lmsbasepath => $lmsbasepath, substitutebasepath => $substitutebasepath});
@@ -81,7 +80,7 @@ sub handler {
 	}
 
 	# push to settings page
-	
+
 	$paramRef->{exportbasefilepathmatrix} = [];
 
 	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
@@ -89,7 +88,7 @@ sub handler {
 
 	foreach $exportbasefilepath (@$exportbasefilepathmatrix) {
 		if ($exportbasefilepath->{'lmsbasepath'}) {
-			push( @{$paramRef->{exportbasefilepathmatrix}}, $exportbasefilepath );
+			push( @{$paramRef->{exportbasefilepathmatrix}}, $exportbasefilepath);
 		}
 	}
 
