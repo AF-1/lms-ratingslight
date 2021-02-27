@@ -1,0 +1,47 @@
+[% page = "PLUGIN_RATINGSLIGHT" %]
+[% PROCESS settings/header.html %]
+
+[% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_DESC" %]
+<input name="export" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_BUTTON" | string %]">
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF_DESC" %]
+        <input name="pref_onlyratingnotmatchcommenttag" id="onlyratingnotmatchcommenttag" type="checkbox" [% IF prefs.onlyratingnotmatchcommenttag %] checked [% END %]>
+[% END %]
+<br><br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION" desc="PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_DESC" %]
+<table size="100">
+	<tr>
+		<th style="text-align:center;"><b>[% "PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_LMSPATH" | string %]</b></th>
+		<th style="text-align:center;padding-left:8px;"><b>[% "PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_NEWPATH" | string %]</b></th>
+	</tr>
+	<tr>
+		<th style="height:4px;" colspan="2"></th>
+	</tr>
+	[% FOREACH exportbasefilepath = exportbasefilepathmatrix; idx = loop.count %]
+	<tr>
+		<td>
+			<input type="text" class="stdedit"
+			name="pref_lmsbasepath_[% idx %]" value="[% exportbasefilepath.lmsbasepath %]"
+			placeholder="[% exportbasefilepath.lmsbasepath %]" autocomplete="off" size="50">
+		</td>
+		<td style="padding-left:8px;">
+			<input type="text" class="stdedit"
+			name="pref_substitutebasepath_[% idx %]" value="[% exportbasefilepath.substitutebasepath %]"
+			placeholder="[% exportbasefilepath.substitutebasepath %]" autocomplete="off" size="50">
+		</td>
+	</tr>
+	[% END %]
+</table>
+[% END %]
+<br><br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION" desc="PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION_DESC" %]
+	<input type="text" class="stdedit" name="pref_exportextension" id="exportextension" value="[% prefs.exportextension %]" size="4">
+[% END %]
+
+[% PROCESS settings/footer.html %]

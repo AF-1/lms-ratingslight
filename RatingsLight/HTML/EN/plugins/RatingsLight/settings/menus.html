@@ -17,10 +17,7 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE" desc="PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE_DESC" %]
-<select name="pref_autorebuildvirtualibraryafterrating" id="autorebuildvirtualibraryafterrating">
-	<option value='1' [% IF prefs.autorebuildvirtualibraryafterrating %]selected[% END %]>[% "Yes" | string %]</option>
-	<option value='0' [% IF NOT prefs.autorebuildvirtualibraryafterrating %]selected[% END %]>[% "No" | string %]</option>
-</select>
+        <input name="pref_autorebuildvirtualibraryafterrating" id="autorebuildvirtualibraryafterrating" type="checkbox" [% IF prefs.autorebuildvirtualibraryafterrating %] checked [% END %]>
 [% END %]
 <br><br><br>
 
@@ -38,10 +35,7 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS" desc="PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS_DESC" %]
-<select name="pref_ratingcontextmenusethalfstars" id="ratingcontextmenusethalfstars">
-	<option value='1' [% IF prefs.ratingcontextmenusethalfstars %]selected[% END %]>[% "Yes" | string %]</option>
-	<option value='0' [% IF NOT prefs.ratingcontextmenusethalfstars %]selected[% END %]>[% "No" | string %]</option>
-</select>
+        <input name="pref_ratingcontextmenusethalfstars" id="ratingcontextmenusethalfstars" type="checkbox" [% IF prefs.ratingcontextmenusethalfstars %] checked [% END %]>
 [% END %]
 <br><br>
 

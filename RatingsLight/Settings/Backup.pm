@@ -9,13 +9,13 @@ use Slim::Utils::Misc;
 use Slim::Utils::Strings;
 
 my $prefs = preferences('plugin.ratingslight');
-my $log = logger('plugin.ratingslight');
+my $log   = logger('plugin.ratingslight');
 
 my $plugin;
 
 sub new {
 	my $class = shift;
-	$plugin = shift;
+	$plugin   = shift;
 
 	$class->SUPER::new($plugin);
 }
@@ -42,7 +42,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(scheduledbackups backuptime backupsdaystokeep restorefile clearallbeforerestore));
+    return ($prefs, qw(scheduledbackups backuptime backupsdaystokeep restorefile clearallbeforerestore));
 }
 
 sub handler {

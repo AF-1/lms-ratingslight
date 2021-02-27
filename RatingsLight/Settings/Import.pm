@@ -1,4 +1,4 @@
-package Plugins::RatingsLight::Settings::ImportExport;
+package Plugins::RatingsLight::Settings::Import;
 
 use strict;
 use base qw(Plugins::RatingsLight::Settings::BaseSettings);
@@ -9,23 +9,23 @@ use Slim::Utils::Misc;
 use Slim::Utils::Strings;
 
 my $prefs = preferences('plugin.ratingslight');
-my $log = logger('plugin.ratingslight');
+my $log   = logger('plugin.ratingslight');
 
 my $plugin;
 
 sub new {
 	my $class = shift;
-	$plugin = shift;
+	$plugin   = shift;
 
 	$class->SUPER::new($plugin);
 }
 
 sub name {
-	return Slim::Web::HTTP::CSRF->protectName('PLUGIN_RATINGSLIGHT_SETTINGS_IMPORTEXPORT');
+	return Slim::Web::HTTP::CSRF->protectName('PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT');
 }
 
 sub page {
-	return Slim::Web::HTTP::CSRF->protectURI('plugins/RatingsLight/settings/importexport.html');
+	return Slim::Web::HTTP::CSRF->protectURI('plugins/RatingsLight/settings/import.html');
 }
 
 sub currentPage {
@@ -42,7 +42,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(onlyratingnotmatchcommenttag rating_keyword_prefix rating_keyword_suffix autoscan ratethisplaylistid ratethisplaylistrating));
+	return ($prefs, qw(rating_keyword_prefix rating_keyword_suffix autoscan ratethisplaylistid ratethisplaylistrating));
 }
 
 sub handler {
@@ -53,13 +53,7 @@ sub handler {
 		$result = $class->SUPER::handler($client, $paramRef);
 		$callHandler = 0;
 	}
-	if($paramRef->{'export'}) {
-		if($callHandler) {
-			$paramRef->{'saveSettings'} = 1;
-			$result = $class->SUPER::handler($client, $paramRef);
-		}
-		Plugins::RatingsLight::Plugin::exportRatingsToPlaylistFiles();
-	}elsif($paramRef->{'manimport'}) {
+	if($paramRef->{'manimport'}) {
 		if($callHandler) {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
@@ -87,8 +81,8 @@ sub beforeRender {
 	if ($playlistcount > 0) {
 		my ($playlistname, $playlistid);
 		my $playlistarray = $queryresult->{_results}{playlists_loop};
-		my @sortedarray = sort { $a->{id} <=> $b->{id} } @$playlistarray;
-		$paramRef->{allplaylists} = \@sortedarray;
+		my @sortedarray =  sort { $a->{id} <=> $b->{id} } @$playlistarray;
+    	$paramRef->{allplaylists} = \@sortedarray;
 	}
 }
 

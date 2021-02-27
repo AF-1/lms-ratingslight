@@ -3,23 +3,9 @@
 
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT" desc="" %]
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_DESC" %]
-<input name="export" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_BUTTON" | string %]">
-[% END %]
-<br>
-
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF_DESC" %]
-<select name="pref_onlyratingnotmatchcommenttag" id="onlyratingnotmatchcommenttag">
-	<option value='1' [% IF prefs.onlyratingnotmatchcommenttag %]selected[% END %]>[% "Yes" | string %]</option>
-	<option value='0' [% IF NOT prefs.onlyratingnotmatchcommenttag %]selected[% END %]>[% "No" | string %]</option>
-</select>
-[% END %]
-[% END %]
-<hr><br>
-
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS" desc="" %]
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_BATCHRATING" desc="PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_BATCHRATING_DESC" %]
+<b>Import ratings by setting a rating value for <b>all</b> tracks in a playlist.</b>
+<br><br>
 <table>
 	<tr>
 		<th style="text-align:center;"><b>[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLNAME" | string %]</b></th>
@@ -49,14 +35,13 @@
 <br>
 <input style="margin-top:-1px;" name="rateplaylistnow" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON" | string %]">
 [% END %]
-<hr>
-[% END %]
+<br><br><br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS" desc="" %]
 <b>Import ratings derived from keywords in the comment tags of your files.</b>
 <br><br>
 <b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx": if a comment tag contains "favstars<b>4</b>xx" -> track rating = <b>4</b> stars
-<br><br>
+<br><br><br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD" desc="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_DESC" %]
 <table style="margin-left:5px;" size="50">
@@ -76,10 +61,7 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN" desc="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN_DESC" %]
-<select name="pref_autoscan" id="autoscan">
-	<option value='1' [% IF prefs.autoscan %]selected[% END %]>[% "Yes" | string %]</option>
-	<option value='0' [% IF NOT prefs.autoscan %]selected[% END %]>[% "No" | string %]</option>
-</select>
+<input name="pref_autoscan" id="autoscan" type="checkbox" [% IF prefs.autoscan %] checked [% END %]>
 [% END %]
 <br>
 

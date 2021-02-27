@@ -10,10 +10,7 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS" desc="PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_DESC" %]
-<select name="pref_scheduledbackups" id="scheduledbackups">
-	<option value='1' [% IF prefs.scheduledbackups %]selected[% END %]>[% "Yes" | string %]</option>
-	<option value='0' [% IF NOT prefs.scheduledbackups %]selected[% END %]>[% "No" | string %]</option>
-</select>
+<input name="pref_scheduledbackups" id="scheduledbackups" type="checkbox" [% IF prefs.scheduledbackups %] checked [% END %]>
 [% END %]
 <br>
 
@@ -36,10 +33,7 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE" desc="PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE_DESC" %]
-<select name="pref_clearallbeforerestore" id="clearallbeforerestore">
-	<option value='1' [% IF prefs.clearallbeforerestore %]selected[% END %]>[% "Yes" | string %]</option>
-	<option value='0' [% IF NOT prefs.clearallbeforerestore %]selected[% END %]>[% "No" | string %]</option>
-</select>
+<input name="pref_clearallbeforerestore" id="clearallbeforerestore" type="checkbox" [% IF prefs.clearallbeforerestore %] checked [% END %]>
 [% END %]
 [% END %]
 

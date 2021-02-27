@@ -30,8 +30,11 @@ PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP
 	EN	Backup / Restore
 
-PLUGIN_RATINGSLIGHT_SETTINGS_IMPORTEXPORT
-	EN	Import / Export
+PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT
+	EN	Import
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT
+	EN	Export
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS
 	EN	Menus
@@ -88,9 +91,6 @@ PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_WARNING
 
 
 
-PLUGIN_RATINGSLIGHT_EXPORT
-	EN	Export
-
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES
 	EN	Export rated tracks to playlist files
 
@@ -106,16 +106,28 @@ PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF_DESC
 	EN	If set to yes, only those tracks will be exported whose LMS rating differs from the rating value derived from comment tag keywords.<br> So if you've marked a track as 2-star rated in its comment tag and its rating hasn't changed it won't be part of the exported playlists.
 
+PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION
+	EN	Replace file path
+
+PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_DESC
+	EN	Replace the LMS root file path in your <b>exported</b> file urls with a different file path.<br>Useful if you want to use the exported playlist with another version of your LMS library on another PC. 
+
+PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_LMSPATH
+	EN	LMS base file path
+
+PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_NEWPATH
+	EN	New base file path
+
+PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION
+	EN	Replace file extension
+
+PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION_DESC
+	EN	Replace the file extension of your <b>exported</b> file urls. Useful if you want to use the exported playlist with a lossy version of your lossless LMS library.
+ 
 
 
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS
-	EN	Import - Playlists
-
-PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_BATCHRATING
-	EN	Rate tracks in playlists
-
-PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_BATCHRATING_DESC
-	EN	Set a rating value for <b>all</b> tracks in a playlist.
+	EN	Playlists
 
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLNAME
 	EN	Playlist Name
@@ -128,7 +140,7 @@ PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON
 
 
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS
-	EN	Import - Comment Tags
+	EN	Comment Tags
 
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD
 	EN	Set your rating keywords
@@ -232,7 +244,7 @@ PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS
 	EN	Show browse menus for rated tracks
 
 PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DESC
-	EN	Browse your rated tracks by artist or genre.<br>Enable <b>Rated + Rated High</b> to get extra menus for tracks rated 3 stars and higher.<br>Please <b>restart LMS</b> for the changed settings to take effect.<br><br>Requires LMS version 7.9 or higher.
+	EN	Browse your rated tracks by artist or genre.<br>Enable <b>Rated + Rated High</b> to get extra menus for tracks rated 3 stars and higher.<br><br>Please <b>restart LMS</b> for the changed settings to take effect.<br><br>Requires LMS version 7.9 or higher.
 
 PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_HIGH
 	EN	Rated + Rated High
@@ -287,13 +299,13 @@ PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEB_LIMIT
 	EN	Show more rated tracks - web limit
 
 PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEB_LIMIT_DESC
-	EN	Limits the number of tracks in the <b>LMS web UI</b> menu called "<i>Show more rated tracks by this artist</i>".<br>(min. 5, max. 200)
+	EN	Limits the number of tracks in the <b>LMS web UI</b> menu called "<i>Show more rated tracks by this artist</i>".<br>(min. 5, max. 200) 
 
 PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
 	EN	Show more rated tracks - menu limit
 
 PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
-	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show more rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>Material skin, SB Touch, SB Radio, piCorePlayer</b>.
+	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show more rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>Material skin, SB Touch, SB Radio, piCorePlayer</b>. 
 
 PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEBMENU_ALLSONGS
 	EN	All songs

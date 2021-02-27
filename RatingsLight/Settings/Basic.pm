@@ -9,13 +9,13 @@ use Slim::Utils::Misc;
 use Slim::Utils::Strings;
 
 my $prefs = preferences('plugin.ratingslight');
-my $log = logger('plugin.ratingslight');
+my $log   = logger('plugin.ratingslight');
 
 my $plugin;
 
 sub new {
 	my $class = shift;
-	$plugin = shift;
+	$plugin   = shift;
 
 	$class->SUPER::new($plugin,1);
 }
@@ -42,7 +42,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(enableIRremotebuttons DPLintegration rlparentfolderpath uselogfile userecentlyaddedplaylist recentlymaxcount));
+	return ($prefs, qw(enableIRremotebuttons dplIntegration rlparentfolderpath uselogfile userecentlyaddedplaylist recentlymaxcount));
 }
 
 sub handler {

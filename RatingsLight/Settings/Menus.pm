@@ -9,13 +9,13 @@ use Slim::Utils::Misc;
 use Slim::Utils::Strings;
 
 my $prefs = preferences('plugin.ratingslight');
-my $log = logger('plugin.ratingslight');
+my $log   = logger('plugin.ratingslight');
 
 my $plugin;
 
 sub new {
 	my $class = shift;
-	$plugin = shift;
+	$plugin   = shift;
 
 	$class->SUPER::new($plugin);
 }
@@ -49,9 +49,9 @@ sub handler {
 	my ($class, $client, $paramRef) = @_;
 
 	if ($paramRef->{'saveSettings'}) {
-	}
+	}	
 	my $result = $class->SUPER::handler($client, $paramRef);
 	return $result;
 }
-
+		
 1;

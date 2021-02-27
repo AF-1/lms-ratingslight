@@ -8,14 +8,14 @@ use Slim::Utils::Prefs;
 use Slim::Utils::Misc;
 
 my $prefs = preferences('plugin.ratingslight');
-my $log = logger('plugin.ratingslight');
+my $log   = logger('plugin.ratingslight');
 
 my $plugin;
 my %subPages = ();
 
 sub new {
 	my $class = shift;
-	$plugin = shift;
+	$plugin   = shift;
 	my $default = shift;
 
 	if(!defined($default) || !$default) {
