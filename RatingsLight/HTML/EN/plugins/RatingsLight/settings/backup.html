@@ -1,3 +1,14 @@
+<script TYPE="text/javascript">
+	function inprogress(elementid) {
+		document.getElementById(elementid).className = "inprogress";
+	}
+</script>
+
+<style>
+@-webkit-keyframes Pulse{from{color:#630030;-webkit-text-shadow:0 0 2px transparent}50%{color:#e33100;-webkit-text-shadow:0 0 5px #e33100}to{color:#630030;-webkit-text-shadow:0 0 2px transparent}}@keyframes Pulse{from{color:#630030;text-shadow:0 0 2px transparent}50%{color:#e33100;text-shadow:0 0 5px #e33100}to{color:#630030;text-shadow:0 0 2px transparent}}.inprogress{padding-left:15px;-webkit-animation-name:Pulse;animation-name:Pulse;-webkit-animation-duration:2s;animation-duration:2s;-webkit-animation-iteration-count:infinite;animation-iteration-count:infinite}
+.status{visibility:hidden;}
+</style>
+
 [% page = "PLUGIN_RATINGSLIGHT" %]
 [% PROCESS settings/header.html %]
 
@@ -5,7 +16,8 @@
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP" desc="" %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_MANUAL_BACKUP" desc="PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_DESC" %]
-	<input name="backup" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_BUTTON" | string %]">
+	<input name="backup" type="submit" class="stdclick" onclick="inprogress('backupstatus');" value="[% "PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_BUTTON" | string %]">
+	<span class='status' id='backupstatus'>creating backup...</span>
 [% END %]
 <br>
 
@@ -28,7 +40,8 @@
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE" desc="" %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE" desc="PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE_DESC" %]
 	<input type="text" class="stdedit selectFile" name="pref_restorefile" id="restorefile" value="[% prefs.restorefile %]" size="40"><br><br>
-	<input name="restore" type="submit" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_RESTORE_BUTTON" | string %]">
+	<input name="restore" type="submit" class="stdclick" onclick="inprogress('restorestatus');" value="[% "PLUGIN_RATINGSLIGHT_RESTORE_BUTTON" | string %]">
+	<span class='status' id='restorestatus'>restoring...</span>
 [% END %]
 <br>
 

@@ -2,7 +2,7 @@ PLUGIN_RATINGSLIGHT
 	EN	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
-	EN	Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Browse rated tracks by artist or genre. Keep track of your recently rated songs with a dedicated playlist and/or log file. Includes ratings-based smart playlists for DynamicPlaylists. Skip (un-)rated tracks with CustomSkip.
+	EN	Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Browse rated tracks by artist or genre. Keep track of your recently rated songs with a dedicated playlist or log file. Supports "Don't Stop The Music". Includes ratings-based smart playlists for DynamicPlaylists. Skip (un-)rated tracks with CustomSkip.
 
 PLUGIN_RATINGSLIGHT_LOG_DESC
 	EN	Log of plugin RatingsLight
@@ -38,6 +38,9 @@ PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS
 	EN	Menus
+
+PLUGIN_RATINGSLIGHT_SETTINGS_DSTM
+	EN	Don't Stop the Music
 
 
 
@@ -312,3 +315,53 @@ PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEBMENU_ALLSONGS
 
 PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_ALLSONGS
 	EN	Insert all songs
+
+
+
+PLUGIN_RATINGSLIGHT_DSTM_RATED
+	EN	Ratings Light - rated tracks
+
+PLUGIN_RATINGSLIGHT_DSTM_RATED_HIGH
+	EN	Ratings Light - rated tracks (with % of rated high)
+
+PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE
+	EN	Ratings Light - rated tracks (similar genres)
+
+PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE_HIGH
+	EN	Ratings Light - rated tracks (similar genres, with % of rated high)
+
+PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED
+	EN	Ratings Light - unrated tracks (with % of rated)
+
+PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_GENRE
+	EN	Ratings Light - unrated tracks (similar genres, with % of rated)
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED
+	EN	Percentage of rated songs
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_DESC
+	EN	Included a certain percentage of rated songs in your "<b>un</b>rated songs" DSTM mix.
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_HIGH
+	EN	Percentage of songs rated 3 stars+
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_HIGH_DESC
+	EN	Percentage of songs rated 3 stars or higher in your "rated songs" DSTM mix.
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS
+	EN	Number of DSTM seed tracks
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS_DESC
+	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.<br>(between 1 and 20) 
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR
+	EN	Minimum track duration
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR_DESC
+	EN	Set the minimum track duration for tracks in <b>Don't Stop The Music</b> mixes or <b>Dynamic Playlist</b> smart playlists.
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES
+	EN	Exclude genres
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES_DESC
+	EN	Choose genres to exclude from <b>Don't Stop The Music</b> mixes and <b>Dynamic Playlist</b> smart playlists.

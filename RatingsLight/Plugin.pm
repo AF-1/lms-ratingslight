@@ -15,6 +15,7 @@ use FindBin qw($Bin);
 use POSIX qw(strftime ceil floor);
 use Slim::Control::Request;
 use Slim::Player::Client;
+use Slim::Player::Source;
 use Slim::Utils::DateTime;
 use Slim::Utils::Log;
 use Slim::Utils::Prefs;
@@ -33,11 +34,12 @@ use Plugins::RatingsLight::Settings::Backup;
 use Plugins::RatingsLight::Settings::Import;
 use Plugins::RatingsLight::Settings::Export;
 use Plugins::RatingsLight::Settings::Menus;
+use Plugins::RatingsLight::Settings::DSTM;
 
 my $log = Slim::Utils::Log->addLogCategory({
-	'category'     => 'plugin.ratingslight',
-	'defaultLevel' => 'DEBUG',
-	'description'  => 'PLUGIN_RATINGSLIGHT',
+	'category' => 'plugin.ratingslight',
+	'defaultLevel' => 'WARN',
+	'description' => 'PLUGIN_RATINGSLIGHT',
 });
 
 my $RATING_CHARACTER = ' *';
@@ -146,6 +148,28 @@ if (! defined $moreratedtracksbyartistcontextmenulimit) {
 	$prefs->set('moreratedtracksbyartistcontextmenulimit', '30');
 }
 
+my $dstm_minTrackDuration = $prefs->get('dstm_minTrackDuration');
+if (! defined $dstm_minTrackDuration) {
+	$prefs->set('dstm_minTrackDuration', '90');
+}
+
+my $dstm_percentagerated = $prefs->get('dstm_percentagerated');
+if (! defined $dstm_percentagerated) {
+	$prefs->set('dstm_percentagerated', '30');
+}
+
+my $dstm_percentageratedhigh = $prefs->get('dstm_percentageratedhigh');
+if (! defined $dstm_percentageratedhigh) {
+	$prefs->set('dstm_percentageratedhigh', '30');
+}
+
+my $excludegenres_namelist = $prefs->get('excludegenres_namelist');
+
+my $num_seedtracks = $prefs->get('num_seedtracks');
+if (! defined $num_seedtracks) {
+	$prefs->set('num_seedtracks', '10');
+}
+
 my $status_exportingtoplaylistfiles;
 $prefs->set('status_exportingtoplaylistfiles', '0');
 my $status_importingfromcommenttags;
@@ -190,6 +214,10 @@ $prefs->init({
 	status_clearingallratings => $status_clearingallratings,
 	moreratedtracksbyartistweblimit => $moreratedtracksbyartistweblimit,
 	moreratedtracksbyartistcontextmenulimit => $moreratedtracksbyartistcontextmenulimit,
+	dstm_minTrackDuration => $dstm_minTrackDuration,
+	dstm_percentagerated => $dstm_percentagerated,
+	dstm_percentageratedhigh => $dstm_percentageratedhigh,
+	excludegenres_namelist => $excludegenres_namelist,
 });
 
 $prefs->setValidate({
@@ -218,14 +246,18 @@ $prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 365 }, 'b
 $prefs->setValidate({ 'validator' => 'intlimit', 'low' => 2, 'high' => 200 }, 'recentlymaxcount');
 $prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 200 }, 'moreratedtracksbyartistweblimit');
 $prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 100 }, 'moreratedtracksbyartistcontextmenulimit');
+$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 1800 }, 'dstm_minTrackDuration');
+$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 100 }, 'dstm_percentagerated');
+$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 100 }, 'dstm_percentageratedhigh');
+$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 20 }, 'num_seedtracks');
 
 sub initPlugin {
 	my $class = shift;
 
 	Slim::Music::Import->addImporter('Plugins::RatingsLight::Plugin', {
-		'type'   => 'post',
+		'type' => 'post',
 		'weight' => 99,
-		'use'    => 1,
+		'use' => 1,
 	});
 
 	if (!main::SCANNER) {
@@ -255,21 +287,45 @@ sub initPlugin {
 			Plugins::RatingsLight::Settings::Import->new($class);
 			Plugins::RatingsLight::Settings::Export->new($class);
 			Plugins::RatingsLight::Settings::Menus->new($class);
+			Plugins::RatingsLight::Settings::DSTM->new($class);
 
- 			Slim::Web::Pages->addPageFunction('showmoreratedtracklist', \&handleMoreRatedWebTrackList);
-        }
+			Slim::Web::Pages->addPageFunction('showmoreratedtracklist', \&handleMoreRatedWebTrackList);
+		}
 
 		if(UNIVERSAL::can("Slim::Menu::TrackInfo","registerInfoProvider")) {
 					Slim::Menu::TrackInfo->registerInfoProvider( ratingslightrating => (
 							before => 'artwork',
-							func   => \&trackInfoHandlerRating,
+							func => \&trackInfoHandlerRating,
 					) );
 		}
 		if(UNIVERSAL::can("Slim::Menu::TrackInfo","registerInfoProvider")) {
 					Slim::Menu::TrackInfo->registerInfoProvider( ratingslightmoreratedtracks => (
 							after => 'ratingslightrating',
-							func   => \&showMoreRatedTracksbyArtistInfoHandler,
+							func => \&showMoreRatedTracksbyArtistInfoHandler,
 					) );
+		}
+
+		if ( Slim::Utils::PluginManager->isEnabled('Slim::Plugin::DontStopTheMusic::Plugin') ) {
+			require Slim::Plugin::DontStopTheMusic::Plugin;
+
+			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED', sub {
+				dontStopTheMusic('rated', @_);
+			});
+			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED_HIGH', sub {
+				dontStopTheMusic('rated_high', @_);
+			});
+			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE', sub {
+				dontStopTheMusic('rated_genre', @_);
+			});
+			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE_HIGH', sub {
+				dontStopTheMusic('rated_genre_high', @_);
+			});
+			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED', sub {
+				dontStopTheMusic('unrated_rated', @_);
+			});
+			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_GENRE', sub {
+				dontStopTheMusic('unrated_rated_genre', @_);
+			});
 		}
 
 		if($::VERSION ge '7.9') {
@@ -312,7 +368,7 @@ sub initPlugin {
 					Slim::Menu::BrowseLibrary->registerNode({
 									type => 'link',
 									name => 'PLUGIN_RATINGSLIGHT_RATED_TRACKS_MENU_FOLDER',
-									id   => 'RatingsLightRatedTracksMenuFolder',
+									id => 'RatingsLightRatedTracksMenuFolder',
 									feed => sub {
 										my ($client, $cb, $args, $pt) = @_;
 										my @items = ();
@@ -404,8 +460,8 @@ sub initPlugin {
 										}
 									 },
 
-									weight       => 88,
-									cache        => 1,
+									weight => 88,
+									cache => 1,
 									icon => 'plugins/RatingsLight/html/images/ratedtracksmenuicon.png',
 									jiveIcon => 'plugins/RatingsLight/html/images/ratedtracksmenuicon.png',
 							});
@@ -414,7 +470,7 @@ sub initPlugin {
 
 		backupScheduler();
 		initExportBaseFilePathMatrix();
-		
+
 		$class->SUPER::initPlugin(@_);
 	}
 }
@@ -444,21 +500,21 @@ sub importRatingsFromCommentTags {
 
 	my $dbh = getCurrentDBH();
 	if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
-		$log->error('Error: no rating keywords found.');
+		$log->warn('Error: no rating keywords found.');
 		return
 	} else {
 		my $sqlunrate = "UPDATE tracks_persistent
-		  SET rating = NULL
-		WHERE 	(tracks_persistent.rating > 0
+			SET rating = NULL
+			WHERE (tracks_persistent.rating > 0
 				AND tracks_persistent.urlmd5 IN (
-				   SELECT tracks.urlmd5
-					 FROM tracks
-						  LEFT JOIN comments ON comments.track = tracks.id
-					WHERE (comments.value NOT LIKE ? OR comments.value IS NULL) )
+					SELECT tracks.urlmd5
+					FROM tracks
+					LEFT JOIN comments ON comments.track = tracks.id
+					WHERE (comments.value NOT LIKE ? OR comments.value IS NULL))
 				);";
 
 		my $sqlrate = "UPDATE tracks_persistent
-			  SET rating = ?
+			SET rating = ?
 			WHERE tracks_persistent.urlmd5 IN (
 				SELECT tracks.urlmd5
 					FROM tracks
@@ -522,7 +578,7 @@ sub importRatingsFromCommentTags {
 		}
 	}
 
-	$log->info("Import completed after ".$ended." seconds.");
+	$log->debug("Import completed after ".$ended." seconds.");
 	$prefs->set('status_importingfromcommenttags', 0);
 }
 
@@ -572,7 +628,7 @@ sub importRatingsFromPlaylist {
 		}
 	}
 
-	$log->info("Rating playlist tracks completed after ".$ended." seconds.");
+	$log->debug("Rating playlist tracks completed after ".$ended." seconds.");
 	$prefs->set('ratethisplaylistid', '');
 	$prefs->set('ratethisplaylistrating', '');
 	$prefs->set('status_batchratingplaylisttracks', 0);
@@ -606,16 +662,16 @@ sub exportRatingsToPlaylistFiles {
 		$rating100ScaleValueCeil = $rating100ScaleValue + 9;
 		if (defined $onlyratingnotmatchcommenttag) {
 			if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
-				$log->error('Error: no rating keywords found.');
+				$log->warn('Error: no rating keywords found.');
 				return
 			} else {
 				$sql = "SELECT tracks_persistent.url FROM tracks_persistent
 				WHERE (tracks_persistent.rating >= $rating100ScaleValue
 						AND tracks_persistent.rating <= $rating100ScaleValueCeil
 						AND tracks_persistent.urlmd5 IN (
-						   SELECT tracks.urlmd5
-							 FROM tracks
-								  LEFT JOIN comments ON comments.track = tracks.id
+							SELECT tracks.urlmd5
+							FROM tracks
+							LEFT JOIN comments ON comments.track = tracks.id
 							WHERE (comments.value NOT LIKE ? OR comments.value IS NULL) )
 						);";
 				$sth = $dbh->prepare($sql);
@@ -667,7 +723,7 @@ sub exportRatingsToPlaylistFiles {
 	}
 	$prefs->set('status_exportingtoplaylistfiles', 0);
 	my $ended = time() - $started;
-	$log->info("Export completed after ".$ended." seconds.");
+	$log->debug("Export completed after ".$ended." seconds.");
 }
 
 sub setRating {
@@ -694,31 +750,31 @@ sub setRating {
 		return;
 	}
 
-  	my $trackId = $request->getParam('_trackid');
+	my $trackId = $request->getParam('_trackid');
 	if(defined($trackId) && $trackId =~ /^track_id:(.*)$/) {
 		$trackId = $1;
 	}elsif(defined($request->getParam('_trackid'))) {
 		$trackId = $request->getParam('_trackid');
 	}
 
-  	my $rating = $request->getParam('_rating');
+	my $rating = $request->getParam('_rating');
 	if(defined($rating) && $rating =~ /^rating:(.*)$/) {
 		$rating = $1;
 	}elsif(defined($request->getParam('_rating'))) {
 		$rating = $request->getParam('_rating');
 	}
 
-  	my $incremental = $request->getParam('_incremental');
+	my $incremental = $request->getParam('_incremental');
 	if(defined($incremental) && $incremental =~ /^incremental:(.*)$/) {
 		$incremental = $1;
 	}elsif(defined($request->getParam('_incremental'))) {
 		$incremental = $request->getParam('_incremental');
 	}
 
-  	if(!defined $trackId || $trackId eq '' || !defined $rating || $rating eq '') {
+	if(!defined $trackId || $trackId eq '' || !defined $rating || $rating eq '') {
 		$request->setStatusBadParams();
 		return;
-  	}
+	}
 
 	my $track = Slim::Schema->resultset("Track")->find($trackId);
 	my $trackURL = $track->url;
@@ -769,7 +825,7 @@ sub setRating {
 	Slim::Music::Info::clearFormatDisplayCache();
 	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackId, $rating5starScaleValue, $rating100ScaleValue]);
 	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackId, $rating5starScaleValue, $rating100ScaleValue]);
-	
+
 	$request->addResult('rating', $rating5starScaleValue);
 	$request->addResult('ratingpercentage', $rating100ScaleValue);
 	$request->setStatusDone();
@@ -849,11 +905,11 @@ sub createBackup {
 		print $output "</RatingsLight>\n";
 		close $output;
 		my $ended = time() - $started;
-		$log->info("Backup completed after ".$ended." seconds.");
+		$log->debug("Backup completed after ".$ended." seconds.");
 
 		cleanupBackups();
 	} else {
-		$log->info("Info: no rated tracks in database")
+		$log->debug("Info: no rated tracks in database")
 	}
 	$prefs->set('status_creatingbackup', 0);
 }
@@ -914,12 +970,15 @@ sub cleanupBackups {
 	closedir($DH);
 	my $mtime;
 	my $etime = int(time());
+	my $n = 0;
 	foreach my $file (@files) {
 		$mtime = stat($file)->mtime;
 		if (($etime - $mtime) > $maxkeeptime) {
 			unlink($file) or die "Can't delete $file: $!";
+			$n++;
 		}
 	}
+	$log->debug("Deleted $n backups.");
 }
 
 sub restoreFromBackup {
@@ -961,15 +1020,15 @@ sub initRestore {
 		$backupParserNB = undef;
 	}
 	$backupParser = XML::Parser->new(
-		'ErrorContext'     => 2,
+		'ErrorContext' => 2,
 		'ProtocolEncoding' => 'UTF-8',
-		'NoExpand'         => 1,
-		'NoLWP'            => 1,
-		'Handlers'         => {
+		'NoExpand' => 1,
+		'NoLWP' => 1,
+		'Handlers' => {
 
 			'Start' => \&handleStartElement,
-			'Char'  => \&handleCharElement,
-			'End'   => \&handleEndElement,
+			'Char' => \&handleCharElement,
+			'End' => \&handleEndElement,
 		},
 	);
 }
@@ -998,7 +1057,7 @@ sub scanFunction {
 		local $/ = '>';
 		my $line;
 
-		for (my $i = 0; $i < 5; ) {  # change back to 25 LATER !!!!!!!
+		for (my $i = 0; $i < 25; ) {
 			my $singleLine = <BACKUPFILE>;
 			if(defined($singleLine)) {
 				$line .= $singleLine;
@@ -1029,13 +1088,13 @@ sub doneScanning {
 	}
 
 	$backupParserNB = undef;
-	$backupParser   = undef;
+	$backupParser = undef;
 	$opened = 0;
 	close(BACKUPFILE);
 
 	my $ended = time() - $restorestarted;
 	$log->debug("Restore completed after ".$ended." seconds.");
-	
+
 	# refresh virtual libraries
 	if($::VERSION ge '7.9') {
 		if (($showratedtracksmenus > 0) && (defined $autorebuildvirtualibraryafterrating)) {
@@ -1245,7 +1304,7 @@ sub mapKeyHold {
 	my $function = shift;
 	if ( defined($client) ) {
 		my $mapsAltered = 0;
-		my @maps  = @{$client->irmaps};
+		my @maps = @{$client->irmaps};
 		for (my $i = 0; $i < scalar(@maps) ; ++$i) {
 			if (ref($maps[$i]) eq 'HASH') {
 				my %mHash = %{$maps[$i]};
@@ -1254,7 +1313,7 @@ sub mapKeyHold {
 						my %mHash2 = %{$mHash{$key}};
 						# if no $baseKeyName.hold
 						if ( (!defined($mHash2{$baseKeyName.'.hold'})) || ($mHash2{$baseKeyName.'.hold'} eq 'dead') ) {
-							#$log->debug("mapping $function to ${baseKeyName}.hold for $i-$key");
+							$log->debug("mapping $function to ${baseKeyName}.hold for $i-$key");
 							if ( (defined($mHash2{$baseKeyName}) || (defined($mHash2{$baseKeyName.'.*'}))) &&
 								 (!defined($mHash2{$baseKeyName.'.single'})) ) {
 								# make baseKeyName.single = baseKeyName
@@ -1271,8 +1330,8 @@ sub mapKeyHold {
 							# delete baseKeyName.*
 							$mHash2{$baseKeyName.'.*'} = undef;
 							++$mapsAltered;
-						#} else {
-							#$log->debug("${baseKeyName}.hold mapping already exists for $i-$key");
+						} else {
+							$log->debug("${baseKeyName}.hold mapping already exists for $i-$key");
 						}
 						$mHash{$key} = \%mHash2;
 					}
@@ -1281,7 +1340,7 @@ sub mapKeyHold {
 			}
 		}
 		if ( $mapsAltered > 0 ) {
-			#$log->info("mapping ${baseKeyName}.hold to $function for \"".$client->name()."\" in $mapsAltered modes");
+			$log->debug("mapping ${baseKeyName}.hold to $function for \"".$client->name()."\" in $mapsAltered modes");
 			$client->irmaps(\@maps);
 		}
 	}
@@ -1295,7 +1354,7 @@ sub trackInfoHandlerRating {
 	my $ishalfstarrating = '0';
 
 	my ( $client, $url, $track, $remoteMeta, $tags ) = @_;
-    $tags ||= {};
+	$tags ||= {};
 
 	if (Slim::Music::Import->stillScanning) {
 		if ( $tags->{menuMode} ) {
@@ -1315,7 +1374,7 @@ sub trackInfoHandlerRating {
 
 	$rating100ScaleValue = getRatingFromDB($track);
 
-    if ( $tags->{menuMode} ) {
+	if ( $tags->{menuMode} ) {
 		my $jive = {};
 		my $actions = {
 			go => {
@@ -1392,13 +1451,11 @@ sub getRatingMenu {
 	if (!$request->isQuery([['ratingslight'],['ratingmenu']])) {
 		$log->warn("Incorrect command\n");
 		$request->setStatusBadDispatch();
-		$log->debug("Exiting getRatingMenu\n");
 		return;
 	}
 	if(!defined $client) {
 		$log->warn("Client required\n");
 		$request->setStatusNeedsClient();
-		$log->debug("Exiting cliJiveHandler\n");
 		return;
 	}
 	my $track_id = $request->getParam('_trackid');
@@ -1474,7 +1531,7 @@ sub getRatingMenu {
 
 sub showMoreRatedTracksbyArtistInfoHandler {
 	my ( $client, $url, $track, $remoteMeta, $tags ) = @_;
-    $tags ||= {};
+	$tags ||= {};
 
 	if (Slim::Music::Import->stillScanning) {
 		$log->warn("Warning: not available until library scan is completed");
@@ -1489,8 +1546,8 @@ sub showMoreRatedTracksbyArtistInfoHandler {
 	if ($string_len > 50) {
 		$artistname = substr($artistname, 0, 50 )."…";
 	}
-   	my $curTrackRating = getRatingFromDB($track);
-   	if ($curTrackRating > 0) {
+	my $curTrackRating = getRatingFromDB($track);
+	if ($curTrackRating > 0) {
 		$text = string('PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST')." ".$artistname;
 		$wtitle = 1;
 	} else {
@@ -1572,7 +1629,7 @@ sub handleMoreRatedWebTrackList {
 			$albumname = substr($albumname, 0, 80 )."…";
 		}
 		$artistname = $track->artist->name;
-   		my $rating = getRatingFromDB($track);
+		my $rating = getRatingFromDB($track);
 		my $ratingtext;
 		my $detecthalfstars = ($rating/2)%2;
 		my $ratingStars = $rating/20;
@@ -1599,7 +1656,7 @@ sub handleMoreRatedWebTrackList {
 		$artistname = substr($artistname, 0, 50 )."…";
 	}
 	$params->{artistname} = $artistname;
-    $params->{moreratedtracks} = \@moreratedtracks;
+	$params->{moreratedtracks} = \@moreratedtracks;
 	return Slim::Web::HTTP::filltemplatefile('plugins/RatingsLight/showmoreratedtracklist.html', $params);
 }
 
@@ -1611,13 +1668,11 @@ sub getMoreRatedTracksbyArtistMenu {
 	if (!$request->isQuery([['ratingslight'],['moreratedtracksbyartistmenu']])) {
 		$log->warn("Incorrect command\n");
 		$request->setStatusBadDispatch();
-		$log->debug("Exiting moreratedtracksbyartistmenu\n");
 		return;
 	}
 	if(!defined $client) {
 		$log->warn("Client required\n");
 		$request->setStatusNeedsClient();
-		$log->debug("Exiting cliJiveHandler\n");
 		return;
 	}
 	my $trackID = $request->getParam('_trackid');
@@ -1703,8 +1758,6 @@ sub getMoreRatedTracksbyArtistMenu {
 
 		my $text2add = "text = 'Added ".$tracktitle;
 		$request->addResultLoop('item_loop',$cnt,'window',$text2add);
-
-
 		$request->addResultLoop('item_loop',$cnt,'text',$returntext);
 		$request->addResultLoop('item_loop',$cnt,'nextWindow','parent');
 		$cnt++;
@@ -1719,7 +1772,7 @@ sub getMoreRatedTracksbyArtistMenu {
 		$request->addResultLoop('item_loop',0,'nextWindow','parent');
 		$cnt++;
 	}
-	
+
 	$request->addResult('offset',0);
 	$request->addResult('count',$cnt);
 	$request->setStatusDone();
@@ -1748,7 +1801,6 @@ sub addToRecentlyRatedPlaylist {
  	}elsif ($existsPL == 0){
  		my $createplaylistrequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'new', 'name:'.$playlistname]);
  		$playlistid = $createplaylistrequest->getResult('playlist_id');
-		$log->debug("playlistid = ".$playlistid);
  	}
 
 	Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:add', 'playlist_id:'.$playlistid, 'url:'.$trackURL]);
@@ -1852,7 +1904,7 @@ sub clearAllRatings {
 	$sth->finish();
 
 	my $ended = time() - $started;
-	$log->info("Clearing all ratings completed after ".$ended." seconds.");
+	$log->debug("Clearing all ratings completed after ".$ended." seconds.");
 	$prefs->set('status_clearingallratings', 0);
 
 	# refresh virtual libraries
@@ -1867,6 +1919,305 @@ sub clearAllRatings {
 			}
 		}
 	}
+}
+
+sub changeExportFilePath {
+	my $trackURL = shift;
+	my $oldtrackURL = $trackURL;
+	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
+	my $exportextension = $prefs->get('exportextension');
+
+	if (scalar @$exportbasefilepathmatrix > 0) {
+		foreach my $thispath (@$exportbasefilepathmatrix) {
+			if (($trackURL =~ ($thispath->{'lmsbasepath'})) && (defined ($thispath->{'substitutebasepath'})) && (($thispath->{'substitutebasepath'}) ne '')) {
+				my $lmsbasepath = $thispath->{'lmsbasepath'};
+				my $substitutebasepath = $thispath->{'substitutebasepath'};
+				if (defined $exportextension) {
+					$trackURL =~ s/\.[^.]*$/\.$exportextension/isg;
+				}
+				$lmsbasepath =~ s/\\/\//isg;
+				$lmsbasepath =~ s/(^\/*)|(\/*$)//isg;
+				$substitutebasepath =~ s/\\/\//isg;
+				$substitutebasepath =~ s/(^\/*)|(\/*$)//isg;
+				$substitutebasepath = escape($substitutebasepath);
+				$trackURL =~ s/$lmsbasepath/$substitutebasepath/isg;
+				$trackURL =~ s/\/{2,}/\//isg;
+				$trackURL =~ s/file:\//file:\/\/\//isg;
+				$log->debug("old url: ".$oldtrackURL."\nlmsbasepath = ".$lmsbasepath."\nsubstitutebasepath = ".$substitutebasepath."\nnew url = ".$trackURL);
+			}
+		}
+	}
+	return $trackURL;
+}
+
+sub initExportBaseFilePathMatrix {
+	# get LMS music dirs
+	my $mediadirs = $serverPrefs->get('mediadirs');
+	my $ignoreInAudioScan = $serverPrefs->get('ignoreInAudioScan');
+	my @lmsmusicdirs;
+	my %musicdircount;
+	my $thisdir;
+	foreach $thisdir (@$mediadirs, @$ignoreInAudioScan) { $musicdircount{$thisdir}++ }
+	foreach $thisdir (keys %musicdircount) {
+		if ($musicdircount{$thisdir} == 1) {
+			push (\@lmsmusicdirs, $thisdir);
+		}
+	}
+
+	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
+	if (!defined $exportbasefilepathmatrix) {
+		my $n = 0;
+		foreach my $musicdir (@lmsmusicdirs) {
+			push(@$exportbasefilepathmatrix, { lmsbasepath => $musicdir, substitutebasepath => ''});
+			$n++;
+		}
+		$prefs->set('exportbasefilepathmatrix', $exportbasefilepathmatrix);
+	} else {
+		# add new music dirs as options if not in list
+		my @currentlmsbasefilepaths;
+		foreach my $thispath (@$exportbasefilepathmatrix) {
+			push (@currentlmsbasefilepaths, $thispath->{'lmsbasepath'});
+		}
+
+		my %seen;
+		@seen{@currentlmsbasefilepaths} = ();
+
+		foreach my $newdir (@lmsmusicdirs) {
+			push (@$exportbasefilepathmatrix, { lmsbasepath => $newdir, substitutebasepath => ''}) unless exists $seen{$newdir};
+		}
+		$prefs->set('exportbasefilepathmatrix', \@$exportbasefilepathmatrix);
+	}
+}
+
+sub getSeedGenres {
+	my $client = shift;
+	my $num_seedtracks = $prefs->get('num_seedtracks');
+	my $seedTracks = Slim::Plugin::DontStopTheMusic::Plugin->getMixableProperties($client, $num_seedtracks);
+
+	if ($seedTracks && ref $seedTracks && scalar @$seedTracks) {
+		my @seedIDs = ();
+		my @seedsToUse = ();
+		foreach my $seedTrack (@$seedTracks) {
+			my ($trackObj) = Slim::Schema->find('Track', $seedTrack->{id});
+			if ($trackObj) {
+				push @seedsToUse, $trackObj;
+				push @seedIDs, $seedTrack->{id};
+			}
+		}
+
+		if (scalar @seedsToUse > 0) {
+			my $genrelist;
+			foreach my $thisID (@seedIDs) {
+				my $track = Slim::Schema->resultset("Track")->find($thisID);
+				my $thisgenreid = $track->genre->id;
+				$log->debug("seed genrename = ".$track->genre->name." -- genre ID: ".$thisgenreid);
+				push @$genrelist,$thisgenreid;
+			}
+			my @filteredgenrelist = sort (uniq(@$genrelist));
+
+			my $includedgenrelist = '';
+			foreach my $thisincludedgenre (@filteredgenrelist) {
+				if ($includedgenrelist eq '') {
+					$includedgenrelist = $thisincludedgenre;
+				} else {
+					$includedgenrelist = $includedgenrelist.",".$thisincludedgenre;
+				}
+			}
+			return $includedgenrelist;
+		}
+	}
+}
+
+sub getExcludedGenreList {
+	my $excludegenres_namelist = $prefs->get('excludegenres_namelist');
+	my $excludedgenreString = '';
+	if ((defined $excludegenres_namelist) && (scalar @$excludegenres_namelist > 0)) {
+		foreach my $thisgenre (@$excludegenres_namelist) {
+			if ($excludedgenreString eq '') {
+				$excludedgenreString = "'".$thisgenre."'";
+			} else {
+				$excludedgenreString = $excludedgenreString.", '".$thisgenre."'";
+			}
+		}
+	}
+	return $excludedgenreString;
+}
+
+sub dontStopTheMusic {
+	my ($mixtype, $client, $cb) = @_;
+	return unless $client;
+	$log->debug("DSTM mixtype = ".$mixtype);
+
+	my $tracks = [];
+	my $sql_limit = 30;
+
+	my $excludedgenrelist = getExcludedGenreList();
+	$log->debug("excludedgenrelist = ".$excludedgenrelist);
+	my $dstm_minTrackDuration = $prefs->get('dstm_minTrackDuration');
+	my $dstm_percentagerated = $prefs->get('dstm_percentagerated');
+	my $dstm_percentageratedhigh = $prefs->get('dstm_percentageratedhigh');
+	my $sqlstatement;
+
+	# Mix: Rated
+	if ($mixtype eq 'rated') {
+		$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $sql_limit;";
+	}
+
+	# Mix: "Rated (with % of rated 3 stars+)"
+	if ($mixtype eq 'rated_high') {
+		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
+DROP TABLE IF EXISTS randomweightedratingslow;
+DROP TABLE IF EXISTS randomweightedratingscombined;
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentageratedhigh);
+";
+		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentageratedhigh;
+";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
+SELECT * from randomweightedratingscombined ORDER BY random() limit $sql_limit;
+DROP TABLE randomweightedratingshigh;
+DROP TABLE randomweightedratingslow;
+DROP TABLE randomweightedratingscombined;";
+	}
+
+	# Mix: "Rated (seed genres)"
+	if ($mixtype eq 'rated_genre') {
+		my $dstm_includegenres = getSeedGenres($client);
+		$sqlstatement = "select tracks.url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $sql_limit;";
+	}
+
+	# Mix: "Rated (seed genres with % of rated 3 stars+)"
+	if ($mixtype eq 'rated_genre_high') {
+		my $dstm_includegenres = getSeedGenres($client);
+		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
+DROP TABLE IF EXISTS randomweightedratingslow;
+DROP TABLE IF EXISTS randomweightedratingscombined;
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentageratedhigh);
+";
+		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= 50 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentageratedhigh;
+";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
+SELECT * from randomweightedratingscombined ORDER BY random() limit $sql_limit;
+DROP TABLE randomweightedratingshigh;
+DROP TABLE randomweightedratingslow;
+DROP TABLE randomweightedratingscombined;";
+	}
+
+	# Mix: "UNrated (with % of RATED Songs)"
+	if ($mixtype eq 'unrated_rated') {
+		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
+DROP TABLE IF EXISTS randomweightedratingsunrated;
+DROP TABLE IF EXISTS randomweightedratingscombined;
+create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentagerated);
+";
+
+		$sqlstatement .= "create temporary table randomweightedratingsrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentagerated;
+";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
+SELECT * from randomweightedratingscombined ORDER BY random() limit $sql_limit;
+DROP TABLE randomweightedratingsrated;
+DROP TABLE randomweightedratingsunrated;
+DROP TABLE randomweightedratingscombined;";
+	}
+
+	# Mix: "UNrated (seed genres with % of RATED songs)"
+	if ($mixtype eq 'unrated_rated_genre') {
+		my $dstm_includegenres;
+		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
+DROP TABLE IF EXISTS randomweightedratingsunrated;
+DROP TABLE IF EXISTS randomweightedratingscombined;
+create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentagerated);
+";
+
+		$sqlstatement .= "create temporary table randomweightedratingsrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentagerated;
+";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
+SELECT * from randomweightedratingscombined ORDER BY random() limit $sql_limit;
+DROP TABLE randomweightedratingsrated;
+DROP TABLE randomweightedratingsunrated;
+DROP TABLE randomweightedratingscombined;";
+	}
+
+	my $dbh = getCurrentDBH();
+	for my $sql (split(/[\n\r]/,$sqlstatement)) {
+		eval {
+			my $sth = $dbh->prepare( $sql );
+			$sth->execute() or do {
+				$sql = undef;
+			};
+			if ($sql =~ /^\(*SELECT+/oi) {
+				my $trackURL;
+				$sth->bind_col(1,\$trackURL);
+
+				while( $sth->fetch()) {
+					my $track = Slim::Schema->resultset("Track")->objectForUrl($trackURL);
+					push @$tracks, $track;
+				}
+			}
+			$sth->finish();
+		};
+	}
+
+	# Prune previously played playlist tracks
+	my $songIndex = Slim::Player::Source::streamingSongIndex($client);
+	my $songsToKeep = 5;
+	if ($songIndex && $songsToKeep ne '') {
+		for (my $i = 0; $i < $songIndex - $songsToKeep; $i++) {
+			my $request = $client->execute(['playlist', 'delete', 0]);
+			$request->source('PLUGIN_RATINGSLIGHT');
+		}
+	}
+
+	$cb->($client, $tracks);
 }
 
 sub getDynamicPlayLists {
@@ -2098,13 +2449,22 @@ sub getNextDynamicPlayListTracks {
 	my ($client,$playlist,$limit,$offset,$parameters) = @_;
 	my $clientID = $client->id;
 	my $DPLid = @$playlist{dynamicplaylistid};
+	$log->debug("DynamicPlaylist name = ".$DPLid);
+	my $dstm_minTrackDuration = $prefs->get('dstm_minTrackDuration');
+	my $excludedgenrelist = getExcludedGenreList();
+	$log->debug("excludedgenrelist = ".$excludedgenrelist);
+
 	my @result = ();
-	my ($items, $sqlstatement, $track);
-	my $dbh = getCurrentDBH();
+	my $sqlstatement;
 
 	# Playlist1: "Rated"
 	if ($DPLid eq 'ratingslight_rated') {
-		$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and dynamicplaylist_history.id is null and excludecomments.id is null and tracks.secs>90 and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ('Classical','Classical - Opera','Classical - BR','Soundtrack - TV & Movie Themes')) group by tracks.id order by random() limit $limit;";
+		$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and dynamicplaylist_history.id is null and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
 	}
 
 	# Playlist2: "Rated (with % of rated 3 stars+)"
@@ -2113,9 +2473,23 @@ sub getNextDynamicPlayListTracks {
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
 DROP TABLE IF EXISTS randomweightedratingslow;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ('Classical','Classical - Opera','Classical - BR','Soundtrack - TV & Movie Themes')) order by random() limit (100-$percentagevalue);
-create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='clientID' where audio=1 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ('Classical','Classical - Opera','Classical - BR','Soundtrack - TV & Movie Themes')) order by random() limit $percentagevalue;
-create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit (100-$percentagevalue);
+";
+
+		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='clientID' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $percentagevalue;
+";
+
+		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
 SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
 DROP TABLE randomweightedratingshigh;
 DROP TABLE randomweightedratingslow;
@@ -2125,7 +2499,12 @@ DROP TABLE randomweightedratingscombined;";
 	# Playlist3: "Rated - by DECADE"
 	if ($DPLid eq 'ratingslight_rated-by_decade') {
 		my $decade = $parameters->{1}->{'value'};
-		$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='clientID' where audio=1 and dynamicplaylist_history.id is null and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs>90 and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ('Classical','Classical - Opera','Classical - BR','Soundtrack - TV & Movie Themes')) group by tracks.id order by random() limit $limit;";
+		$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='clientID' where audio=1 and dynamicplaylist_history.id is null and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
 	}
 
 	# Playlist4: "Rated - by DECADE (with % of rated 3 stars+)"
@@ -2135,9 +2514,23 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
 DROP TABLE IF EXISTS randomweightedratingslow;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ('Classical','Classical - Opera','Classical - BR','Soundtrack - TV & Movie Themes')) order by random() limit (100-$percentagevalue);
-create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= 50 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ('Classical','Classical - Opera','Classical - BR','Soundtrack - TV & Movie Themes')) order by random() limit $percentagevalue;
-create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit (100-$percentagevalue);
+";
+
+		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= 50 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $percentagevalue;
+";
+
+		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
 SELECT * from randomweightedratingscombined ORDER BY random()limit $limit;
 DROP TABLE randomweightedratingshigh;
 DROP TABLE randomweightedratingslow;
@@ -2147,7 +2540,7 @@ DROP TABLE randomweightedratingscombined;";
 	# Playlist5: "Rated - by GENRE"
 	if ($DPLid eq 'ratingslight_rated-by_genre') {
 		my $genre = $parameters->{1}->{'value'};
-		$sqlstatement = "select tracks.url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and dynamicplaylist_history.id is null and excludecomments.id is null and tracks.secs>90 group by tracks.id order by random() limit $limit;";
+		$sqlstatement = "select tracks.url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and dynamicplaylist_history.id is null and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration group by tracks.id order by random() limit $limit;";
 	}
 
 	# Playlist6: "Rated - by GENRE (with % of rated 3 stars+)"
@@ -2157,8 +2550,8 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
 DROP TABLE IF EXISTS randomweightedratingslow;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null order by random() limit (100-$percentagevalue);
-create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= 50 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null order by random() limit $percentagevalue;
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null order by random() limit (100-$percentagevalue);
+create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= 50 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null order by random() limit $percentagevalue;
 create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
 SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
 DROP TABLE randomweightedratingshigh;
@@ -2170,7 +2563,7 @@ DROP TABLE randomweightedratingscombined;";
 	if ($DPLid eq 'ratingslight_rated-by_genre_and_decade') {
 		my $genre = $parameters->{1}->{'value'};
 		my $decade = $parameters->{2}->{'value'};
-		$sqlstatement = "select tracks.url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and dynamicplaylist_history.id is null and excludecomments.id is null and tracks.secs>90 and tracks.year>=$decade and tracks.year<$decade+10 group by tracks.id order by random() limit $limit;";
+		$sqlstatement = "select tracks.url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and dynamicplaylist_history.id is null and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and tracks.year>=$decade and tracks.year<$decade+10 group by tracks.id order by random() limit $limit;";
 	}
 
 	# Playlist8: "Rated - by GENRE + DECADE (with % of rated 3 stars+)"
@@ -2181,8 +2574,8 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
 DROP TABLE IF EXISTS randomweightedratingslow;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null order by random() limit (100-$percentagevalue);
-create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 50 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null order by random() limit $percentagevalue;
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null order by random() limit (100-$percentagevalue);
+create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 50 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null order by random() limit $percentagevalue;
 create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
 SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
 DROP TABLE randomweightedratingshigh;
@@ -2196,9 +2589,23 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
 DROP TABLE IF EXISTS randomweightedratingsunrated;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ('Classical','Classical - Opera','Classical - BR','Soundtrack - TV & Movie Themes')) order by random() limit (100-$percentagevalue);
-create temporary table randomweightedratingsrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ('Classical','Classical - Opera','Classical - BR','Soundtrack - TV & Movie Themes')) order by random() limit $percentagevalue;
-create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
+create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit (100-$percentagevalue);
+";
+
+		$sqlstatement .= "create temporary table randomweightedratingsrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $percentagevalue;
+";
+
+		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
 SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
 DROP TABLE randomweightedratingsrated;
 DROP TABLE randomweightedratingsunrated;
@@ -2212,9 +2619,23 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
 DROP TABLE IF EXISTS randomweightedratingsunrated;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and tracks.secs>90 and dynamicplaylist_history.id is null and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ('Classical','Classical - Opera','Classical - BR','Soundtrack - TV & Movie Themes')) order by random() limit (100-$percentagevalue);
-create temporary table randomweightedratingsrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ('Classical','Classical - Opera','Classical - BR','Soundtrack - TV & Movie Themes')) order by random() limit $percentagevalue;
-create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
+create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit (100-$percentagevalue);
+";
+
+		$sqlstatement .= "create temporary table randomweightedratingsrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null";
+
+		if ($excludedgenrelist ne '') {
+			$sqlstatement .= " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $percentagevalue;
+";
+
+		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
 SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
 DROP TABLE randomweightedratingsrated;
 DROP TABLE randomweightedratingsunrated;
@@ -2228,8 +2649,8 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
 DROP TABLE IF EXISTS randomweightedratingsunrated;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null order by random() limit (100-$percentagevalue);
-create temporary table randomweightedratingsrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null order by random() limit $percentagevalue;
+create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null order by random() limit (100-$percentagevalue);
+create temporary table randomweightedratingsrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null order by random() limit $percentagevalue;
 create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
 SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
 DROP TABLE randomweightedratingsrated;
@@ -2245,8 +2666,8 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
 DROP TABLE IF EXISTS randomweightedratingsunrated;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null order by random() limit (100-$percentagevalue);
-create temporary table randomweightedratingsrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs>90 and dynamicplaylist_history.id is null order by random() limit $percentagevalue;
+create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null order by random() limit (100-$percentagevalue);
+create temporary table randomweightedratingsrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0 left join comments as excludecomments on tracks.id=excludecomments.track and excludecomments.value like '%%never%%' left join dynamicplaylist_history on tracks.id=dynamicplaylist_history.id and dynamicplaylist_history.client='$clientID' where audio=1 and tracks.year>=$decade and tracks.year<$decade+10 and excludecomments.id is null and tracks.secs >= $dstm_minTrackDuration and dynamicplaylist_history.id is null order by random() limit $percentagevalue;
 create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
 SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
 DROP TABLE randomweightedratingsrated;
@@ -2254,8 +2675,9 @@ DROP TABLE randomweightedratingsunrated;
 DROP TABLE randomweightedratingscombined;";
 	}
 
+	my $dbh = getCurrentDBH();
 	for my $sql (split(/[\n\r]/,$sqlstatement)) {
-    	eval {
+		eval {
 			my $sth = $dbh->prepare( $sql );
 			$sth->execute() or do {
 				$sql = undef;
@@ -2265,7 +2687,7 @@ DROP TABLE randomweightedratingscombined;";
 				$sth->bind_col(1,\$trackURL);
 
 				while( $sth->fetch()) {
-					$track = Slim::Schema->resultset("Track")->objectForUrl($trackURL);
+					my $track = Slim::Schema->resultset("Track")->objectForUrl($trackURL);
 					push @result,$track;
 				}
 			}
@@ -2303,72 +2725,6 @@ sub getCustomSkipFilterTypes {
 	push @result, \%notrated;
 
 	return \@result;
-}
-
-sub changeExportFilePath {
-	my $trackURL = shift;
-	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
-	my $exportextension = $prefs->get('exportextension');
-
-	if (scalar @$exportbasefilepathmatrix > 0) {
-		foreach my $thispath (@$exportbasefilepathmatrix) {
-			if  (($trackURL =~ ($thispath->{'lmsbasepath'})) && (defined ($thispath->{'substitutebasepath'})) && (($thispath->{'substitutebasepath'}) ne '')) {
-				my $lmsbasepath = $thispath->{'lmsbasepath'};
-				my $substitutebasepath = $thispath->{'substitutebasepath'};
-				if (defined $exportextension) {
-					$trackURL =~ s/\.[^.]*$/\.$exportextension/isg;
-				}
-				$lmsbasepath =~ s/\\/\//isg;
-				$lmsbasepath =~ s/(^\/*)|(\/*$)//isg;
-				$substitutebasepath =~ s/\\/\//isg;
-				$substitutebasepath =~ s/(^\/*)|(\/*$)//isg;
-				$substitutebasepath = escape($substitutebasepath);
-				$trackURL =~ s/$lmsbasepath/$substitutebasepath/isg;
-				$trackURL =~ s/\/{2,}/\//isg;
-				$trackURL =~ s/file:\//file:\/\/\//isg;
-			}
-		}
-	}
-	return $trackURL;
-}
-
-sub initExportBaseFilePathMatrix {
-	# get LMS music dirs
-	my $mediadirs = $serverPrefs->get('mediadirs');
-	my $ignoreInAudioScan = $serverPrefs->get('ignoreInAudioScan');
-	my @lmsmusicdirs;
-	my %musicdircount;
-	my $thisdir;
-	foreach $thisdir (@$mediadirs, @$ignoreInAudioScan) { $musicdircount{$thisdir}++ }
-	foreach $thisdir (keys %musicdircount) {
-		if ($musicdircount{$thisdir} == 1) {
-			push (\@lmsmusicdirs, $thisdir);
-		}
-	}
-
-	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
-	if (!defined $exportbasefilepathmatrix) {
-		my $n = 0;
-		foreach my $musicdir (@lmsmusicdirs) {
-			push(@$exportbasefilepathmatrix, { lmsbasepath => $musicdir, substitutebasepath => ''});
-			$n++;
-		}
-		$prefs->set('exportbasefilepathmatrix', $exportbasefilepathmatrix);
-	} else {
-		# add new music dirs as options if not in list
-		my @currentlmsbasefilepaths;
-		foreach my $thispath (@$exportbasefilepathmatrix) {
-			push (@currentlmsbasefilepaths, $thispath->{'lmsbasepath'});
-		}
-
-		my %seen;
-		@seen{@currentlmsbasefilepaths} = ();
-
-		foreach my $newdir (@lmsmusicdirs) {
-			push (@$exportbasefilepathmatrix, { lmsbasepath => $newdir, substitutebasepath => ''}) unless exists $seen{$newdir};
-		}
-		$prefs->set('exportbasefilepathmatrix', \@$exportbasefilepathmatrix);
-	}
 }
 
 sub checkCustomSkipFilterType {
@@ -2470,13 +2826,13 @@ sub addTitleFormat {
 }
 
 sub isTimeOrEmpty {
-        my $name = shift;
-        my $arg = shift;
-        if(!$arg || $arg eq '') {
-                return 1;
-        }elsif ($arg =~ m/^([0\s]?[0-9]|1[0-9]|2[0-4]):([0-5][0-9])\s*(P|PM|A|AM)?$/isg) {
-                return 1;
-        }
+	my $name = shift;
+	my $arg = shift;
+	if(!$arg || $arg eq '') {
+		return 1;
+	}elsif ($arg =~ m/^([0\s]?[0-9]|1[0-9]|2[0-4]):([0-5][0-9])\s*(P|PM|A|AM)?$/isg) {
+		return 1;
+	}
 	return 0;
 }
 
@@ -2501,6 +2857,11 @@ sub rollback {
 sub parse_duration {
 	use integer;
 	sprintf("%02dh:%02dm", $_[0]/3600, $_[0]/60%60);
+}
+
+sub uniq {
+	my %seen;
+	grep !$seen{$_}++, @_;
 }
 
 *escape = \&URI::Escape::uri_escape_utf8;

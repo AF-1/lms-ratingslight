@@ -1,6 +1,9 @@
 package Plugins::RatingsLight::Settings::Import;
 
 use strict;
+use warnings;
+use utf8;
+
 use base qw(Plugins::RatingsLight::Settings::BaseSettings);
 
 use Slim::Utils::Log;

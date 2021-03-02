@@ -1,0 +1,45 @@
+[% page = "PLUGIN_RATINGSLIGHT" %]
+[% PROCESS settings/header.html %]
+
+[% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_DESC" %]
+	<input type="text" class="stdedit" name="pref_dstm_percentagerated" id="dstm_percentagerated" value="[% prefs.dstm_percentagerated %]" size="3">
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_HIGH" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_HIGH_DESC" %]
+	<input type="text" class="stdedit" name="pref_dstm_percentageratedhigh" id="dstm_percentageratedhigh" value="[% prefs.dstm_percentageratedhigh %]" size="3">
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS_DESC" %]
+	<input type="text" class="stdedit" name="pref_num_seedtracks" id="num_seedtracks" value="[% prefs.num_seedtracks %]" size="3">
+[% END %]
+<br><hr>
+[% WRAPPER setting title="" desc="" %]
+<b>The settings below apply to "Don't Stop The Music" mixes <u>and</u> "Dynamic Playlist" smart playlists.</b>
+[% END %]
+<span style="height:8px;"></span>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR_DESC" %]
+	<input type="text" class="stdedit" name="pref_dstm_minTrackDuration" id="dstm_minTrackDuration" value="[% prefs.dstm_minTrackDuration %]" size="3">
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES_DESC" %]
+	<table border="0" width="100%">[% USE table(excludedgenrelist, cols=3, pad=0) %]
+		[%- FOREACH genrerow = table.rows %]
+			<tr>
+				[%- FOREACH excludedgenre = genrerow %]
+				<td>
+					<input type="checkbox" name="pref_excludedgenre_[% excludedgenre.id %]" id="[% excludedgenre.id %]" value="1" [% excludedgenre.chosen ? "checked" : "" %]>
+					<label for="[% excludedgenre.id %]">[% excludedgenre.name | html %]</label>
+				</td>
+				[%- END %]
+			</tr>
+		[%- END %]
+	</table>
+[% END %]
+
+[% PROCESS settings/footer.html %]
