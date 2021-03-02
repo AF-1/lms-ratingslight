@@ -1954,20 +1954,20 @@ sub initExportBaseFilePathMatrix {
 	# get LMS music dirs
 	my $mediadirs = $serverPrefs->get('mediadirs');
 	my $ignoreInAudioScan = $serverPrefs->get('ignoreInAudioScan');
-	my @lmsmusicdirs;
+	my $lmsmusicdirs = [];
 	my %musicdircount;
 	my $thisdir;
 	foreach $thisdir (@$mediadirs, @$ignoreInAudioScan) { $musicdircount{$thisdir}++ }
 	foreach $thisdir (keys %musicdircount) {
 		if ($musicdircount{$thisdir} == 1) {
-			push (\@lmsmusicdirs, $thisdir);
+			push (@$lmsmusicdirs, $thisdir);
 		}
 	}
 
 	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
 	if (!defined $exportbasefilepathmatrix) {
 		my $n = 0;
-		foreach my $musicdir (@lmsmusicdirs) {
+		foreach my $musicdir (@$lmsmusicdirs) {
 			push(@$exportbasefilepathmatrix, { lmsbasepath => $musicdir, substitutebasepath => ''});
 			$n++;
 		}
@@ -1982,7 +1982,7 @@ sub initExportBaseFilePathMatrix {
 		my %seen;
 		@seen{@currentlmsbasefilepaths} = ();
 
-		foreach my $newdir (@lmsmusicdirs) {
+		foreach my $newdir (@$lmsmusicdirs) {
 			push (@$exportbasefilepathmatrix, { lmsbasepath => $newdir, substitutebasepath => ''}) unless exists $seen{$newdir};
 		}
 		$prefs->set('exportbasefilepathmatrix', \@$exportbasefilepathmatrix);
