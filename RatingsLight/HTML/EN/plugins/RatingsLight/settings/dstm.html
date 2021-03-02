@@ -28,7 +28,7 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES_DESC" %]
-	<table border="0" width="100%">[% USE table(excludedgenrelist, cols=3, pad=0) %]
+	<table border="0" width="100%">[% USE table excludedgenrelist, cols=3, pad=0 %]
 		[%- FOREACH genrerow = table.rows %]
 			<tr>
 				[%- FOREACH excludedgenre = genrerow %]

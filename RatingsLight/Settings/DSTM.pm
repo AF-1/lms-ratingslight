@@ -21,7 +21,7 @@ my $plugin;
 sub new {
 	my $class = shift;
 	$plugin = shift;
-	$class->SUPER::new($plugin,1);
+	$class->SUPER::new($plugin);
 }
 
 sub name {
@@ -74,7 +74,7 @@ sub handler {
  			}
 		}
 		$sth->finish();
-		
+
  		$prefs->set('excludegenres_namelist', $excludegenres_namelist);
  		$log->debug('*** saved *** excludegenres_namelist = '.Dumper($excludegenres_namelist));
  		$paramRef->{@$excludegenres} = $excludegenres;
@@ -88,7 +88,7 @@ sub handler {
 
 	# push to settings page
 
-	$paramRef->{excludegenres} = [];
+	$paramRef->{excludedgenrelist} = [];
 
 	my $excludegenres;
 	my $excludegenres_namelist = $prefs->get('excludegenres_namelist');
@@ -103,7 +103,7 @@ sub handler {
 	my ($excludedgenre_id, $excludedgenre_name);
 	$sth->bind_col(1,\$excludedgenre_id);
 	$sth->bind_col(2,\$excludedgenre_name);
-	
+
 	while( $sth->fetch()) {
 		my %excludedgenres_chosen = map { $_ => 1 } @$excludegenres_namelist;
 		if(exists($excludedgenres_chosen{$excludedgenre_name})) {
