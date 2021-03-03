@@ -65,7 +65,7 @@ sub handler {
 			}
 		}
 		$log->debug("*** SAVED *** excludegenres_namelist = ".Dumper($excludegenres_namelist));
-		$prefs->set('excludegenres_namelist', sort ($excludegenres_namelist));
+		$prefs->set('excludegenres_namelist', $excludegenres_namelist);
 
 		$result = $class->SUPER::handler($client, $paramRef);
 		$callHandler = 0;
