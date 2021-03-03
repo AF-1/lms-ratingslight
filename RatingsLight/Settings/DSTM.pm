@@ -95,8 +95,12 @@ sub getGenres {
 
 	my $request = Slim::Control::Request::executeRequest(undef, $query);
 
+	my $excludenamelist = $prefs->get('excludegenres_namelist');
 	# Extract each genre name into a hash
-	my %exclude = map { $_ => 1 } @{ $prefs->get('excludegenres_namelist') };
+	my %exclude;
+	if (defined $excludenamelist) {
+		%exclude = map { $_ => 1 } @$excludenamelist;
+	}
 
 	my $i = 0;
 	foreach my $genre ( @{ $request->getResult('genres_loop') || [] } ) {
