@@ -21,7 +21,7 @@ my $plugin;
 sub new {
 	my $class = shift;
 	$plugin = shift;
-	$class->SUPER::new($plugin,1);
+	$class->SUPER::new($plugin);
 }
 
 sub name {
@@ -56,8 +56,7 @@ sub handler {
 	if ($paramRef->{'saveSettings'}) {
 
 		my $excludegenres_namelist;
-
-		my $genres = getGenres($client);
+		my $genres = getGenres();
 
 		# %$paramRef will contain a key called genre_<genre id> for each ticked checkbox on the page
 		for my $genre (keys %{$genres}) {
@@ -66,7 +65,7 @@ sub handler {
 			}
 		}
 		$log->debug("*** SAVED *** excludegenres_namelist = ".Dumper($excludegenres_namelist));
-		$prefs->set('excludegenres_namelist', $excludegenres_namelist);
+		$prefs->set('excludegenres_namelist', sort ($excludegenres_namelist));
 
 		$result = $class->SUPER::handler($client, $paramRef);
 		$callHandler = 0;
@@ -74,7 +73,13 @@ sub handler {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}
 
-	# push to settings page
+
+	return $result;
+}
+
+sub beforeRender {
+	my ($class, $paramRef) = @_;
+
 	my $genrelist = getGenres();
 	$log->debug("genrelist (all genres) = ".Dumper($genrelist));
 	$paramRef->{'genrelist'} = $genrelist;
@@ -82,10 +87,6 @@ sub handler {
 	my $genrelistsorted = [getSortedGenres()];
 	$log->debug("genrelistsorted (just names) = ".Dumper($genrelistsorted));
 	$paramRef->{'genrelistsorted'} = $genrelistsorted;
-
-	$result = $class->SUPER::handler($client, $paramRef);
-
-	return $result;
 }
 
 sub getGenres {
