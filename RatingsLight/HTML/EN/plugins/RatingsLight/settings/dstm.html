@@ -28,13 +28,14 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES_DESC" %]
-	<table border="0" width="100%">[% USE table excludedgenrelist, cols=3, pad=0 %]
+	<table border="0" width="100%">[% USE table genrelistsorted, cols=3, pad=0 %]
 		[%- FOREACH genrerow = table.rows %]
 			<tr>
-				[%- FOREACH excludedgenre = genrerow %]
+				[%- FOREACH genre = genrerow %]
+				[%- genreid = "genre_" _ genrelist.item("$genre").id %]
 				<td>
-					<input type="checkbox" name="pref_excludedgenre_[% excludedgenre.id %]" id="[% excludedgenre.id %]" value="1" [% excludedgenre.chosen ? "checked" : "" %]>
-					<label for="[% excludedgenre.id %]">[% excludedgenre.name | html %]</label>
+					<input type="checkbox" name="[% genreid %]" id="[% genreid %]" value="1" [% genrelist.item("$genre").chosen ? "checked" : "" %]>
+					<label for="[% genreid %]">[% genrelist.item("$genre").name | html %]</label>
 				</td>
 				[%- END %]
 			</tr>
