@@ -1700,7 +1700,7 @@ sub initVirtualLibraries {
 		# check if source virtual library still exists, otherwise use complete library
 		if ((defined $browsemenus_sourceVL_id) && ($browsemenus_sourceVL_id ne '')) {
 			my $VLstillexists = 0;
-			foreach my $thisVLid (keys $libraries) {
+			foreach my $thisVLid (keys % { $libraries } ) {
 				if ($thisVLid eq $browsemenus_sourceVL_id) {
 					$VLstillexists = 1;
 					$log->debug("VL $browsemenus_sourceVL_id exists!");
