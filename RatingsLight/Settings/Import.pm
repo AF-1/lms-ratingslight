@@ -60,7 +60,14 @@ sub handler {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
-		Plugins::RatingsLight::Plugin::importRatingsFromCommentTags();
+		$log->debug("rating keyword prefix = ".$paramRef->{'pref_rating_keyword_prefix'});
+		$log->debug("rating keyword suffix = ".$paramRef->{'pref_rating_keyword_suffix'});
+		if (((!defined ($paramRef->{'pref_rating_keyword_prefix'})) || ($paramRef->{'pref_rating_keyword_prefix'} eq '')) && ((!defined ($paramRef->{'pref_rating_keyword_suffix'})) || ($paramRef->{'pref_rating_keyword_suffix'} eq ''))) {
+			$paramRef->{'missingkeywords'} = 1;
+			$result = $class->SUPER::handler($client, $paramRef);
+		} else {
+			Plugins::RatingsLight::Plugin::importRatingsFromCommentTags();
+		}
 	}elsif($paramRef->{'rateplaylistnow'}) {
 		if($callHandler) {
 			$paramRef->{'saveSettings'} = 1;
@@ -81,7 +88,6 @@ sub beforeRender {
 	my $playlistcount = $queryresult->{_results}{count};
 
 	if ($playlistcount > 0) {
-		my ($playlistname, $playlistid);
 		my $playlistarray = $queryresult->{_results}{playlists_loop};
 		my @sortedarray = sort {$a->{id} <=> $b->{id}} @$playlistarray;
 		$paramRef->{allplaylists} = \@sortedarray;

@@ -73,7 +73,6 @@ sub handler {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}
 
-
 	return $result;
 }
 

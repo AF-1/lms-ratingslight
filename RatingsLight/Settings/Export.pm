@@ -46,7 +46,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(onlyratingnotmatchcommenttag exportextension));
+	return ($prefs, qw(onlyratingnotmatchcommenttag exportextension exportVL_id));
 }
 
 sub handler {
@@ -103,6 +103,47 @@ sub handler {
 	$result = $class->SUPER::handler($client, $paramRef);
 
 	return $result;
+}
+
+sub beforeRender {
+	my ($class, $paramRef) = @_;
+
+	my @items;
+	my $libraries = Slim::Music::VirtualLibraries->getLibraries();
+
+	my $localonlyname = Slim::Music::VirtualLibraries->getNameForId("localTracksOnly");
+	my $preferlocalname = Slim::Music::VirtualLibraries->getNameForId("preferLocalLibraryOnly");
+	my @hiddenVLs = ("Ratings Light - ", $preferlocalname, $localonlyname);
+
+	sub regex {
+		my ($VLname, @hiddenVLs) = @_;
+		my $match = 0;
+		my $re = join '|', map { quotemeta } @hiddenVLs;
+		if ($VLname =~ /^($re)/) {
+			$match = 1;
+		}
+		return $match;
+	}
+
+	while (my ($k, $v) = each %$libraries) {
+		my $count = Slim::Utils::Misc::delimitThousands(Slim::Music::VirtualLibraries->getTrackCount($k));
+		my $name = Slim::Music::VirtualLibraries->getNameForId($k);
+
+		if (regex ($name, @hiddenVLs) != 1) {
+			push @items, {
+				name => $name." (".$count.($count == 1 ? " track)" : " tracks)"),
+				sortName => $name,
+				library_id => $k,
+			};
+		}
+	}
+	push @items, {
+		name => "Complete Library (Default)",
+		sortName => " Complete Library",
+		library_id => undef,
+	};
+	@items = sort { $a->{sortName} cmp $b->{sortName} } @items;
+	$paramRef->{virtuallibraries} = \@items;
 }
 
 sub trim {

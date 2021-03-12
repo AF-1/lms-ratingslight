@@ -44,64 +44,70 @@ PLUGIN_RATINGSLIGHT_SETTINGS_DSTM
 
 
 
-PLUGIN_RATINGSLIGHT_REMOTEBUTTONS
+PLUGIN_RATINGSLIGHT_VARIOUS_REMOTEBUTTONS
 	EN	Rating with remote buttons
 
-PLUGIN_RATINGSLIGHT_REMOTEBUTTONS_DESC
-	EN	Use the buttons of your Logitech IR remote to rate the track that is currently playing on your device (devices with a VFD display like Squeezebox, Boom, Transporter).<br><br><b>Press and hold</b> the key until you see a message on your display confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5  =  1 to 5 stars<br>0  =  unrate<br>8  =  subtract 0.5 stars from current rating<br>9  =  add 0.5 stars to current rating<br>arrow up  =  add 1 star to current rating<br>arrow down  =  subtract 1 star from current rating<br><br><b>Boom only:</b><br>Use the <b>arrow up</b> and <b>arrow down</b> keys for track rating with the Boom's mini remote.
+PLUGIN_RATINGSLIGHT_VARIOUS_REMOTEBUTTONS_DESC
+	EN	Use the buttons of your Logitech IR remote to rate the track that is currently playing on your device <br>(devices with a VFD display like Squeezebox, Boom, Transporter).<br><br><b>Press and hold</b> the key until you see a message on your display confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5  =  1 to 5 stars<br>0  =  unrate<br>8  =  subtract 0.5 stars from current rating<br>9  =  add 0.5 stars to current rating<br><br><b>Boom only:</b><br>Use the <b>arrow up</b> and <b>arrow down</b> keys for track rating with the Boom's mini remote.<br><br>arrow up  =  add 1 star to current rating<br>arrow down  =  subtract 1 star from current rating
 
-PLUGIN_RATINGSLIGHT_DYNAMICPLAYLISTINTEGRATION
+PLUGIN_RATINGSLIGHT_VARIOUS_DYNAMICPLAYLISTINTEGRATION
 	EN	DynamicPlaylists integration
 
-PLUGIN_RATINGSLIGHT_DYNAMICPLAYLISTINTEGRATION_DESC
+PLUGIN_RATINGSLIGHT_VARIOUS_DYNAMICPLAYLISTINTEGRATION_DESC
 	EN	If enabled <i>Ratings Light</i> will provide a set of <b>ratings-based smart playlists</b> ready for use with the <i>DynamicPlaylists</i> plugin.
 
-PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST
+PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST
 	EN	Recently rated playlist
 
-PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_DESC
-	EN	Keeps a playlist of recently rated tracks.<br>Ignores batch rating actions (imports (playlist/comment tags) and restores from backup).
+PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_DESC
+	EN	Keeps a playlist of recently rated tracks.<br>Ignores batch rating actions like imports or restores from backup.
 
-PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_MAXCOUNT
+PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_MAXCOUNT
 	EN	Max. number of tracks<br>in Recently Rated playlist
 
-PLUGIN_RATINGSLIGHT_USERECENTLYADDEDPLAYLIST_MAXCOUNT_DESC
+PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_MAXCOUNT_DESC
 	EN	Limits the number of tracks in the <i>Recently Rated playlist</i> (between 2 and 200).
 
-PLUGIN_RATINGSLIGHT_USELOGFILE
+PLUGIN_RATINGSLIGHT_VARIOUS_USELOGFILE
 	EN	Log changed ratings
 
-PLUGIN_RATINGSLIGHT_USELOGFILE_DESC
+PLUGIN_RATINGSLIGHT_VARIOUS_USELOGFILE_DESC
 	EN	Keep track of your recently rated songs with a plain text log file.
 
-PLUGIN_RATINGSLIGHT_RATINGSLIGHT_PARENTFOLDERPATH
+PLUGIN_RATINGSLIGHT_VARIOUS_RATINGSLIGHT_PARENTFOLDERPATH
 	EN	Location of the Ratings Light folder
 
-PLUGIN_RATINGSLIGHT_RATINGSLIGHT_PARENTFOLDERPATH_DESC
+PLUGIN_RATINGSLIGHT_VARIOUS_RATINGSLIGHT_PARENTFOLDERPATH_DESC
 	EN	Choose a location (<b>parent</b> folder) for the <i>Ratings Light</i> folder where this plugin stores exported playlist files, (scheduled) backups, and rating logs.
 
-PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW
+PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_NOW
 	EN	Clear all ratings
 
-PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_DESC
+PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_NOW_DESC
 	EN	This will clear all ratings in your database.
 
-PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_BUTTON
+PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_NOW_BUTTON
 	EN	Clear ratings now
 
-PLUGIN_RATINGSLIGHT_CLEARALLRATINGS_NOW_WARNING
+PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_NOW_WARNING
 	EN	This will clear all ratings!
+
+PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_INPROGRESS
+	EN	clearing...
 
 
 
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES
-	EN	Export rated tracks to playlist files
+	EN	Export rated tracks<br>from this library (view)<br>to playlist files
+
+PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_DESC
+	EN	Choose a library (view) and export its rated tracks to playlist files, e.g. for import of LMS rated tracks into other apps.<br>Files are exported to the <i>Ratings Light</i> folder and have a m3u.txt-extension so they won't get picked up by LMS scans.
 
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_BUTTON
 	EN	Export now
 
-PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_DESC
-	EN	Export rated tracks to playlist files, e.g. for import of LMS rated tracks into other apps. Files are exported to the <i>Ratings Light</i> folder and have a m3u.txt-extension so they won't get picked up by LMS scans.
+PLUGIN_RATINGSLIGHT_EXPORT_INPROGRESS
+	EN	exporting...
 
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF
 	EN	Export only tracks with rating values different from comment tag ratings
@@ -132,6 +138,9 @@ PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION_DESC
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS
 	EN	Playlists
 
+PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_HEADER
+	EN	<b>Import ratings by setting a rating value for <b>all</b> tracks in a playlist.</b>
+
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLNAME
 	EN	Playlist Name
 
@@ -145,8 +154,20 @@ PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS
 	EN	Comment Tags
 
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_HEADER
+	EN	<b>Import ratings derived from keywords in the comment tags of your files.</b>
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_EXAMPLE
+	EN	<b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx": if a comment tag contains "favstars<b>4</b>xx" -> track rating = <b>4</b> stars
+
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD
 	EN	Set your rating keywords
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_PREFIX
+	EN	<b>Rating Keyword <u>Pre</u>fix</b>
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_SUFFIX
+	EN	<b>Rating Keyword <u>Suf</u>fix</b>
 
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_DESC
 	EN	At least one field must be filled.<br>Up to 30 letters, case insensitive, no numbers or special characters.<br>Please use <b>integers as rating values</b> in your keywords, no half-star rating values.
@@ -166,6 +187,12 @@ PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_DESC
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON
 	EN	Import now
 
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_MISSINGKEYWORDS
+	EN	You have to set at least one keyword!
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_INPROGRESS
+	EN	importing...
+
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON_WARNING
 	EN	This will reset all ratings and overwrite them with rating values derived from the keywords in the comment tags.
 
@@ -174,31 +201,34 @@ PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON_WARNING
 PLUGIN_RATINGSLIGHT_BACKUP
 	EN	Backup
 
-PLUGIN_RATINGSLIGHT_MANUAL_BACKUP
+PLUGIN_RATINGSLIGHT_BACKUP_MANUAL_BACKUP
 	EN	Manual Backup
 
-PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_DESC
-	EN	Backup your rated tracks and their rating values to a single backup file.
+PLUGIN_RATINGSLIGHT_BACKUP_MANUAL_BACKUP_DESC
+	EN	Backup all <b>rated</b> tracks (from your entire library) and their rating values to a single backup file.
 
-PLUGIN_RATINGSLIGHT_MANUAL_BACKUP_BUTTON
+PLUGIN_RATINGSLIGHT_BACKUP_MANUAL_BACKUP_BUTTON
 	EN	Backup now
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS
+PLUGIN_RATINGSLIGHT_BACKUP_MANUAL_BACKUP_INPROGRESS
+	EN	creating backup...
+
+PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS
 	EN	Scheduled Backups
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_DESC
+PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_DESC
 	EN	Enable scheduled daily backups
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPTIME
+PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME
 	EN	Backup Time
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPTIME_DESC
+PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME_DESC
 	EN	Set the time for your daily backup. If you leave this empty no scheduled backups will occur.
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP
+PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP
 	EN	Delete backups older than
 
-PLUGIN_RATINGSLIGHT_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP_DESC
+PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP_DESC
 	EN	Set the number of days after which old backups will be deleted.
 
 
@@ -220,100 +250,121 @@ PLUGIN_RATINGSLIGHT_RESTORE_NOW_DESC
 PLUGIN_RATINGSLIGHT_RESTORE_BUTTON
 	EN	Restore now
 
+PLUGIN_RATINGSLIGHT_RESTORE_MISSINGFILE
+	EN	You have to select a file first!
+
+PLUGIN_RATINGSLIGHT_RESTORE_NOXMLFILE
+	EN	Please select a valid XML file created with <i>Ratings Light</i> !
+
+PLUGIN_RATINGSLIGHT_RESTORE_INPROGESS
+	EN	restoring...
+
 PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE
 	EN	Clear all ratings before restore
 
 PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE_DESC
-	EN	This will clear all ratings in the database before starting the restore process. All ratings values in your database will be reset to the values from the backup. In other words, ratings not contained in the backup will be lost.
+	EN	This will clear all ratings in the database before starting the restore process. All rating values in your database will be reset to the values from the backup. In other words, ratings not contained in the backup will be lost.
 
 
 
-PLUGIN_RATINGSLIGHT_RATED_TRACKS_MENU_FOLDER
+PLUGIN_RATINGSLIGHT_MENUS_RATED_TRACKS_MENU_FOLDER
 	EN	Rated Tracks
 
-PLUGIN_RATINGSLIGHT_ARTISTMENU_RATEDHIGH
+PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATEDHIGH
 	EN	Artists - with tracks rated 3 stars+
 
-PLUGIN_RATINGSLIGHT_GENREMENU_RATEDHIGH
+PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATEDHIGH
 	EN	Genres - with tracks rated 3 stars+
 
-PLUGIN_RATINGSLIGHT_ARTISTMENU_RATED
+PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATED
 	EN	Artists - with rated tracks
 
-PLUGIN_RATINGSLIGHT_GENREMENU_RATED
+PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATED
 	EN	Genres - with rated tracks
 
-PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS
+PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS
 	EN	Show browse menus for rated tracks
 
-PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DESC
-	EN	Browse your rated tracks by artist or genre.<br>Enable <b>Rated + Rated High</b> to get extra menus for tracks rated 3 stars and higher.<br><br>Please <b>restart LMS</b> for the changed settings to take effect.<br><br>Requires LMS version 7.9 or higher.
+PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_DESC
+	EN	Browse your rated tracks by artist or genre.<br>Enable <b>Rated + Rated High</b> to get extra menus for tracks rated 3 stars and higher.
 
-PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_HIGH
+PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_HIGH
 	EN	Rated + Rated High
 
-PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_RATED_ONLY
+PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_RATED_ONLY
 	EN	Rated
 
-PLUGIN_RATINGSLIGHT_SHOW_RATED_TRACKS_MENUS_DISABLE
+PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_DISABLE
 	EN	Disable menus
 
-PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE
+PLUGIN_RATINGSLIGHT_MENUS_SOURCE_VL
+	EN	Select virtual library<br>for browse menus
+
+PLUGIN_RATINGSLIGHT_MENUS_SOURCE_VL_DESC
+	EN	Select the virtual library for which Ratings Light should create artists and genre browse menus
+
+PLUGIN_RATINGSLIGHT_MENUS_AUTOREBUILD_VLS_AFTER_RATING_CHANGE
 	EN	Auto-refresh browse menus
 
-PLUGIN_RATINGSLIGHT_AUTOREBUILD_VLS_AFTER_RATING_CHANGE_DESC
-	EN	Keep your enabled <b>Rated Tracks</b> menus up-to-date. Refreshing happens after you have set/changed a track rating.<br><br>Requires LMS version 7.9 or higher.
-
-PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE
+PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_DISPLAYMODE
 	EN	Display of context menu ratings
 
-PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE_DESC
+PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_DISPLAYMODE_DESC
 	EN	Context menu ratings (text) can be displayed as stars, text or both.
 
-PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE_STARS_TEXT
+PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_DISPLAYMODE_STARS_TEXT
 	EN	Stars and text
 
-PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE_STARS
+PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_DISPLAYMODE_STARS
 	EN	Stars
 
-PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_DISPLAYMODE_TEXT
+PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_DISPLAYMODE_TEXT
 	EN	Text
 
-PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS
+PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_SETHALFSTARS
 	EN	Allow context menu half-star ratings
 
-PLUGIN_RATINGSLIGHT_RATINGCONTEXTMENU_SETHALFSTARS_DESC
+PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_SETHALFSTARS_DESC
 	EN	Show/hide half-star ratings in the <b>context rating menu</b>. This affects only the context rating menu where you rate tracks.<br>The <b>current track rating</b> in the track context menu will <i>always</i> show the <b>exact</b> track rating incl. half-stars, no matter what.
 
 
-PLUGIN_RATINGSLIGHT_RATEDTRACKSBYARTIST
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST
 	EN	Show rated tracks by
 
-PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST
 	EN	Show more rated tracks by
 
-PLUGIN_RATINGSLIGHT_RATEDTRACKSBYARTIST_LISTHEADER
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_LISTHEADER
 	EN	Rated tracks by
 
-PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_LISTHEADER
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_LISTHEADER
 	EN	More rated tracks by
 
-PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEB_LIMIT
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEB_LIMIT
 	EN	Show more rated tracks - web limit
 
-PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEB_LIMIT_DESC
-	EN	Limits the number of tracks in the <b>LMS web UI</b> menu called "<i>Show more rated tracks by this artist</i>".<br>(min. 5, max. 200) 
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEB_LIMIT_DESC
+	EN	Limits the number of tracks in the <b>LMS web UI</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 200) 
 
-PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
 	EN	Show more rated tracks - menu limit
 
-PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
-	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show more rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>Material skin, SB Touch, SB Radio, piCorePlayer</b>. 
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
+	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>Material skin, SB Touch, SB Radio, piCorePlayer</b>. 
 
-PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEBMENU_ALLSONGS
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_ALLSONGS
 	EN	All songs
 
-PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_CONTEXTMENU_ALLSONGS
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_PLAYNOW
+	EN	Play now
+
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_APPEND
+	EN	Add to the end of the playlist
+
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_PLAYNEXT
+	EN	Play next
+
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_ALLSONGS
 	EN	Insert all songs
 
 
@@ -336,17 +387,23 @@ PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED
 PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_GENRE
 	EN	Ratings Light - unrated tracks (similar genres, with % of rated)
 
+PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED
+	EN	Ratings Light - unrated tracks (unplayed with % of rated)
+
+PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED_GENRE
+	EN	Ratings Light - unrated tracks (unplayed, similar genres, with % of rated)
+
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED
 	EN	Percentage of rated songs
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_DESC
-	EN	Included a certain percentage of rated songs in your "<b>un</b>rated songs" DSTM mix.
+	EN	Included a certain percentage of rated songs in "<b>un</b>rated songs" DSTM mixes.
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_HIGH
 	EN	Percentage of songs rated 3 stars+
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_HIGH_DESC
-	EN	Percentage of songs rated 3 stars or higher in your "rated songs" DSTM mix.
+	EN	Percentage of songs rated 3 stars or higher in "rated songs" DSTM mixes.
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS
 	EN	Number of DSTM seed tracks
@@ -354,11 +411,14 @@ PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS_DESC
 	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.<br>(between 1 and 20) 
 
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_HEADER
+	EN	<b>The settings below apply to "Don't Stop The Music" mixes <u>and</u> "Dynamic Playlist" smart playlists.</b>
+
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR
 	EN	Minimum track duration
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR_DESC
-	EN	Set the minimum track duration for tracks in <b>Don't Stop The Music</b> mixes or <b>Dynamic Playlist</b> smart playlists.
+	EN	Set the minimum track duration for tracks in <b>Don't Stop The Music</b> mixes and <b>Dynamic Playlist</b> smart playlists.
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES
 	EN	Exclude genres

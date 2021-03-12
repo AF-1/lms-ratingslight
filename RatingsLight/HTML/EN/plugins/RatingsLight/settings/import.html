@@ -13,6 +13,7 @@
 <style>
 @-webkit-keyframes Pulse{from{color:#630030;-webkit-text-shadow:0 0 2px transparent}50%{color:#e33100;-webkit-text-shadow:0 0 5px #e33100}to{color:#630030;-webkit-text-shadow:0 0 2px transparent}}@keyframes Pulse{from{color:#630030;text-shadow:0 0 2px transparent}50%{color:#e33100;text-shadow:0 0 5px #e33100}to{color:#630030;text-shadow:0 0 2px transparent}}.inprogress{padding-left:15px;-webkit-animation-name:Pulse;animation-name:Pulse;-webkit-animation-duration:2s;animation-duration:2s;-webkit-animation-iteration-count:infinite;animation-iteration-count:infinite}
 .status{visibility:hidden;}
+.error{color:red;}
 </style>
 
 [% page = "PLUGIN_RATINGSLIGHT" %]
@@ -21,7 +22,7 @@
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS" desc="" %]
-<b>Import ratings by setting a rating value for <b>all</b> tracks in a playlist.</b>
+[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_HEADER" | string %]
 <br><br>
 <table>
 	<tr>
@@ -56,16 +57,16 @@
 <br><br><br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS" desc="" %]
-<b>Import ratings derived from keywords in the comment tags of your files.</b>
+[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_HEADER" | string %]
 <br><br>
-<b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx": if a comment tag contains "favstars<b>4</b>xx" -> track rating = <b>4</b> stars
+[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_EXAMPLE" | string %]
 <br><br><br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD" desc="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_DESC" %]
 <table style="margin-left:5px;" size="50">
 	<tr>
-		<th style="text-align:center;"><b>Rating Keyword <u>Pre</u>fix</b></th>
-		<th style="text-align:center;padding-left:8px;"><b>Rating Keyword <u>Suf</u>fix</b></th>
+		<th style="text-align:center;">[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_PREFIX" | string %]</th>
+		<th style="text-align:center;padding-left:8px;">[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_SUFFIX" | string %]</th>
 	</tr>
 	<tr>
 		<th style="height:4px;" colspan="2"></th>
@@ -85,7 +86,8 @@
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT" desc="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_DESC" %]
 	<input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onClick="inprogresscommentag();" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON" | string %]">
-	<span class='status' id='commenttagimportstatus'>importing...</span>
+	<span class='status' id='commenttagimportstatus'>[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_INPROGRESS" | string %]</span>
+	<span class='[% IF missingkeywords %]error[% ELSE %]status[% END %]'>[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_MISSINGKEYWORDS" | string %]</span>
 [% END %]
 [% END %]
 

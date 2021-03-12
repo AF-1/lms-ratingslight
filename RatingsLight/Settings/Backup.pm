@@ -66,16 +66,32 @@ sub handler {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
-		Plugins::RatingsLight::Plugin::restoreFromBackup();
+		my $selectedfile = $paramRef->{'pref_restorefile'};
+		$log->debug("restorefile = ".$selectedfile);
+		if ((!defined ($paramRef->{'pref_restorefile'})) || ($paramRef->{'pref_restorefile'} eq '')) {
+			$paramRef->{'restoremissingfile'} = 1;
+			$result = $class->SUPER::handler($client, $paramRef);
+		} elsif ($selectedfile !~ /\.xml/i) {
+			$paramRef->{'restoremissingfile'} = 2;
+			$result = $class->SUPER::handler($client, $paramRef);
+		} else {
+			Plugins::RatingsLight::Plugin::restoreFromBackup();
+		}
 	}elsif($paramRef->{'pref_scheduledbackups'}) {
 		if($callHandler) {
 			$paramRef->{'saveSettings'} = 1;
+
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
 		Plugins::RatingsLight::Plugin::backupScheduler();
 	}elsif($callHandler) {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}
+
+	my $RLfolderpath = ($prefs->get('rlparentfolderpath')).'/Ratingslight';
+	$prefs->set('restorefile', $RLfolderpath);
+	$result = $class->SUPER::handler($client, $paramRef);
+
 	return $result;
 }
 

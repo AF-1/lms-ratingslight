@@ -15,8 +15,14 @@
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_DESC" %]
+	<select name="pref_exportVL_id" id="exportVL_id">
+		[% FOREACH library = virtuallibraries %]
+			<option value="[% library.library_id %]">[% library.name %]</option>
+		[% END %]
+	</select>
+<br><br>
 <input name="export" type="submit" onclick="inprogress('exportstatus');" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_BUTTON" | string %]">
-<span class='status' id='exportstatus'>exporting...</span>
+<span class='status' id='exportstatus'>[% "PLUGIN_RATINGSLIGHT_EXPORT_INPROGRESS" | string %]</span>
 [% END %]
 <br>
 

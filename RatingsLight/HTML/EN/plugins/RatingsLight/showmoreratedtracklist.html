@@ -1,7 +1,7 @@
 [% IF wtitle > 0 %]
-[% pagetitle = 'PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_LISTHEADER' | string; pagetitle = pagetitle _ " " _ artistname %]
+[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_LISTHEADER' | string; pagetitle = pagetitle _ " " _ artistname %]
 [% ELSE %]
-[% pagetitle = 'PLUGIN_RATINGSLIGHT_RATEDTRACKSBYARTIST_LISTHEADER' | string; pagetitle = pagetitle _ " " _ artistname %]
+[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_LISTHEADER' | string; pagetitle = pagetitle _ " " _ artistname %]
 [% END %]
 [% PROCESS pageheader.html %]
 <style>
@@ -49,19 +49,19 @@
 	[% IF trackcount > 1 %]
 	<div class="filler"></div>
 	<div class="wrapper"><div>
-	<span style="font-family:sans-serif;font-size:12px;">[% "PLUGIN_RATINGSLIGHT_MORERATEDTRACKSBYARTIST_WEBMENU_ALLSONGS" | string %] ([% trackcount %])</span>
-	<span class="play_btn" onclick="playallnow();" title="Play now"></span>
-	<span class="append_btn" onclick="appendall();" title="Add to the end of the playlist"></span>
-	<span class="playnext_btn" onclick="playallnext();" title="Play Next"></span><br><br>
+	<span style="font-family:sans-serif;font-size:12px;">[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_ALLSONGS" | string %] ([% trackcount %])</span>
+	<span class="play_btn" onclick="playallnow();" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_PLAYNOW" | string %]"></span>
+	<span class="append_btn" onclick="appendall();" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_APPEND" | string %]"></span>
+	<span class="playnext_btn" onclick="playallnext();" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_PLAYNEXT" | string %]"></span><br><br>
 	</div></div>
 	[% END %]
 	<div class="filler"></div>
 	[% FOREACH ratedtrack = moreratedtracks %]
 	<div class="wrapper"><div>
 	<span style="font-family:sans-serif;font-size:12px;">[% ratedtrack.tracktitle %]</span>
-	<span class="play_btn" onclick="playnow([% ratedtrack.trackid %]);" title="Play now"></span>
-	<span class="append_btn" onclick="append([% ratedtrack.trackid %]);" title="Add to the end of the playlist"></span>
-	<span class="playnext_btn" onclick="playnext([% ratedtrack.trackid %]);" title="Play Next"></span><br>
+	<span class="play_btn" onclick="playnow([% ratedtrack.trackid %]);" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_PLAYNOW" | string %]"></span>
+	<span class="append_btn" onclick="append([% ratedtrack.trackid %]);" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_APPEND" | string %]"></span>
+	<span class="playnext_btn" onclick="playnext([% ratedtrack.trackid %]);" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_PLAYNEXT" | string %]"></span><br>
 	<span style="font-family:sans-serif;font-size:11px;">[% ratedtrack.albumname %]</span>
 	</div></div>
 	<div class="filler"></div>
