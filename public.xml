@@ -8,7 +8,7 @@
             <desc lang="EN">Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Browse rated tracks by artist or genre. Keep track of your recently rated songs with a dedicated playlist or log file. Supports "Don't Stop The Music". Includes ratings-based smart playlists for DynamicPlaylists. Skip (un-)rated tracks with CustomSkip.</desc>
         	<url>https://github.com/AF-1/lms-ratingslight/releases/download/1.8.3/lms-ratingslight-1.8.3.zip</url>
             <creator>AF</creator>
-            <sha>6d2c7d6f8a28d68a299b9daf1b1968743b97e068</sha>
+            <sha>37e68d6f5cba911706079e9f1eb99c6d28c36b8d</sha>
         </plugin>
     </plugins>
 </extensions>
