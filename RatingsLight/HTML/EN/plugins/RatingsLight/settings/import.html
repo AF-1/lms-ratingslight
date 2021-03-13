@@ -33,6 +33,7 @@
 		<th style="height:4px;" colspan="2"></th>
 	</tr>
 	<tr>
+	[% IF playlistcount %]
 		<td>
 			<select name="pref_ratethisplaylistid" id="ratethisplaylistid">
 				[% FOREACH plist = allplaylists %]
@@ -48,11 +49,16 @@
 				[% END %]
 			</select>
 		</td>
+	[% ELSE %]
+		<td colspan="2" style="text-align: center;">[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLRATING_NOPLFOUND" | string %]</td>
+	[% END %]
 	</tr>
 </table>
+[% IF playlistcount %]
 <br>
 	<input style="margin-top:-1px;" name="rateplaylistnow" type="submit" onclick="inprogress('playlistratingstatus');" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON" | string %]">
 	<span class='status' id='playlistratingstatus'>rating...</span>
+[% END %]
 [% END %]
 <br><br><br>
 

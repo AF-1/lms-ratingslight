@@ -10,6 +10,7 @@ use Slim::Utils::Log;
 use Slim::Utils::Prefs;
 use Slim::Utils::Misc;
 use Slim::Utils::Strings;
+use Data::Dumper;
 
 my $prefs = preferences('plugin.ratingslight');
 my $log = logger('plugin.ratingslight');
@@ -85,11 +86,13 @@ sub beforeRender {
 	my ($class, $paramRef) = @_;
 	my @allplaylists = ();
 	my $queryresult = Slim::Control::Request::executeRequest(undef, ['playlists', '0', '50']);
-	my $playlistcount = $queryresult->{_results}{count};
+	my $playlistcount = $queryresult->getResult("count");
 
 	if ($playlistcount > 0) {
-		my $playlistarray = $queryresult->{_results}{playlists_loop};
+		my $playlistarray = $queryresult->getResult("playlists_loop");
 		my @sortedarray = sort {$a->{id} <=> $b->{id}} @$playlistarray;
+		$log->debug("sorted playlists = ".Dumper(\@sortedarray));
+		$paramRef->{playlistcount} = $playlistcount;
 		$paramRef->{allplaylists} = \@sortedarray;
 	}
 }
