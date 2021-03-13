@@ -475,10 +475,10 @@ sub importRatingsFromPlaylist {
 
 	my $queryresult = Slim::Control::Request::executeRequest(undef, ['playlists', 'tracks', '0', '1000', 'playlist_id:'.$playlistid, 'tags:u']);
 
-	my $playlisttrackcount = $queryresult->{_results}{count};
+	my $playlisttrackcount = $queryresult->getResult("count");
 	if ($playlisttrackcount > 0) {
 		my $trackURL;
-		my $playlisttracksarray = $queryresult->{_results}{playlisttracks_loop};
+		my $playlisttracksarray = $queryresult->getResult("playlisttracks_loop");
 
 		for my $playlisttrack (@$playlisttracksarray) {
 			$trackURL = $playlisttrack->{url};
