@@ -347,7 +347,9 @@ sub initPlugin {
 }
 
 sub postinitPlugin {
-	initVirtualLibraries();
+	if (!main::SCANNER) {
+		initVirtualLibraries();
+	}
 }
 
 sub startScan {
