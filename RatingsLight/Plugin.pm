@@ -1258,7 +1258,7 @@ sub trackInfoHandlerRating {
 }
 
 sub VFD_deviceRating {
-    my ($client, $callback, $params, $trackURL, $trackID, $rating) = @_;
+	my ($client, $callback, $params, $trackURL, $trackID, $rating) = @_;
 	$log->debug("VFD_deviceRating - trackURL = ".$trackURL);
 	$log->debug("VFD_deviceRating - trackID = ".$trackID);
 	$log->debug("VFD_deviceRating - rating = ".$rating);
@@ -1276,7 +1276,7 @@ sub VFD_deviceRating {
 
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating));
 
-    if (defined $callback) {
+	if (defined $callback) {
 		$callback->([{type => 'text', name  => $text, showBriefly => 3}]);
 	} else {
 		$client->showBriefly({'line' => [$client->string('PLUGIN_RATINGSLIGHT'), $text]}, 3);
