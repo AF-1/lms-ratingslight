@@ -44,7 +44,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(enableIRremotebuttons dplIntegration rlparentfolderpath uselogfile userecentlyaddedplaylist recentlymaxcount));
+	return ($prefs, qw(enableIRremotebuttons rlparentfolderpath uselogfile userecentlyaddedplaylist recentlymaxcount));
 }
 
 sub handler {

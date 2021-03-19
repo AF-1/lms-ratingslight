@@ -42,6 +42,7 @@ my $log = Slim::Utils::Log->addLogCategory({
 	'description' => 'PLUGIN_RATINGSLIGHT',
 });
 
+my $initialised = 0;
 my $RATING_CHARACTER = ' *';
 my $fractionchar = ' '.HTML::Entities::decode_entities('&#189;');
 
@@ -51,12 +52,6 @@ my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
 my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
-
-my $dplIntegration = $prefs->get('dplIntegration');
-my $dplIntegrationSetBefore = $prefs->get('_ts_dplIntegration');
-if (!defined $dplIntegrationSetBefore) {
-	$prefs->set('dplIntegration', 'on');
-}
 
 my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
 if (! defined $rlparentfolderpath) {
@@ -196,7 +191,6 @@ $prefs->init({
 	ratingcontextmenudisplaymode => $ratingcontextmenudisplaymode,
 	ratingcontextmenusethalfstars => $ratingcontextmenusethalfstars,
 	enableIRremotebuttons => $enableIRremotebuttons,
-	dplIntegration => $dplIntegration,
 	rlparentfolderpath => $rlparentfolderpath,
 	scheduledbackups => $scheduledbackups,
 	backuptime => $backuptime,
@@ -256,9 +250,11 @@ $prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 20 }, 'nu
 
 $prefs->setChange(\&initVirtualLibraries, 'browsemenus_sourceVL_id');
 $prefs->setChange(\&initVirtualLibraries, 'showratedtracksmenus');
+$prefs->setChange(\&initIR, 'enableIRremotebuttons');
 
 sub initPlugin {
 	my $class = shift;
+	return if $initialised;
 
 	Slim::Music::Import->addImporter('Plugins::RatingsLight::Plugin', {
 		'type' => 'post',
@@ -267,12 +263,7 @@ sub initPlugin {
 	});
 
 	if (!main::SCANNER) {
-		my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
-
-		if (defined $enableIRremotebuttons) {
-			Slim::Control::Request::subscribe( \&newPlayerCheck, [['client']],[['new']]);
-			Slim::Buttons::Common::addMode('PLUGIN.RatingsLight::Plugin', getFunctions(),\&Slim::Buttons::Input::Choice::setMode);
-		}
+		initIR();
 
 		Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating','_incremental'], [1, 0, 1, \&setRating]);
 		Slim::Control::Request::addDispatch(['ratingslight','setratingpercent', '_trackid', '_rating','_incremental'], [1, 0, 1, \&setRating]);
@@ -343,12 +334,24 @@ sub initPlugin {
 		initExportBaseFilePathMatrix();
 
 		$class->SUPER::initPlugin(@_);
+		$initialised = 1;
 	}
 }
 
 sub postinitPlugin {
 	if (!main::SCANNER) {
 		initVirtualLibraries();
+	}
+}
+
+sub initIR {
+	my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
+
+	if (defined $enableIRremotebuttons) {
+		Slim::Control::Request::subscribe( \&newPlayerCheck, [['client']],[['new']]);
+		Slim::Buttons::Common::addMode('PLUGIN.RatingsLight::Plugin', getFunctions(),\&Slim::Buttons::Input::Choice::setMode);
+	} else {
+		Slim::Control::Request::unsubscribe( \&newPlayerCheck, [['client']],[['new']]);
 	}
 }
 
@@ -525,7 +528,7 @@ sub exportRatingsToPlaylistFiles {
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
 	my ($sql, $sth) = undef;
 	my $dbh = getCurrentDBH();
-	my ($rating5starScaleValue, $rating100ScaleValueCeil) = 0;
+	my $rating100ScaleValueCeil = 0;
 	my $rating100ScaleValue = 10;
 	my $exporttimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
@@ -545,8 +548,7 @@ sub exportRatingsToPlaylistFiles {
 						$sql = "SELECT tracks_persistent.url FROM tracks_persistent WHERE (tracks_persistent.rating >= $rating100ScaleValue AND tracks_persistent.rating <= $rating100ScaleValueCeil AND tracks_persistent.urlmd5 IN (SELECT tracks.urlmd5 FROM tracks LEFT JOIN comments ON comments.track = tracks.id WHERE (comments.value NOT LIKE ? OR comments.value IS NULL) ));";
 				}
 				$sth = $dbh->prepare($sql);
-				$rating5starScaleValue = $rating100ScaleValue/20;
-				my $ratingkeyword = "%%".$rating_keyword_prefix.$rating5starScaleValue.$rating_keyword_suffix."%%";
+				my $ratingkeyword = "%%".$rating_keyword_prefix.($rating100ScaleValue/20).$rating_keyword_suffix."%%";
 				$sth->bind_param(1, $ratingkeyword);
 			}
 		} else {
@@ -572,8 +574,7 @@ sub exportRatingsToPlaylistFiles {
 		$totaltrackcount = $totaltrackcount + $trackcount;
 
 		if (@trackURLs) {
-			$rating5starScaleValue = $rating100ScaleValue/20;
-			my $PLfilename = ($rating5starScaleValue == 1 ? 'RL_Export_'.$filename_timestamp.'__Rated_'.$rating5starScaleValue.'_star.m3u.txt' : 'RL_Export_'.$filename_timestamp.'__Rated_'.$rating5starScaleValue.'_stars.m3u.txt');
+			my $PLfilename = (($rating100ScaleValue/20) == 1 ? 'RL_Export_'.$filename_timestamp.'__Rated_'.($rating100ScaleValue/20).'_star.m3u.txt' : 'RL_Export_'.$filename_timestamp.'__Rated_'.($rating100ScaleValue/20).'_stars.m3u.txt');
 
 			my $filename = catfile($exportDir,$PLfilename);
 			my $output = FileHandle->new($filename, ">:utf8") or do {
@@ -588,7 +589,7 @@ sub exportRatingsToPlaylistFiles {
 				my $exportVL_name = Slim::Music::VirtualLibraries->getNameForId($exportVL_id);
 				print $output '# tracks from library (view): '.$exportVL_name."\n";
 			}
-			print $output '# contains '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' rated '.($rating5starScaleValue == 1 ? $rating5starScaleValue.' star' : $rating5starScaleValue.' stars')."\n\n";
+			print $output '# contains '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' rated '.(($rating100ScaleValue/20) == 1 ? ($rating100ScaleValue/20).' star' : ($rating100ScaleValue/20).' stars')."\n\n";
 			if (defined $onlyratingnotmatchcommenttag) {
 				print $output "# *** This export only contains rated tracks whose ratings differ from the rating value derived from their comment tag keywords. ***\n";
 				print $output "# *** If you want to export ALL rated tracks change the preference on the Ratings Light settings page. ***\n\n";
@@ -695,8 +696,6 @@ sub setRating {
 	if ($rating100ScaleValue < 0) {
 		$rating100ScaleValue = 0;
 	}
-	my $rating5starScaleValue = ($rating100ScaleValue/20);
-
 	if (defined $userecentlyaddedplaylist) {
 		addToRecentlyRatedPlaylist($trackURL);
 	}
@@ -707,11 +706,11 @@ sub setRating {
 	writeRatingToDB($trackURL, $rating100ScaleValue);
 
 	Slim::Music::Info::clearFormatDisplayCache();
-	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackId, $rating5starScaleValue, $rating100ScaleValue]);
-	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackId, $rating5starScaleValue, $rating100ScaleValue]);
+	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackId, $rating100ScaleValue/20, $rating100ScaleValue]);
+	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackId, $rating100ScaleValue/20, $rating100ScaleValue]);
 
-	$request->addResult('rating', $rating5starScaleValue);
-	$request->addResult('ratingpercentage', $rating100ScaleValue);
+	$request->addResult('rating', $rating100ScaleValue/20);
+	$request->addResult('ratingpercentage', $rating100ScaleValue/20);
 	$request->setStatusDone();
 
 	# refresh virtual libraries
@@ -1046,6 +1045,8 @@ our %menuFunctions = (
 		my $client = shift;
 		my $button = shift;
 		my $digit = shift;
+		$log->debug("IR command - button: ".$button);
+		$log->debug("IR command - digit: ".$digit);
 
 		if (Slim::Music::Import->stillScanning) {
 			$log->warn("Warning: access to rating values blocked until library scan is completed");
@@ -1055,23 +1056,13 @@ our %menuFunctions = (
 			return;
 		}
 
-		my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
-		my $uselogfile = $prefs->get('uselogfile');
-		my $userecentlyaddedplaylist = $prefs->get('userecentlyaddedplaylist');
-
 		return unless $digit>='0' && $digit<='9';
 
 		my $song = Slim::Player::Playlist::song($client);
 		my $curtrackinfo = $song->{_column_data};
-
 		my $curtrackURL = @$curtrackinfo{url};
 		my $curtrackid = @$curtrackinfo{id};
-
-		if ($digit == 0) {
-			$rating = 0;
-		}
-
-		if ($digit > 0 && $digit <=5) {
+		if ($digit >= 0 && $digit <=5) {
 			$rating = $digit*20;
 		}
 
@@ -1100,54 +1091,21 @@ our %menuFunctions = (
 				$rating = 0;
 			}
 		}
-
-		if (defined $userecentlyaddedplaylist) {
-			addToRecentlyRatedPlaylist($curtrackURL);
-		}
-
-		if (defined $uselogfile) {
-			logRatedTrack($curtrackURL, $rating);
-		}
-		writeRatingToDB($curtrackURL, $rating);
-
-		my $detecthalfstars = ($rating/2)%2;
-		my $ratingStars = $rating/20;
-		my $rating5starScaleValue = $ratingStars;
-		my $ratingtext = string('PLUGIN_RATINGSLIGHT_UNRATED');
-		if ($rating > 0) {
-			if ($detecthalfstars == 1) {
-				$ratingStars = floor($ratingStars);
-				$ratingtext = ($RATING_CHARACTER x $ratingStars).$fractionchar;
-			} else {
-				$ratingtext = ($RATING_CHARACTER x $ratingStars);
-			}
-		}
-		$client->showBriefly({
-			'line' => [$client->string('PLUGIN_RATINGSLIGHT'),$client->string('PLUGIN_RATINGSLIGHT_RATING').' '.($ratingtext)]},
-			3);
-
-		Slim::Music::Info::clearFormatDisplayCache();
-		Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $curtrackURL, $curtrackid, $rating5starScaleValue, $rating]);
-		Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $curtrackURL, $curtrackid, $rating5starScaleValue, $rating]);
-
-		# refresh virtual libraries
-		if ($showratedtracksmenus > 0) {
-			my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RL_RATED');
-			Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
-
-			if ($showratedtracksmenus == 2) {
-			my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RL_RATED_HIGH');
-			Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
-			}
-		}
+		$log->debug("IR command - current track URL = ".$curtrackURL);
+		$log->debug("IR command - current track ID = ".$curtrackid);
+		$log->debug("IR command - rating = ".$rating);
+		VFD_deviceRating($client, undef, undef, $curtrackURL, $curtrackid, $rating);
 	},
 );
 
 sub shutdownPlugin {
+	return if !$initialised;
+	$log->debug("Shutting down");
 	my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
 	if (defined $enableIRremotebuttons) {
 		Slim::Control::Request::unsubscribe( \&newPlayerCheck, [['client']],[['new']]);
 	}
+	$initialised = 0;
 }
 
 sub getFunctions {
@@ -1163,15 +1121,10 @@ sub newPlayerCheck {
 		$model = Slim::Player::Client::getClient($clientID)->model;
 	}
 
-	if ( defined($client) && $request->{_requeststr} eq "client,new" ) {
-		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '1', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_1');
-		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '2', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_2');
-		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '3', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_3');
-		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '4', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_4');
-		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '5', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_5');
-		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '8', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_8');
-		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '9', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_9');
-		Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, '0', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_0');
+	if ((defined $client) && ($request->{_requeststr} eq "client,new")) {
+		foreach my $button (0..9) {
+			Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, $button, "modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_$button");
+		}
 		if ($model eq 'boom') {
 			Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, 'arrow_down', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_6');
 			Slim::Utils::Timers::setTimer($client, Time::HiRes::time() + 2, \&mapKeyHold, 'arrow_up', 'modefunction_PLUGIN.RatingsLight::Plugin->saveremoteratings_7');
@@ -1221,7 +1174,7 @@ sub mapKeyHold {
 				$maps[$i] = \%mHash;
 			}
 		}
-		if ( $mapsAltered > 0 ) {
+		if ($mapsAltered > 0) {
 			$log->debug("mapping ${baseKeyName}.hold to $function for \"".$client->name()."\" in $mapsAltered modes");
 			$client->irmaps(\@maps);
 		}
@@ -1229,11 +1182,8 @@ sub mapKeyHold {
 }
 
 sub trackInfoHandlerRating {
-	my $ratingcontextmenudisplaymode = $prefs->get('ratingcontextmenudisplaymode');
- 	my ($rating100ScaleValue, $rating5starScaleValue, $rating5starScaleValueExact) = 0;
+ 	my $rating100ScaleValue = 0;
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING');
-	my ($text1, $text2) = '';
-	my $ishalfstarrating = '0';
 
 	my ( $client, $url, $track, $remoteMeta, $tags ) = @_;
 	$tags ||= {};
@@ -1255,8 +1205,9 @@ sub trackInfoHandlerRating {
 	}
 
 	$rating100ScaleValue = getRatingFromDB($track);
+	$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating100ScaleValue));
 
-	if ( $tags->{menuMode} ) {
+	if ($tags->{menuMode}) {
 		my $jive = {};
 		my $actions = {
 			go => {
@@ -1265,69 +1216,90 @@ sub trackInfoHandlerRating {
 			},
 		};
 		$jive->{actions} = $actions;
-		$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.string('PLUGIN_RATINGSLIGHT_UNRATED');
-		if ($rating100ScaleValue > 0) {
-			$rating5starScaleValueExact = $rating100ScaleValue/20;
-			my $detecthalfstars = ($rating100ScaleValue/2)%2;
-			if ($detecthalfstars == 1) {
-				my $displayrating5starScaleValueExact = floor($rating5starScaleValueExact);
-				$text1 = ($RATING_CHARACTER x $displayrating5starScaleValueExact).$fractionchar;
-				$text2 = ($displayrating5starScaleValueExact > 0 ? '$displayrating5starScaleValueExact.5 ' : '0.5 ').'stars';
-			} else {
-				$text1 = ($RATING_CHARACTER x $rating5starScaleValueExact);
-				$text2 = '$rating5starScaleValueExact '.($rating5starScaleValueExact == 1 ? 'star' : 'stars');
-			}
-			if ($ratingcontextmenudisplaymode == 1) {
-				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text1;
-			} elsif ($ratingcontextmenudisplaymode == 2) {
-				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text2;
-			} else {
-				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text1.' ('.$text2.')';
-			}
-		}
+
 		return {
 			type => 'redirect',
 			name => $text,
 			jive => $jive,
 		};
-	}else {
-		if ($rating100ScaleValue > 0) {
-			$rating5starScaleValueExact = $rating100ScaleValue/20;
-			my $detecthalfstars = ($rating100ScaleValue/2)%2;
-			if ($detecthalfstars == 1) {
-				my $displayrating5starScaleValueExact = floor($rating5starScaleValueExact);
-				$text1 = ($RATING_CHARACTER x $displayrating5starScaleValueExact).$fractionchar;
-				$text2 = ($displayrating5starScaleValueExact > 0 ? '$displayrating5starScaleValueExact.5 ' : '0.5 ').'stars';
-			} else {
-				$text1 = ($RATING_CHARACTER x $rating5starScaleValueExact);
-				$text2 = '$rating5starScaleValueExact '.($rating5starScaleValueExact == 1 ? 'star' : 'stars');
-			}
-			if ($ratingcontextmenudisplaymode == 1) {
-				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text1;
-			} elsif ($ratingcontextmenudisplaymode == 2) {
-				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text2;
-			} else {
-				$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.$text1.' ('.$text2.')';
-			}
-		}
- 		return {
+	} else {
+		my $item = {
 			type => 'text',
 			name => $text,
 			itemvalue => $rating100ScaleValue,
-			itemvalue5starexact => $rating5starScaleValueExact,
+			itemvalue5starexact => $rating100ScaleValue/20,
 			itemid => $track->id,
 			web => {
 				'type' => 'htmltemplate',
 				'value' => 'plugins/RatingsLight/html/trackratinginfo.html'
 			},
 		};
+
+		delete $item->{type};
+		my @ratingValues = ();
+		if (defined $ratingcontextmenusethalfstars) {
+			@ratingValues = qw(100 90 80 70 60 50 40 30 20 10 0);
+		} else {
+			@ratingValues = qw(100 80 60 40 20 0);
+		}
+
+		my @items = ();
+		foreach my $ratingValue (@ratingValues) {
+			push(@items,
+			{
+				name => getRatingTextLine($ratingValue),
+				url => \&VFD_deviceRating,
+				passthrough => [$url, $track->id, $ratingValue],
+			});
+		}
+		$item->{items} = \@items;
+		return $item;
+	}
+}
+
+sub VFD_deviceRating {
+    my ($client, $callback, $params, $trackURL, $trackID, $rating) = @_;
+	$log->debug("VFD_deviceRating - trackURL = ".$trackURL);
+	$log->debug("VFD_deviceRating - trackID = ".$trackID);
+	$log->debug("VFD_deviceRating - rating = ".$rating);
+	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+	my $uselogfile = $prefs->get('uselogfile');
+	my $userecentlyaddedplaylist = $prefs->get('userecentlyaddedplaylist');
+
+	if (defined $userecentlyaddedplaylist) {
+		addToRecentlyRatedPlaylist($trackURL);
+	}
+	if (defined $uselogfile) {
+		logRatedTrack($trackURL, $rating);
+	}
+	writeRatingToDB($trackURL, $rating);
+
+	my $text = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating));
+
+    if (defined $callback) {
+		$callback->([{type => 'text', name  => $text, showBriefly => 3}]);
+	} else {
+		$client->showBriefly({'line' => [$client->string('PLUGIN_RATINGSLIGHT'), $text]}, 3);
+	}
+	Slim::Music::Info::clearFormatDisplayCache();
+	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackID, $rating/20, $rating]);
+	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackID, $rating/20, $rating]);
+
+	# refresh virtual libraries
+	if ($showratedtracksmenus > 0) {
+		my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RL_RATED');
+		Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
+
+		if ($showratedtracksmenus == 2) {
+		my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RL_RATED_HIGH');
+		Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
+		}
 	}
 }
 
 sub getRatingMenu {
 	my $request = shift;
 	my $client = $request->client();
-	my $ratingcontextmenudisplaymode = $prefs->get('ratingcontextmenudisplaymode');
 	my $ratingcontextmenusethalfstars = $prefs->get('ratingcontextmenusethalfstars');
 
 	if (!$request->isQuery([['ratingslight'],['ratingmenu']])) {
@@ -1360,9 +1332,9 @@ sub getRatingMenu {
 
 	my @ratingValues = ();
 	if (defined $ratingcontextmenusethalfstars) {
-		@ratingValues = qw(100 90 80 70 60 50 40 30 20 10);
+		@ratingValues = qw(100 90 80 70 60 50 40 30 20 10 0);
 	} else {
-		@ratingValues = qw(100 80 60 40 20);
+		@ratingValues = qw(100 80 60 40 20 0);
 	}
 
 	foreach my $rating (@ratingValues) {
@@ -1370,45 +1342,56 @@ sub getRatingMenu {
 			'rating' => $rating,
 		);
 		$request->addResultLoop('item_loop',$cnt,'params',\%itemParams);
+		my $jive = 1;
+		my $text = getRatingTextLine($rating, $jive);
+
+		$request->addResultLoop('item_loop',$cnt,'text',$text);
+		$request->addResultLoop('item_loop',$cnt,'nextWindow','parent');
+		$cnt++;
+	}
+
+	$request->addResult('offset',0);
+	$request->addResult('count',$cnt);
+	$request->setStatusDone();
+}
+
+sub getRatingTextLine {
+	my $ratingcontextmenudisplaymode = $prefs->get('ratingcontextmenudisplaymode');
+	my $rating = shift;
+	my $jivemenuline = shift;
+	my ($text, $text1, $text2) = '';
+
+	if ($rating > 0) {
 		my $detecthalfstars = ($rating/2)%2;
 		my $ratingStars = $rating/20;
 		my $spacechar = " ";
 		my $maxlength = 22;
 		my $spacescount = 0;
-		my ($text, $text1, $text2) = '';
 
 		if ($detecthalfstars == 1) {
 			$ratingStars = floor($ratingStars);
 			$text1 = ($RATING_CHARACTER x $ratingStars).$fractionchar;
-			$text2 = ($ratingStars > 0 ? "$ratingStars.5 " : "0.5 ")."stars";
+			$text2 = ($ratingStars > 0 ? $ratingStars.'.5 ' : '0.5 ').'stars';
 		} else {
 			$text1 = ($RATING_CHARACTER x $ratingStars);
-			$text2 = "$ratingStars ".($ratingStars == 1 ? "star" : "stars");
+			$text2 = $ratingStars.' '.($ratingStars == 1 ? 'star' : 'stars');
 		}
 		if ($ratingcontextmenudisplaymode == 1) {
 			$text = $text1;
 		} elsif ($ratingcontextmenudisplaymode == 2) {
 			$text = $text2;
 		} else {
-			$spacescount = $maxlength - (length $text1) - (length $text2);
-			$text = $text1.($spacechar x $spacescount)."(".$text2.")";
+			if (defined $jivemenuline) {
+				$spacescount = $maxlength - (length $text1) - (length $text2);
+				$text = $text1.($spacechar x $spacescount)."(".$text2.")";
+			} else {
+				$text = $text1." (".$text2.")";
+			}
 		}
-		$request->addResultLoop('item_loop',$cnt,'text',$text);
-
-		$request->addResultLoop('item_loop',$cnt,'nextWindow','parent');
-		$cnt++;
+	} else {
+		$text = string("PLUGIN_RATINGSLIGHT_UNRATED");
 	}
-	my %itemParams = (
-		'rating' => 0,
-	);
-	$request->addResultLoop('item_loop',$cnt,'params',\%itemParams);
-	$request->addResultLoop('item_loop',$cnt,'text',string("PLUGIN_RATINGSLIGHT_UNRATED"));
-	$request->addResultLoop('item_loop',$cnt,'nextWindow','parent');
-	$cnt++;
-
-	$request->addResult('offset',0);
-	$request->addResult('count',$cnt);
-	$request->setStatusDone();
+	return $text;
 }
 
 sub showMoreRatedTracksbyArtistInfoHandler {
@@ -1520,13 +1503,11 @@ sub handleMoreRatedWebTrackList {
 		my $track = Slim::Schema->resultset("Track")->objectForUrl($trackURL);
  		my $track_id = $track->id;
  		my $tracktitle = $track->title;
-		my $string_len_tracktitle = length($tracktitle);
-		if ($string_len_tracktitle > 70) {
+		if (length($tracktitle) > 70) {
 			$tracktitle = substr($tracktitle, 0, 70 )."…";
 		}
 		my $albumname = "Album: ".$track->album->name;
-		my $string_len_albumname = length($albumname);
-		if ($string_len_albumname > 80) {
+		if (length($albumname) > 80) {
 			$albumname = substr($albumname, 0, 80 )."…";
 		}
 		$artistname = $track->artist->name;
@@ -1545,15 +1526,14 @@ sub handleMoreRatedWebTrackList {
 		if ($alltrackids eq '') {
 			$alltrackids = $track_id;
 		} else {
-			$alltrackids = $alltrackids.",".$track_id;
+			$alltrackids .= ",".$track_id;
 		}
 	}
 	$sth->finish();
 	$params->{trackcount} = scalar(@moreratedtracks);
 	$params->{alltrackids} = $alltrackids;
 
-	my $string_len_artistname = length($artistname);
-	if ($string_len_artistname > 50) {
+	if (length($artistname) > 50) {
 		$artistname = substr($artistname, 0, 50 )."…";
 	}
 	$params->{artistname} = $artistname;
@@ -1641,19 +1621,17 @@ sub getMoreRatedTracksbyArtistMenu {
 		if ($alltrackids eq '') {
 			$alltrackids = $ratedtrack->id;
 		} else {
-			$alltrackids = $alltrackids.",".$ratedtrack->id;
+			$alltrackids .= ",".($ratedtrack->id);
 		}
 
 		my ($tracktitle, $albumname, $ratingtext) = '';
 		my $rating = getRatingFromDB($ratedtrack);
 		$tracktitle = $ratedtrack->title;
-		my $string_len_tracktitle = length($tracktitle);
-		if ($string_len_tracktitle > 60) {
+		if (length($tracktitle) > 60) {
 			$tracktitle = substr($tracktitle, 0, 60 )."…";
 		}
 		$albumname = "Album: ".$ratedtrack->album->name;
-		my $string_len_albumname = length($albumname);
-		if ($string_len_albumname > 70) {
+		if (length($albumname) > 70) {
 			$albumname = substr($albumname, 0, 70 )."…";
 		}
 		my $detecthalfstars = ($rating/2)%2;
@@ -2472,278 +2450,273 @@ DROP TABLE randomweightedratingscombined;";
 }
 
 sub getDynamicPlayLists {
-	my $dplIntegration = $prefs->get('dplIntegration');
+	my ($client) = @_;
+	my %result = ();
 
-	if (defined $dplIntegration) {
-		my ($client) = @_;
-		my %result = ();
+	### all possible parameters ###
 
-		### all possible parameters ###
+	# % rated high #
+	my %parametertop1 = (
+			'id' => 1, # 1-10
+			'type' => 'list', # album, artist, genre, year, playlist, list or custom
+			'name' => 'Select percentage of songs rated 3 stars or higher',
+			'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
+	);
+	my %parametertop2 = (
+			'id' => 2,
+			'type' => 'list',
+			'name' => 'Select percentage of songs rated 3 stars or higher',
+			'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
+	);
+	my %parametertop3 = (
+			'id' => 3,
+			'type' => 'list',
+			'name' => 'Select percentage of songs rated 3 stars or higher',
+			'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
+	);
 
-		# % rated high #
-		my %parametertop1 = (
-				'id' => 1, # 1-10
-				'type' => 'list', # album, artist, genre, year, playlist, list or custom
-				'name' => 'Select percentage of songs rated 3 stars or higher',
-				'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
-		);
-		my %parametertop2 = (
-				'id' => 2,
-				'type' => 'list',
-				'name' => 'Select percentage of songs rated 3 stars or higher',
-				'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
-		);
-		my %parametertop3 = (
-				'id' => 3,
-				'type' => 'list',
-				'name' => 'Select percentage of songs rated 3 stars or higher',
-				'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
-		);
+	# % rated #
+	my %parameterrated1 = (
+			'id' => 1,
+			'type' => 'list',
+			'name' => 'Select percentage of rated songs',
+			'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
+	);
+	my %parameterrated2 = (
+			'id' => 2,
+			'type' => 'list',
+			'name' => 'Select percentage of rated songs',
+			'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
+	);
+	my %parameterrated3 = (
+			'id' => 3,
+			'type' => 'list',
+			'name' => 'Select percentage of rated songs',
+			'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
+	);
 
-		# % rated #
-		my %parameterrated1 = (
-				'id' => 1,
-				'type' => 'list',
-				'name' => 'Select percentage of rated songs',
-				'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
-		);
-		my %parameterrated2 = (
-				'id' => 2,
-				'type' => 'list',
-				'name' => 'Select percentage of rated songs',
-				'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
-		);
-		my %parameterrated3 = (
-				'id' => 3,
-				'type' => 'list',
-				'name' => 'Select percentage of rated songs',
-				'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
-		);
+	# genre #
+	my %parametergen1 = (
+			'id' => 1,
+			'type' => 'genre',
+			'name' => 'Select genre'
+	);
 
-		# genre #
-		my %parametergen1 = (
-				'id' => 1,
-				'type' => 'genre',
-				'name' => 'Select genre'
-		);
+	# decade #
+	my %parameterdec1 = (
+			'id' => 1,
+			'type' => 'custom',
+			'name' => 'Select decade',
+			'definition' => "select cast(((tracks.year/10)*10) as int),case when tracks.year>0 then cast(((tracks.year/10)*10) as int)||'s' else 'Unknown' end from tracks where tracks.audio=1 group by cast(((tracks.year/10)*10) as int) order by tracks.year desc"
+	);
+	my %parameterdec2 = (
+			'id' => 2,
+			'type' => 'custom',
+			'name' => 'Select decade',
+			'definition' => "select cast(((tracks.year/10)*10) as int),case when tracks.year>0 then cast(((tracks.year/10)*10) as int)||'s' else 'Unknown' end from tracks where tracks.audio=1 group by cast(((tracks.year/10)*10) as int) order by tracks.year desc"
+	);
 
-		# decade #
-		my %parameterdec1 = (
-				'id' => 1,
-				'type' => 'custom',
-				'name' => 'Select decade',
-				'definition' => "select cast(((tracks.year/10)*10) as int),case when tracks.year>0 then cast(((tracks.year/10)*10) as int)||'s' else 'Unknown' end from tracks where tracks.audio=1 group by cast(((tracks.year/10)*10) as int) order by tracks.year desc"
-		);
-		my %parameterdec2 = (
-				'id' => 2,
-				'type' => 'custom',
-				'name' => 'Select decade',
-				'definition' => "select cast(((tracks.year/10)*10) as int),case when tracks.year>0 then cast(((tracks.year/10)*10) as int)||'s' else 'Unknown' end from tracks where tracks.audio=1 group by cast(((tracks.year/10)*10) as int) order by tracks.year desc"
-		);
+	# % play count #
+	my %parameterplaycount1 = (
+			'id' => 1,
+			'type' => 'list',
+			'name' => 'Choose songs to include',
+			'definition' => '0:all songs,1:unplayed,2:played'
+	);
+	my %parameterplaycount2 = (
+			'id' => 2,
+			'type' => 'list',
+			'name' => 'Choose songs to include',
+			'definition' => '0:all songs,1:unplayed,2:played'
+	);
+	my %parameterplaycount3 = (
+			'id' => 3,
+			'type' => 'list',
+			'name' => 'Choose songs to include',
+			'definition' => '0:all songs,1:unplayed,2:played'
+	);
+	my %parameterplaycount4 = (
+			'id' => 4,
+			'type' => 'list',
+			'name' => 'Choose songs to include',
+			'definition' => '0:all songs,1:unplayed,2:played'
+	);
 
-		# % play count #
-		my %parameterplaycount1 = (
-				'id' => 1,
-				'type' => 'list',
-				'name' => 'Choose songs to include',
-				'definition' => '0:all songs,1:unplayed,2:played'
-		);
-		my %parameterplaycount2 = (
-				'id' => 2,
-				'type' => 'list',
-				'name' => 'Choose songs to include',
-				'definition' => '0:all songs,1:unplayed,2:played'
-		);
-		my %parameterplaycount3 = (
-				'id' => 3,
-				'type' => 'list',
-				'name' => 'Choose songs to include',
-				'definition' => '0:all songs,1:unplayed,2:played'
-		);
-		my %parameterplaycount4 = (
-				'id' => 4,
-				'type' => 'list',
-				'name' => 'Choose songs to include',
-				'definition' => '0:all songs,1:unplayed,2:played'
-		);
+	#### playlists ###
+	my %playlist1 = (
+		'name' => 'Rated',
+		'url' => 'plugins/RatingsLight/html/dpldesc/rated.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist2 = (
+		'name' => 'Rated (with % of rated 3 stars+)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/rated_top.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist3 = (
+		'name' => 'Rated - by DECADE',
+		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist4 = (
+		'name' => 'Rated - by DECADE (with % of rated 3 stars+)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade_top.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist5 = (
+		'name' => 'Rated - by GENRE',
+		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_genre.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist6 = (
+		'name' => 'Rated - by GENRE (with % of rated 3 stars+)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_genre_top.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist7 = (
+		'name' => 'Rated - by GENRE + DECADE',
+		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade_and_genre.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist8 = (
+		'name' => 'Rated - by GENRE + DECADE (with % of rated 3 stars+)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade_and_genre_top.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist9 = (
+		'name' => 'UNrated (with % of RATED songs)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/unrated_rated.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist10 = (
+		'name' => 'UNrated by DECADE (with % of RATED songs)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_decade_top.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist11 = (
+		'name' => 'UNrated by GENRE (with % of RATED songs)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_genre_top.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist12 = (
+		'name' => 'UNrated by GENRE + DECADE (with % of RATED songs)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_decade_and_genre_top.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist13 = (
+		'name' => 'Rated (un/played)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/rated_unplayed.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
 
-		#### playlists ###
-		my %playlist1 = (
-			'name' => 'Rated',
-			'url' => 'plugins/RatingsLight/html/dpldesc/rated.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist2 = (
-			'name' => 'Rated (with % of rated 3 stars+)',
-			'url' => 'plugins/RatingsLight/html/dpldesc/rated_top.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist3 = (
-			'name' => 'Rated - by DECADE',
-			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist4 = (
-			'name' => 'Rated - by DECADE (with % of rated 3 stars+)',
-			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade_top.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist5 = (
-			'name' => 'Rated - by GENRE',
-			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_genre.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist6 = (
-			'name' => 'Rated - by GENRE (with % of rated 3 stars+)',
-			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_genre_top.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist7 = (
-			'name' => 'Rated - by GENRE + DECADE',
-			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade_and_genre.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist8 = (
-			'name' => 'Rated - by GENRE + DECADE (with % of rated 3 stars+)',
-			'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade_and_genre_top.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist9 = (
-			'name' => 'UNrated (with % of RATED songs)',
-			'url' => 'plugins/RatingsLight/html/dpldesc/unrated_rated.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist10 = (
-			'name' => 'UNrated by DECADE (with % of RATED songs)',
-			'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_decade_top.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist11 = (
-			'name' => 'UNrated by GENRE (with % of RATED songs)',
-			'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_genre_top.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist12 = (
-			'name' => 'UNrated by GENRE + DECADE (with % of RATED songs)',
-			'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_decade_and_genre_top.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
-		my %playlist13 = (
-			'name' => 'Rated (un/played)',
-			'url' => 'plugins/RatingsLight/html/dpldesc/rated_unplayed.html?dummyparam=1',
-			'groups' => [['Ratings Light ']]
-		);
+	# Playlist1: "Rated"
+	$result{'ratingslight_rated'} = \%playlist1;
 
-		# Playlist1: "Rated"
-		$result{'ratingslight_rated'} = \%playlist1;
+	# Playlist2: "Rated (with % of rated 3 stars+, un/played)"
+	my %parametersPL2 = (
+		1 => \%parametertop1,
+		2 => \%parameterplaycount2
+	);
+	$playlist2{'parameters'} = \%parametersPL2;
+	$result{'ratingslight_rated-with_top_percentage'} = \%playlist2;
 
-		# Playlist2: "Rated (with % of rated 3 stars+, un/played)"
-		my %parametersPL2 = (
-			1 => \%parametertop1,
-			2 => \%parameterplaycount2
-		);
-		$playlist2{'parameters'} = \%parametersPL2;
-		$result{'ratingslight_rated-with_top_percentage'} = \%playlist2;
+	# Playlist3: "Rated - by DECADE (un/played)"
+	my %parametersPL3 = (
+		1 => \%parameterdec1,
+		2 => \%parameterplaycount2
+	);
+	$playlist3{'parameters'} = \%parametersPL3;
+	$result{'ratingslight_rated-by_decade'} = \%playlist3;
 
-		# Playlist3: "Rated - by DECADE (un/played)"
-		my %parametersPL3 = (
-			1 => \%parameterdec1,
-			2 => \%parameterplaycount2
-		);
-		$playlist3{'parameters'} = \%parametersPL3;
-		$result{'ratingslight_rated-by_decade'} = \%playlist3;
+	# Playlist4: "Rated - by DECADE (with % of rated 3 stars+, un/played)"
+	my %parametersPL4 = (
+		1 => \%parameterdec1,
+		2 => \%parametertop2,
+		3 => \%parameterplaycount3
+	);
+	$playlist4{'parameters'} = \%parametersPL4;
+	$result{'ratingslight_rated-by_decade_with_top_percentage'} = \%playlist4;
 
-		# Playlist4: "Rated - by DECADE (with % of rated 3 stars+, un/played)"
-		my %parametersPL4 = (
-			1 => \%parameterdec1,
-			2 => \%parametertop2,
-			3 => \%parameterplaycount3
-		);
-		$playlist4{'parameters'} = \%parametersPL4;
-		$result{'ratingslight_rated-by_decade_with_top_percentage'} = \%playlist4;
+	# Playlist5: "Rated - by GENRE"
+	my %parametersPL5 = (
+		1 => \%parametergen1,
+		2 => \%parameterplaycount2
+	);
+	$playlist5{'parameters'} = \%parametersPL5;
+	$result{'ratingslight_rated-by_genre'} = \%playlist5;
 
-		# Playlist5: "Rated - by GENRE"
-		my %parametersPL5 = (
-			1 => \%parametergen1,
-			2 => \%parameterplaycount2
-		);
-		$playlist5{'parameters'} = \%parametersPL5;
-		$result{'ratingslight_rated-by_genre'} = \%playlist5;
+	# Playlist6: "Rated - by GENRE (with % of rated 3 stars+, un/played)"
+	my %parametersPL6 = (
+		1 => \%parametergen1,
+		2 => \%parametertop2,
+		3 => \%parameterplaycount3
+	);
+	$playlist6{'parameters'} = \%parametersPL6;
+	$result{'ratingslight_rated-by_genre_with_top_percentage'} = \%playlist6;
 
-		# Playlist6: "Rated - by GENRE (with % of rated 3 stars+, un/played)"
-		my %parametersPL6 = (
-			1 => \%parametergen1,
-			2 => \%parametertop2,
-			3 => \%parameterplaycount3
-		);
-		$playlist6{'parameters'} = \%parametersPL6;
-		$result{'ratingslight_rated-by_genre_with_top_percentage'} = \%playlist6;
+	# Playlist7: "Rated - by GENRE + DECADE (un/played)"
+	my %parametersPL7 = (
+		1 => \%parametergen1,
+		2 => \%parameterdec2,
+		3 => \%parameterplaycount3
+	);
+	$playlist7{'parameters'} = \%parametersPL7;
+	$result{'ratingslight_rated-by_genre_and_decade'} = \%playlist7;
 
-		# Playlist7: "Rated - by GENRE + DECADE (un/played)"
-		my %parametersPL7 = (
-			1 => \%parametergen1,
-			2 => \%parameterdec2,
-			3 => \%parameterplaycount3
-		);
-		$playlist7{'parameters'} = \%parametersPL7;
-		$result{'ratingslight_rated-by_genre_and_decade'} = \%playlist7;
+	# Playlist8: "Rated - by GENRE + DECADE (with % of rated 3 stars+, un/played)"
+	my %parametersPL8 = (
+		1 => \%parametergen1,
+		2 => \%parameterdec2,
+		3 => \%parametertop3,
+		4 => \%parameterplaycount4
+	);
+	$playlist8{'parameters'} = \%parametersPL8;
+	$result{'ratingslight_rated-by_genre_and_decade_with_top_percentage'} = \%playlist8;
 
-		# Playlist8: "Rated - by GENRE + DECADE (with % of rated 3 stars+, un/played)"
-		my %parametersPL8 = (
-			1 => \%parametergen1,
-			2 => \%parameterdec2,
-			3 => \%parametertop3,
-			4 => \%parameterplaycount4
-		);
-		$playlist8{'parameters'} = \%parametersPL8;
-		$result{'ratingslight_rated-by_genre_and_decade_with_top_percentage'} = \%playlist8;
+	# Playlist9: "UNrated (with % of RATED songs, un/played)"
+	my %parametersPL9 = (
+		1 => \%parameterrated1,
+		2 => \%parameterplaycount2,
+	);
+	$playlist9{'parameters'} = \%parametersPL9;
+	$result{'ratingslight_unrated-with_rated_percentage'} = \%playlist9;
 
-		# Playlist9: "UNrated (with % of RATED songs, un/played)"
-		my %parametersPL9 = (
-			1 => \%parameterrated1,
-			2 => \%parameterplaycount2,
-			3 => \%parameterplaycount3
-		);
-		$playlist9{'parameters'} = \%parametersPL9;
-		$result{'ratingslight_unrated-with_rated_percentage'} = \%playlist9;
+	# Playlist10: "UNrated by DECADE (with % of RATED songs, un/played)"
+	my %parametersPL10 = (
+		1 => \%parameterdec1,
+		2 => \%parameterrated2,
+		3 => \%parameterplaycount3
+	);
+	$playlist10{'parameters'} = \%parametersPL10;
+	$result{'ratingslight_unrated-by_decade_with_rated_percentage'} = \%playlist10;
 
-		# Playlist10: "UNrated by DECADE (with % of RATED songs, un/played)"
-		my %parametersPL10 = (
-			1 => \%parameterdec1,
-			2 => \%parameterrated2,
-			3 => \%parameterplaycount3
-		);
-		$playlist10{'parameters'} = \%parametersPL10;
-		$result{'ratingslight_unrated-by_decade_with_rated_percentage'} = \%playlist10;
+	# Playlist11: "UNrated by GENRE (with % of RATED songs, un/played)"
+	my %parametersPL11 = (
+		1 => \%parametergen1,
+		2 => \%parameterrated2,
+		3 => \%parameterplaycount3
+	);
+	$playlist11{'parameters'} = \%parametersPL11;
+	$result{'ratingslight_unrated-by_genre_with_rated_percentage'} = \%playlist11;
 
-		# Playlist11: "UNrated by GENRE (with % of RATED songs, un/played)"
-		my %parametersPL11 = (
-			1 => \%parametergen1,
-			2 => \%parameterrated2,
-			3 => \%parameterplaycount3
-		);
-		$playlist11{'parameters'} = \%parametersPL11;
-		$result{'ratingslight_unrated-by_genre_with_rated_percentage'} = \%playlist11;
+	# Playlist12: "UNrated by GENRE + DECADE (with % of RATED songs, un/played)"
+	my %parametersPL12 = (
+		1 => \%parametergen1,
+		2 => \%parameterdec2,
+		3 => \%parameterrated3,
+		4 => \%parameterplaycount4
+	);
+	$playlist12{'parameters'} = \%parametersPL12;
+	$result{'ratingslight_unrated-by_genre_and_decade_with_rated_percentage'} = \%playlist12;
 
-		# Playlist12: "UNrated by GENRE + DECADE (with % of RATED songs, un/played)"
-		my %parametersPL12 = (
-			1 => \%parametergen1,
-			2 => \%parameterdec2,
-			3 => \%parameterrated3,
-			4 => \%parameterplaycount4
-		);
-		$playlist12{'parameters'} = \%parametersPL12;
-		$result{'ratingslight_unrated-by_genre_and_decade_with_rated_percentage'} = \%playlist12;
+	# Playlist13: "Rated (un/played)"
+	my %parametersPL13 = (
+		1 => \%parameterplaycount1
+	);
+	$playlist13{'parameters'} = \%parametersPL13;
+	$result{'ratingslight_rated-unplayed'} = \%playlist13;
 
-		# Playlist13: "Rated (un/played)"
-		my %parametersPL13 = (
-			1 => \%parameterplaycount1
-		);
-		$playlist13{'parameters'} = \%parametersPL13;
-		$result{'ratingslight_rated-unplayed'} = \%playlist13;
-
-		return \%result;
-	}
+	return \%result;
 }
 
 sub getNextDynamicPlayListTracks {
@@ -3373,7 +3346,6 @@ sub getTitleFormat_Rating {
 	my $track = shift;
 	my $ratingtext = HTML::Entities::decode_entities('&nbsp;');
 	my $rating100ScaleValue = 0;
-	my $rating5starScaleValue = 0;
 
 	$rating100ScaleValue = getRatingFromDB($track);
 	if ($rating100ScaleValue > 0) {
