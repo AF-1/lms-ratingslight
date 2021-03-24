@@ -10,5 +10,12 @@
             <creator>AF</creator>
             <sha>dfc7139b9e88291fd0ec975c8cb307a0e3da5a2a</sha>
         </plugin>
+        <plugin name="UseCommentTagInfo" version="1.0.4" minTarget="7.9" maxTarget="*">
+            <title lang="EN">Use Comment Tag Info</title>
+            <desc lang="EN">This plugin allows you to include extra information in the song details page based on (key)words in comment tags.</desc>
+        	<url>https://github.com/AF-1/lms-usecommenttaginfo/releases/download/1.0.4/lms-usecommenttaginfo-1.0.4.zip</url>
+            <creator>AF</creator>
+            <sha>49e82dd7c8028c2a4c253c24f0a5b25dec12f3b7</sha>
+        </plugin>
     </plugins>
 </extensions>
