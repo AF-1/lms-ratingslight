@@ -53,6 +53,11 @@ my $serverPrefs = preferences('server');
 
 my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
 
+my $topratedminrating = $prefs->get('topratedminrating');
+if (! defined $topratedminrating) {
+	$prefs->set('topratedminrating', '60');
+}
+
 my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
 if (! defined $rlparentfolderpath) {
 	my $playlistdir = $serverPrefs->get('playlistdir');
@@ -154,9 +159,9 @@ if (! defined $dstm_percentagerated) {
 	$prefs->set('dstm_percentagerated', '30');
 }
 
-my $dstm_percentageratedhigh = $prefs->get('dstm_percentageratedhigh');
-if (! defined $dstm_percentageratedhigh) {
-	$prefs->set('dstm_percentageratedhigh', '30');
+my $dstm_percentagetoprated = $prefs->get('dstm_percentagetoprated');
+if (! defined $dstm_percentagetoprated) {
+	$prefs->set('dstm_percentagetoprated', '30');
 }
 
 my $excludegenres_namelist = $prefs->get('excludegenres_namelist');
@@ -191,6 +196,7 @@ $prefs->init({
 	ratingcontextmenudisplaymode => $ratingcontextmenudisplaymode,
 	ratingcontextmenusethalfstars => $ratingcontextmenusethalfstars,
 	enableIRremotebuttons => $enableIRremotebuttons,
+	topratedminrating => $topratedminrating,
 	rlparentfolderpath => $rlparentfolderpath,
 	scheduledbackups => $scheduledbackups,
 	backuptime => $backuptime,
@@ -213,7 +219,7 @@ $prefs->init({
 	moreratedtracksbyartistcontextmenulimit => $moreratedtracksbyartistcontextmenulimit,
 	dstm_minTrackDuration => $dstm_minTrackDuration,
 	dstm_percentagerated => $dstm_percentagerated,
-	dstm_percentageratedhigh => $dstm_percentageratedhigh,
+	dstm_percentagetoprated => $dstm_percentagetoprated,
 	excludegenres_namelist => $excludegenres_namelist,
 });
 
@@ -245,7 +251,7 @@ $prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 200 }, 'm
 $prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 100 }, 'moreratedtracksbyartistcontextmenulimit');
 $prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 1800 }, 'dstm_minTrackDuration');
 $prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 100 }, 'dstm_percentagerated');
-$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 100 }, 'dstm_percentageratedhigh');
+$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 100 }, 'dstm_percentagetoprated');
 $prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 20 }, 'num_seedtracks');
 
 $prefs->setChange(\&initVirtualLibraries, 'browsemenus_sourceVL_id');
@@ -271,6 +277,7 @@ sub initPlugin {
 		Slim::Control::Request::addDispatch(['ratingslight','moreratedtracksbyartistmenu','_trackid', '_artistid'], [0, 1, 1, \&getMoreRatedTracksbyArtistMenu]);
 		Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
 		Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'],[0, 1, 0, undef]);
+		Slim::Control::Request::addDispatch(['ratingslight', 'actionsmenu'], [0, 1, 1, \&getActionsMenu]);
 
 		Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
 
@@ -288,18 +295,14 @@ sub initPlugin {
 			Slim::Web::Pages->addPageFunction('showmoreratedtracklist', \&handleMoreRatedWebTrackList);
 		}
 
-		if(UNIVERSAL::can("Slim::Menu::TrackInfo","registerInfoProvider")) {
-					Slim::Menu::TrackInfo->registerInfoProvider( ratingslightrating => (
-							before => 'artwork',
-							func => \&trackInfoHandlerRating,
-					) );
-		}
-		if(UNIVERSAL::can("Slim::Menu::TrackInfo","registerInfoProvider")) {
-					Slim::Menu::TrackInfo->registerInfoProvider( ratingslightmoreratedtracks => (
-							after => 'ratingslightrating',
-							func => \&showMoreRatedTracksbyArtistInfoHandler,
-					) );
-		}
+		Slim::Menu::TrackInfo->registerInfoProvider(ratingslightrating => (
+				before => 'artwork',
+				func => \&trackInfoHandlerRating,
+		));
+		Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracks => (
+				after => 'ratingslightrating',
+				func => \&showMoreRatedTracksbyArtistInfoHandler,
+		));
 
 		if ( Slim::Utils::PluginManager->isEnabled('Slim::Plugin::DontStopTheMusic::Plugin') ) {
 			require Slim::Plugin::DontStopTheMusic::Plugin;
@@ -307,14 +310,14 @@ sub initPlugin {
 			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED', sub {
 				dontStopTheMusic('rated', @_);
 			});
-			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED_HIGH', sub {
-				dontStopTheMusic('rated_high', @_);
+			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_TOPRATED', sub {
+				dontStopTheMusic('rated_toprated', @_);
 			});
 			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE', sub {
 				dontStopTheMusic('rated_genre', @_);
 			});
-			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE_HIGH', sub {
-				dontStopTheMusic('rated_genre_high', @_);
+			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE_TOPRATED', sub {
+				dontStopTheMusic('rated_genre_toprated', @_);
 			});
 			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED', sub {
 				dontStopTheMusic('unrated_rated', @_);
@@ -445,16 +448,7 @@ sub importRatingsFromCommentTags {
 
 	my $ended = time() - $started;
 
-	# refresh virtual libraries
-	if ($showratedtracksmenus > 0) {
-		my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RL_RATED');
-		Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
-
-		if ($showratedtracksmenus == 2) {
-		my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RL_RATED_HIGH');
-		Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
-		}
-	}
+	refreshVirtualLibraries();
 
 	$log->debug("Import completed after ".$ended." seconds.");
 	$prefs->set('status_importingfromcommenttags', 0);
@@ -485,23 +479,14 @@ sub importRatingsFromPlaylist {
 		my $trackURL;
 		my $playlisttracksarray = $queryresult->getResult("playlisttracks_loop");
 
-		for my $playlisttrack (@$playlisttracksarray) {
+		for my $playlisttrack (@{$playlisttracksarray}) {
 			$trackURL = $playlisttrack->{url};
 			writeRatingToDB($trackURL, $rating);
 		}
 	}
 	my $ended = time() - $started;
 
-	# refresh virtual libraries
-	if ($showratedtracksmenus > 0) {
-		my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RL_RATED');
-		Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
-
-		if ($showratedtracksmenus == 2) {
-		my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RL_RATED_HIGH');
-		Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
-		}
-	}
+	refreshVirtualLibraries();
 
 	$log->debug("Rating playlist tracks completed after ".$ended." seconds.");
 	$prefs->set('ratethisplaylistid', '');
@@ -689,13 +674,8 @@ sub setRating {
 			$rating100ScaleValue = $rating;
 		}
 	}
+	$rating100ScaleValue = ratingSanityCheck($rating100ScaleValue);
 
-	if ($rating100ScaleValue > 100) {
-		$rating100ScaleValue = 100;
-	}
-	if ($rating100ScaleValue < 0) {
-		$rating100ScaleValue = 0;
-	}
 	if (defined $userecentlyaddedplaylist) {
 		addToRecentlyRatedPlaylist($trackURL);
 	}
@@ -713,16 +693,7 @@ sub setRating {
 	$request->addResult('ratingpercentage', $rating100ScaleValue/20);
 	$request->setStatusDone();
 
-	# refresh virtual libraries
-	if ($showratedtracksmenus > 0) {
-		my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RL_RATED');
-		Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
-
-		if ($showratedtracksmenus == 2) {
-		my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RL_RATED_HIGH');
-		Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
-		}
-	}
+	refreshVirtualLibraries();
 }
 
 sub createBackup {
@@ -980,16 +951,8 @@ sub doneScanning {
 	my $ended = time() - $restorestarted;
 	$log->debug("Restore completed after ".$ended." seconds.");
 
-	# refresh virtual libraries
-	if ($showratedtracksmenus > 0) {
-		my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RL_RATED');
-		Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
+	refreshVirtualLibraries();
 
-		if ($showratedtracksmenus == 2) {
-		my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RL_RATED_HIGH');
-		Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
-		}
-	}
 	$prefs->set('status_restoringfrombackup', 0);
 	Slim::Utils::Scheduler::remove_task(\&scanFunction);
 	my $RLfolderpath = $rlparentfolderpath.'/Ratingslight';
@@ -1060,8 +1023,8 @@ our %menuFunctions = (
 
 		my $song = Slim::Player::Playlist::song($client);
 		my $curtrackinfo = $song->{_column_data};
-		my $curtrackURL = @$curtrackinfo{url};
-		my $curtrackid = @$curtrackinfo{id};
+		my $curtrackURL = @{$curtrackinfo}{url};
+		my $curtrackid = @{$curtrackinfo}{id};
 		if ($digit >= 0 && $digit <=5) {
 			$rating = $digit*20;
 		}
@@ -1084,12 +1047,7 @@ our %menuFunctions = (
 			if ($digit == 9) {
 				$rating = $currentrating + 10;
 			}
-			if ($rating > 100) {
-				$rating = 100;
-			}
-			if ($rating < 0) {
-				$rating = 0;
-			}
+			$rating = ratingSanityCheck($rating);
 		}
 		$log->debug("IR command - current track URL = ".$curtrackURL);
 		$log->debug("IR command - current track ID = ".$curtrackid);
@@ -1105,6 +1063,7 @@ sub shutdownPlugin {
 	if (defined $enableIRremotebuttons) {
 		Slim::Control::Request::unsubscribe( \&newPlayerCheck, [['client']],[['new']]);
 	}
+	Slim::Music::Import->useImporter('Plugins::RatingsLight::Plugin',0);
 	$initialised = 0;
 }
 
@@ -1277,7 +1236,7 @@ sub VFD_deviceRating {
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating));
 
 	if (defined $callback) {
-		$callback->([{type => 'text', name  => $text, showBriefly => 3}]);
+		$callback->([{type => 'text', name => $text, showBriefly => 3}]);
 	} else {
 		$client->showBriefly({'line' => [$client->string('PLUGIN_RATINGSLIGHT'), $text]}, 3);
 	}
@@ -1285,16 +1244,7 @@ sub VFD_deviceRating {
 	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackID, $rating/20, $rating]);
 	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackID, $rating/20, $rating]);
 
-	# refresh virtual libraries
-	if ($showratedtracksmenus > 0) {
-		my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RL_RATED');
-		Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
-
-		if ($showratedtracksmenus == 2) {
-		my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RL_RATED_HIGH');
-		Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
-		}
-	}
+	refreshVirtualLibraries();
 }
 
 sub getRatingMenu {
@@ -1409,7 +1359,7 @@ sub showMoreRatedTracksbyArtistInfoHandler {
 	my $artistname = $track->primary_artist->name;
 	my $string_len = length($artistname);
 	if ($string_len > 50) {
-		$artistname = substr($artistname, 0, 50 )."…";
+		$artistname = substr($artistname, 0, 50 )."...";
 	}
 	my $curTrackRating = getRatingFromDB($track);
 	if ($curTrackRating > 0) {
@@ -1504,12 +1454,15 @@ sub handleMoreRatedWebTrackList {
  		my $track_id = $track->id;
  		my $tracktitle = $track->title;
 		if (length($tracktitle) > 70) {
-			$tracktitle = substr($tracktitle, 0, 70 )."…";
+			$tracktitle = substr($tracktitle, 0, 70 )."...";
 		}
 		my $albumname = "Album: ".$track->album->name;
 		if (length($albumname) > 80) {
-			$albumname = substr($albumname, 0, 80 )."…";
+			$albumname = substr($albumname, 0, 80 )."...";
 		}
+		my $albumID = $track->album->id;
+		my $artworkID = $track->album->artwork;
+
 		$artistname = $track->artist->name;
 		my $rating = getRatingFromDB($track);
 		my $ratingtext;
@@ -1522,7 +1475,7 @@ sub handleMoreRatedWebTrackList {
 			$ratingtext = ($RATING_CHARACTER x $ratingStars);
 		}
 		$tracktitle = $tracktitle." (".$ratingtext." )";
-		push (@moreratedtracks, {trackid => $track_id, tracktitle => $tracktitle, albumname => $albumname});
+		push (@moreratedtracks, {trackid => $track_id, tracktitle => $tracktitle, albumname => $albumname, albumid => $albumID, artworkid => $artworkID});
 		if ($alltrackids eq '') {
 			$alltrackids = $track_id;
 		} else {
@@ -1534,7 +1487,7 @@ sub handleMoreRatedWebTrackList {
 	$params->{alltrackids} = $alltrackids;
 
 	if (length($artistname) > 50) {
-		$artistname = substr($artistname, 0, 50 )."…";
+		$artistname = substr($artistname, 0, 50 )."...";
 	}
 	$params->{artistname} = $artistname;
 	$params->{moreratedtracks} = \@moreratedtracks;
@@ -1583,21 +1536,6 @@ sub getMoreRatedTracksbyArtistMenu {
 	}
 	$sth->finish();
 
- 	my %baseParams = ();
-	my $baseMenu = {
-		'actions' => {
-			'do' => {
-				'cmd' => ['playlistcontrol', 'cmd:insert'],
-				'itemsParams' => 'params',
-			},
-			'play' => {
-				'cmd' => ['playlistcontrol', 'cmd:insert'],
-				'itemsParams' => 'params',
-			},
-		}
-	};
-	$request->addResult('base',$baseMenu);
-
 	my %menuStyle = ();
 	$menuStyle{'titleStyle'} = 'mymusic';
 	$menuStyle{'menuStyle'} = 'album';
@@ -1612,10 +1550,6 @@ sub getMoreRatedTracksbyArtistMenu {
 	my $alltrackids = '';
 
 	foreach my $ratedtrack (@moreratedtracks) {
-		my %itemParams = (
-			'track_id' => $ratedtrack->id,
-		);
-		$request->addResultLoop('item_loop',$cnt,'params',\%itemParams);
 		$request->addResultLoop('item_loop',$cnt,'icon-id',$ratedtrack->coverid);
 
 		if ($alltrackids eq '') {
@@ -1628,11 +1562,11 @@ sub getMoreRatedTracksbyArtistMenu {
 		my $rating = getRatingFromDB($ratedtrack);
 		$tracktitle = $ratedtrack->title;
 		if (length($tracktitle) > 60) {
-			$tracktitle = substr($tracktitle, 0, 60 )."…";
+			$tracktitle = substr($tracktitle, 0, 60 )."...";
 		}
 		$albumname = "Album: ".$ratedtrack->album->name;
 		if (length($albumname) > 70) {
-			$albumname = substr($albumname, 0, 70 )."…";
+			$albumname = substr($albumname, 0, 70 )."...";
 		}
 		my $detecthalfstars = ($rating/2)%2;
 		my $ratingStars = $rating/20;
@@ -1644,20 +1578,30 @@ sub getMoreRatedTracksbyArtistMenu {
 		}
 		my $returntext = $tracktitle." (".$ratingtext." )\n".$albumname;
 
-		my $text2add = "text = 'Added ".$tracktitle;
-		$request->addResultLoop('item_loop',$cnt,'window',$text2add);
+		my $actions = {
+			'go' => {
+				'player' => 0,
+				'cmd' => ['ratingslight', 'actionsmenu', 'track_id:'.$ratedtrack->id, 'allsongs:0'],
+			},
+		};
+
+		$request->addResultLoop('item_loop',$cnt,'type','redirect');
+		$request->addResultLoop('item_loop',$cnt,'actions',$actions);
 		$request->addResultLoop('item_loop',$cnt,'text',$returntext);
-		$request->addResultLoop('item_loop',$cnt,'nextWindow','parent');
 		$cnt++;
 	}
 
 	if ($trackcount > 1) {
-		my %itemParams = (
-			'track_id' => $alltrackids,
-		);
-		$request->addResultLoop('item_loop',0,'params',\%itemParams);
-		$request->addResultLoop('item_loop',0,'text',string("PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_ALLSONGS")." (".$trackcount.")");
-		$request->addResultLoop('item_loop',0,'nextWindow','parent');
+		my $actions = {
+			'go' => {
+				'player' => 0,
+				'cmd' => ['ratingslight', 'actionsmenu', 'track_id:'.$alltrackids, 'allsongs:1'],
+			},
+		};
+		$request->addResultLoop('item_loop',0,'type','redirect');
+		$request->addResultLoop('item_loop',0,'actions',$actions);
+		$request->addResultLoop('item_loop',0,'icon', 'plugins/RatingsLight/html/images/coverplaceholder.png');
+		$request->addResultLoop('item_loop',0,'text',string("PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_ALLSONGS")." (".$trackcount.")");
 		$cnt++;
 	}
 
@@ -1666,15 +1610,112 @@ sub getMoreRatedTracksbyArtistMenu {
 	$request->setStatusDone();
 }
 
+sub getActionsMenu {
+	my $request = shift;
+
+	if (!$request->isQuery([['ratingslight'],['actionsmenu']])) {
+		$log->warn("Incorrect command\n");
+		$request->setStatusBadDispatch();
+		return;
+	}
+
+	my $trackID = $request->getParam('track_id');
+	my $allsongs = $request->getParam('allsongs');
+
+	$request->addResult('window', {
+		menustyle => 'album',
+	});
+
+	my $actionsmenuitems = [
+		{
+			itemtext => string("PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_PLAYNOW"),
+			itemcmd1 => 'playlistcontrol',
+			itemcmd2 => 'load'
+		},
+		{
+			itemtext => string("PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_PLAYNEXT"),
+			itemcmd1 => 'playlistcontrol',
+			itemcmd2 => 'insert'
+		},
+		{
+			itemtext => string("PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_APPEND"),
+			itemcmd1 => 'playlistcontrol',
+			itemcmd2 => 'add'
+		},
+		{
+			itemtext => string("PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_MOREINFO"),
+			itemcmd1 => 'trackinfo',
+			itemcmd2 => 'items',
+		}];
+
+	my $cnt = 0;
+	foreach my $menuitem (@{$actionsmenuitems}) {
+		my $menuitemtext = $menuitem->{'itemtext'};
+		my $menuitemcmd1 = $menuitem->{'itemcmd1'};
+		my $menuitemcmd2 = $menuitem->{'itemcmd2'};
+		my $actions;
+
+		unless (($menuitemcmd1 eq 'trackinfo') && ($allsongs == 1)) {
+			my $thisitem->{'actionParam'} = 'track_id';
+
+			if ($menuitemcmd1 eq 'trackinfo') {
+				my %itemParams = (
+					'track_id' => $trackID,
+					'menu' => 1,
+					'usecontextmenu' => 1,
+				);
+				$actions = {
+					'player' => 0,
+					'go' => {
+						'cmd' => [$menuitemcmd1, $menuitemcmd2],
+						'params' => {
+							'menu' => 1,
+							$thisitem->{'actionParam'} => $trackID,
+						},
+					},
+					'player' => 0,
+					'play' => {
+						'cmd' => [$menuitemcmd1, $menuitemcmd2],
+						'params' => {
+							'menu' => 1,
+							$thisitem->{'actionParam'} => $trackID,
+						},
+					}
+				};
+			} else {
+				$actions = {
+					'player' => 0,
+					'go' => {
+						'cmd' => [$menuitemcmd1, 'cmd:'.$menuitemcmd2, 'track_id:'.$trackID],
+					},
+					'player' => 0,
+					'play' => {
+						'cmd' => [$menuitemcmd1, 'cmd:'.$menuitemcmd2, 'track_id:'.$trackID],
+					}
+				};
+				$request->addResultLoop('item_loop',$cnt,'nextWindow','parent');
+			}
+
+			$request->addResultLoop('item_loop',$cnt,'actions',$actions);
+			$request->addResultLoop('item_loop',$cnt,'text',$menuitemtext);
+			$cnt++;
+		}
+	}
+	$request->addResult('offset',0);
+	$request->addResult('count',$cnt);
+	$request->setStatusDone();
+}
+
 sub initVirtualLibraries {
 	Slim::Music::VirtualLibraries->unregisterLibrary('RL_RATED');
-	Slim::Music::VirtualLibraries->unregisterLibrary('RL_RATED_HIGH');
+	Slim::Music::VirtualLibraries->unregisterLibrary('RL_TOPRATED');
 	Slim::Menu::BrowseLibrary->deregisterNode('RatingsLightRatedTracksMenuFolder');
 
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 	if ($showratedtracksmenus > 0) {
 		my $browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
 		$log->debug("browsemenus_sourceVL_id = ".Dumper($browsemenus_sourceVL_id));
+		my $topratedminrating = $prefs->get('topratedminrating');
 
 		my $libraries = (Slim::Music::VirtualLibraries->getLibraries());
 		# check if source virtual library still exists, otherwise use complete library
@@ -1697,7 +1738,7 @@ sub initVirtualLibraries {
 		if ((! defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
 			push @libraries,{
 				id => 'RL_RATED',
-				name => 'Ratings Light - Rated',
+				name => 'Ratings Light - Rated Tracks',
 				sql => qq{
 					INSERT OR IGNORE INTO library_track (library, track)
 					SELECT '%s', tracks.id
@@ -1710,7 +1751,7 @@ sub initVirtualLibraries {
 		} else {
 			push @libraries,{
 				id => 'RL_RATED',
-				name => 'Ratings Light - Rated',
+				name => 'Ratings Light - Rated Tracks',
 				sql => qq{
 					INSERT OR IGNORE INTO library_track (library, track)
 					SELECT '%s', tracks.id
@@ -1727,28 +1768,28 @@ sub initVirtualLibraries {
 		if ($showratedtracksmenus == 2) {
 			if ((! defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
 				push @libraries,{
-					id => 'RL_RATED_HIGH',
-					name => 'Ratings Light - Rated 3 stars+',
+					id => 'RL_TOPRATED',
+					name => 'Ratings Light - Top Rated Tracks',
 					sql => qq{
 						INSERT OR IGNORE INTO library_track (library, track)
 						SELECT '%s', tracks.id
 						FROM tracks
 						LEFT JOIN tracks_persistent tracks_persistent ON tracks_persistent.urlmd5 = tracks.urlmd5
-							WHERE tracks_persistent.rating >= 60
+							WHERE tracks_persistent.rating >= $topratedminrating
 						GROUP by tracks.id
 					}
 				};
 			} else {
 				push @libraries,{
-					id => 'RL_RATED_HIGH',
-					name => 'Ratings Light - Rated 3 stars+',
+					id => 'RL_TOPRATED',
+					name => 'Ratings Light - Top Rated Tracks',
 					sql => qq{
 						INSERT OR IGNORE INTO library_track (library, track)
 						SELECT '%s', tracks.id
 						FROM tracks
 						LEFT JOIN tracks_persistent tracks_persistent ON tracks_persistent.urlmd5 = tracks.urlmd5
 						LEFT JOIN library_track library_track ON library_track.track = tracks.id
-							WHERE tracks_persistent.rating >= 60
+							WHERE tracks_persistent.rating >= $topratedminrating
 							AND library_track.library = "$browsemenus_sourceVL_id"
 						GROUP by tracks.id
 					}
@@ -1820,15 +1861,15 @@ sub initVirtualLibraries {
 								});
 
 								if ($showratedtracksmenus == 2) {
-									# Artists with tracks rated 3 stars+
-									$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RL_RATED_HIGH') };
+									# Artists with top rated tracks
+									$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RL_TOPRATED') };
 									push @items,{
 										type => 'link',
-										name => string('PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATEDHIGH').$browsemenus_sourceVL_name,
+										name => string('PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_TOPRATED').$browsemenus_sourceVL_name,
 										url => \&Slim::Menu::BrowseLibrary::_artists,
 										icon => 'html/images/artists.png',
 										jiveIcon => 'html/images/artists.png',
-										id => string('myMusicArtists_RATED_HIGH_TracksByArtist'),
+										id => string('myMusicArtists_RATED_TOPRATED_TracksByArtist'),
 										condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
 										weight => 210,
 										cache => 1,
@@ -1840,15 +1881,15 @@ sub initVirtualLibraries {
 										}],
 									};
 
-									# Genres with tracks rated 3 stars+
-									$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RL_RATED_HIGH') };
+									# Genres with top rated tracks
+									$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RL_TOPRATED') };
 									push @items,{
 										type => 'link',
-										name => string('PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATEDHIGH').$browsemenus_sourceVL_name,
+										name => string('PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_TOPRATED').$browsemenus_sourceVL_name,
 										url => \&Slim::Menu::BrowseLibrary::_genres,
 										icon => 'html/images/genres.png',
 										jiveIcon => 'html/images/genres.png',
-										id => string('myMusicGenres_RATED_HIGH_TracksByGenres'),
+										id => string('myMusicGenres_RATED_TOPRATED_TracksByGenres'),
 										condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
 										weight => 212,
 										cache => 1,
@@ -1870,13 +1911,27 @@ sub initVirtualLibraries {
 	}
 }
 
+sub refreshVirtualLibraries {
+	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+
+	if ($showratedtracksmenus > 0) {
+		my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RL_RATED');
+		Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
+
+		if ($showratedtracksmenus == 2) {
+		my $library_id_rated_toprated = Slim::Music::VirtualLibraries->getRealId('RL_TOPRATED');
+		Slim::Music::VirtualLibraries->rebuild($library_id_rated_toprated);
+		}
+	}
+}
+
 sub getVirtualLibraries {
 	my $libraries = Slim::Music::VirtualLibraries->getLibraries();
 	my %libraries;
 
 	%libraries = map {
 		$_ => $libraries->{$_}->{name}
-	} keys %$libraries if keys %$libraries;
+	} keys %{$libraries} if keys %{$libraries};
 
 	return \%libraries;
 }
@@ -1891,7 +1946,7 @@ sub addToRecentlyRatedPlaylist {
 
  	if ($existsPL == 1) {
  		my $playlistidhash = $request->getResult('playlists_loop');
-		foreach my $hashref (@$playlistidhash) {
+		foreach my $hashref (@{$playlistidhash}) {
 			$playlistid = $hashref->{id};
 		}
 
@@ -1939,7 +1994,7 @@ sub logRatedTrack {
 	my $query = Slim::Control::Request::executeRequest(undef, ['songinfo', '0', '100', 'url:'.$trackURL, 'tags:alR']);
 	my $songinfohash = $query->getResult('songinfo_loop');
 
-	foreach my $elem ( @{$songinfohash} ){
+	foreach my $elem (@{$songinfohash}){
 		foreach my $key ( keys %{ $elem } ){
 			if ($key eq 'title') {
 				$title = $elem->{$key};
@@ -2010,18 +2065,7 @@ sub clearAllRatings {
 	$log->debug("Clearing all ratings completed after ".$ended." seconds.");
 	$prefs->set('status_clearingallratings', 0);
 
-	# refresh virtual libraries
-	if($status_restoringfrombackup != 1) {
-		if (($showratedtracksmenus > 0) && (defined $autorebuildvirtualibraryafterrating)) {
-			my $library_id_rated_all = Slim::Music::VirtualLibraries->getRealId('RL_RATED');
-			Slim::Music::VirtualLibraries->rebuild($library_id_rated_all);
-
-			if ($showratedtracksmenus == 2) {
-			my $library_id_rated_high = Slim::Music::VirtualLibraries->getRealId('RL_RATED_HIGH');
-			Slim::Music::VirtualLibraries->rebuild($library_id_rated_high);
-			}
-		}
-	}
+	refreshVirtualLibraries();
 }
 
 sub changeExportFilePath {
@@ -2030,8 +2074,8 @@ sub changeExportFilePath {
 	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
 	my $exportextension = $prefs->get('exportextension');
 
-	if (scalar @$exportbasefilepathmatrix > 0) {
-		foreach my $thispath (@$exportbasefilepathmatrix) {
+	if (scalar @{$exportbasefilepathmatrix} > 0) {
+		foreach my $thispath (@{$exportbasefilepathmatrix}) {
 			if (($trackURL =~ ($thispath->{'lmsbasepath'})) && (defined ($thispath->{'substitutebasepath'})) && (($thispath->{'substitutebasepath'}) ne '')) {
 				my $lmsbasepath = $thispath->{'lmsbasepath'};
 				my $substitutebasepath = $thispath->{'substitutebasepath'};
@@ -2060,35 +2104,35 @@ sub initExportBaseFilePathMatrix {
 	my $lmsmusicdirs = [];
 	my %musicdircount;
 	my $thisdir;
-	foreach $thisdir (@$mediadirs, @$ignoreInAudioScan) { $musicdircount{$thisdir}++ }
+	foreach $thisdir (@{$mediadirs}, @{$ignoreInAudioScan}) { $musicdircount{$thisdir}++ }
 	foreach $thisdir (keys %musicdircount) {
 		if ($musicdircount{$thisdir} == 1) {
-			push (@$lmsmusicdirs, $thisdir);
+			push (@{$lmsmusicdirs}, $thisdir);
 		}
 	}
 
 	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
 	if (!defined $exportbasefilepathmatrix) {
 		my $n = 0;
-		foreach my $musicdir (@$lmsmusicdirs) {
-			push(@$exportbasefilepathmatrix, { lmsbasepath => $musicdir, substitutebasepath => ''});
+		foreach my $musicdir (@{$lmsmusicdirs}) {
+			push(@{$exportbasefilepathmatrix}, { lmsbasepath => $musicdir, substitutebasepath => ''});
 			$n++;
 		}
 		$prefs->set('exportbasefilepathmatrix', $exportbasefilepathmatrix);
 	} else {
 		# add new music dirs as options if not in list
 		my @currentlmsbasefilepaths;
-		foreach my $thispath (@$exportbasefilepathmatrix) {
+		foreach my $thispath (@{$exportbasefilepathmatrix}) {
 			push (@currentlmsbasefilepaths, $thispath->{'lmsbasepath'});
 		}
 
 		my %seen;
 		@seen{@currentlmsbasefilepaths} = ();
 
-		foreach my $newdir (@$lmsmusicdirs) {
-			push (@$exportbasefilepathmatrix, { lmsbasepath => $newdir, substitutebasepath => ''}) unless exists $seen{$newdir};
+		foreach my $newdir (@{$lmsmusicdirs}) {
+			push (@{$exportbasefilepathmatrix}, { lmsbasepath => $newdir, substitutebasepath => ''}) unless exists $seen{$newdir};
 		}
-		$prefs->set('exportbasefilepathmatrix', \@$exportbasefilepathmatrix);
+		$prefs->set('exportbasefilepathmatrix', \@{$exportbasefilepathmatrix});
 	}
 }
 
@@ -2097,10 +2141,10 @@ sub getSeedGenres {
 	my $num_seedtracks = $prefs->get('num_seedtracks');
 	my $seedTracks = Slim::Plugin::DontStopTheMusic::Plugin->getMixableProperties($client, $num_seedtracks);
 
-	if ($seedTracks && ref $seedTracks && scalar @$seedTracks) {
+	if ($seedTracks && ref $seedTracks && scalar @{$seedTracks}) {
 		my @seedIDs = ();
 		my @seedsToUse = ();
-		foreach my $seedTrack (@$seedTracks) {
+		foreach my $seedTrack (@{$seedTracks}) {
 			my ($trackObj) = Slim::Schema->find('Track', $seedTrack->{id});
 			if ($trackObj) {
 				push @seedsToUse, $trackObj;
@@ -2114,9 +2158,9 @@ sub getSeedGenres {
 				my $track = Slim::Schema->resultset("Track")->find($thisID);
 				my $thisgenreid = $track->genre->id;
 				$log->debug("seed genrename = ".$track->genre->name." -- genre ID: ".$thisgenreid);
-				push @$genrelist,$thisgenreid;
+				push @{$genrelist},$thisgenreid;
 			}
-			my @filteredgenrelist = sort (uniq(@$genrelist));
+			my @filteredgenrelist = sort (uniq(@{$genrelist}));
 
 			my $includedgenrelist = '';
 			foreach my $thisincludedgenre (@filteredgenrelist) {
@@ -2134,8 +2178,8 @@ sub getSeedGenres {
 sub getExcludedGenreList {
 	my $excludegenres_namelist = $prefs->get('excludegenres_namelist');
 	my $excludedgenreString = '';
-	if ((defined $excludegenres_namelist) && (scalar @$excludegenres_namelist > 0)) {
-		foreach my $thisgenre (@$excludegenres_namelist) {
+	if ((defined $excludegenres_namelist) && (scalar @{$excludegenres_namelist} > 0)) {
+		foreach my $thisgenre (@{$excludegenres_namelist}) {
 			if ($excludedgenreString eq '') {
 				$excludedgenreString = "'".$thisgenre."'";
 			} else {
@@ -2151,6 +2195,7 @@ sub dontStopTheMusic {
 	return unless $client;
 	$log->debug("DSTM mixtype = ".$mixtype);
 
+	my $topratedminrating = $prefs->get('topratedminrating');
 	my $tracks = [];
 	my $sql_limit = 30;
 
@@ -2158,7 +2203,7 @@ sub dontStopTheMusic {
 	$log->debug("excludedgenrelist = ".$excludedgenrelist);
 	my $dstm_minTrackDuration = $prefs->get('dstm_minTrackDuration');
 	my $dstm_percentagerated = $prefs->get('dstm_percentagerated');
-	my $dstm_percentageratedhigh = $prefs->get('dstm_percentageratedhigh');
+	my $dstm_percentagetoprated = $prefs->get('dstm_percentagetoprated');
 	my $currentLibrary = Slim::Music::VirtualLibraries->getLibraryIdForClient($client);
 	$log->debug("current client VlibID = ".$currentLibrary);
 
@@ -2187,13 +2232,13 @@ sub dontStopTheMusic {
 		$sqlstatement .= " group by tracks.id order by random() limit $sql_limit;";
 	}
 
-	# Mix: "Rated (with % of rated 3 stars+)"
-	if ($mixtype eq 'rated_high') {
+	# Mix: "Rated (with % of top rated)"
+	if ($mixtype eq 'rated_toprated') {
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
 DROP TABLE IF EXISTS randomweightedratingslow;
 DROP TABLE IF EXISTS randomweightedratingscombined;
 ";
-		$sqlstatement .="create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49";
+		$sqlstatement .="create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2202,10 +2247,10 @@ DROP TABLE IF EXISTS randomweightedratingscombined;
 		if ($excludedgenrelist ne '') {
 			$sqlstatement .= $excludegenre_sql;
 		}
-		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentageratedhigh);
+		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentagetoprated);
 ";
 
-		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 49";
+		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= $topratedminrating";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2214,7 +2259,7 @@ DROP TABLE IF EXISTS randomweightedratingscombined;
 		if ($excludedgenrelist ne '') {
 			$sqlstatement .= $excludegenre_sql;
 		}
-		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentageratedhigh;
+		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentagetoprated;
 ";
 		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
 SELECT * from randomweightedratingscombined ORDER BY random() limit $sql_limit;
@@ -2238,13 +2283,13 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement .= " group by tracks.id order by random() limit $sql_limit;";
 	}
 
-	# Mix: "Rated (seed genres with % of rated 3 stars+)"
-	if ($mixtype eq 'rated_genre_high') {
+	# Mix: "Rated (seed genres with % of top rated)"
+	if ($mixtype eq 'rated_genre_toprated') {
 		my $dstm_includegenres = getSeedGenres($client);
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
 DROP TABLE IF EXISTS randomweightedratingslow;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49";
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2253,9 +2298,9 @@ create temporary table randomweightedratingslow as select tracks.url as url from
 		if ($excludedgenrelist ne '') {
 			$sqlstatement .= $excludegenre_sql;
 		}
-		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentageratedhigh);
+		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentagetoprated);
 ";
-		$sqlstatement .="create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= 50";
+		$sqlstatement .="create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= $topratedminrating";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2264,7 +2309,7 @@ create temporary table randomweightedratingslow as select tracks.url as url from
 		if ($excludedgenrelist ne '') {
 			$sqlstatement .= $excludegenre_sql;
 		}
-		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentageratedhigh;
+		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentagetoprated;
 ";
 		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
 SELECT * from randomweightedratingscombined ORDER BY random() limit $sql_limit;
@@ -2428,13 +2473,13 @@ DROP TABLE randomweightedratingscombined;";
 
 				while( $sth->fetch()) {
 					my $track = Slim::Schema->resultset("Track")->objectForUrl($trackURL);
-					push @$tracks, $track;
+					push @{$tracks}, $track;
 				}
 			}
 			$sth->finish();
 		};
 	}
-	my $tracksfound = scalar @$tracks || 0;
+	my $tracksfound = scalar @{$tracks} || 0;
 	$log->debug("RL DSTM - tracks found/used: ".$tracksfound);
 	# Prune previously played playlist tracks
 	my $songIndex = Slim::Player::Source::streamingSongIndex($client);
@@ -2455,23 +2500,23 @@ sub getDynamicPlayLists {
 
 	### all possible parameters ###
 
-	# % rated high #
+	# % top rated #
 	my %parametertop1 = (
 			'id' => 1, # 1-10
 			'type' => 'list', # album, artist, genre, year, playlist, list or custom
-			'name' => 'Select percentage of songs rated 3 stars or higher',
+			'name' => 'Select percentage of top rated songs',
 			'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
 	);
 	my %parametertop2 = (
 			'id' => 2,
 			'type' => 'list',
-			'name' => 'Select percentage of songs rated 3 stars or higher',
+			'name' => 'Select percentage of top rated songs',
 			'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
 	);
 	my %parametertop3 = (
 			'id' => 3,
 			'type' => 'list',
-			'name' => 'Select percentage of songs rated 3 stars or higher',
+			'name' => 'Select percentage of top rated songs',
 			'definition' => '0:0%,10:10%,20:20%,30:30%,40:40%,50:50%,60:60%,70:70%,80:80%,90:90%,100:100%'
 	);
 
@@ -2549,7 +2594,7 @@ sub getDynamicPlayLists {
 		'groups' => [['Ratings Light ']]
 	);
 	my %playlist2 = (
-		'name' => 'Rated (with % of rated 3 stars+)',
+		'name' => 'Rated (with % of top rated)',
 		'url' => 'plugins/RatingsLight/html/dpldesc/rated_top.html?dummyparam=1',
 		'groups' => [['Ratings Light ']]
 	);
@@ -2559,7 +2604,7 @@ sub getDynamicPlayLists {
 		'groups' => [['Ratings Light ']]
 	);
 	my %playlist4 = (
-		'name' => 'Rated - by DECADE (with % of rated 3 stars+)',
+		'name' => 'Rated - by DECADE (with % of top rated)',
 		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade_top.html?dummyparam=1',
 		'groups' => [['Ratings Light ']]
 	);
@@ -2569,7 +2614,7 @@ sub getDynamicPlayLists {
 		'groups' => [['Ratings Light ']]
 	);
 	my %playlist6 = (
-		'name' => 'Rated - by GENRE (with % of rated 3 stars+)',
+		'name' => 'Rated - by GENRE (with % of top rated)',
 		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_genre_top.html?dummyparam=1',
 		'groups' => [['Ratings Light ']]
 	);
@@ -2579,28 +2624,28 @@ sub getDynamicPlayLists {
 		'groups' => [['Ratings Light ']]
 	);
 	my %playlist8 = (
-		'name' => 'Rated - by GENRE + DECADE (with % of rated 3 stars+)',
+		'name' => 'Rated - by GENRE + DECADE (with % of top rated)',
 		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_decade_and_genre_top.html?dummyparam=1',
 		'groups' => [['Ratings Light ']]
 	);
 	my %playlist9 = (
-		'name' => 'UNrated (with % of RATED songs)',
+		'name' => 'UNrated (with % of rated songs)',
 		'url' => 'plugins/RatingsLight/html/dpldesc/unrated_rated.html?dummyparam=1',
 		'groups' => [['Ratings Light ']]
 	);
 	my %playlist10 = (
-		'name' => 'UNrated by DECADE (with % of RATED songs)',
-		'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_decade_top.html?dummyparam=1',
+		'name' => 'UNrated by DECADE (with % of rated songs)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_decade_rated.html?dummyparam=1',
 		'groups' => [['Ratings Light ']]
 	);
 	my %playlist11 = (
-		'name' => 'UNrated by GENRE (with % of RATED songs)',
-		'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_genre_top.html?dummyparam=1',
+		'name' => 'UNrated by GENRE (with % of rated songs)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_genre_rated.html?dummyparam=1',
 		'groups' => [['Ratings Light ']]
 	);
 	my %playlist12 = (
-		'name' => 'UNrated by GENRE + DECADE (with % of RATED songs)',
-		'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_decade_and_genre_top.html?dummyparam=1',
+		'name' => 'UNrated by GENRE + DECADE (with % of rated songs)',
+		'url' => 'plugins/RatingsLight/html/dpldesc/unrated_by_decade_and_genre_rated.html?dummyparam=1',
 		'groups' => [['Ratings Light ']]
 	);
 	my %playlist13 = (
@@ -2612,7 +2657,7 @@ sub getDynamicPlayLists {
 	# Playlist1: "Rated"
 	$result{'ratingslight_rated'} = \%playlist1;
 
-	# Playlist2: "Rated (with % of rated 3 stars+, un/played)"
+	# Playlist2: "Rated (with % of top rated, un/played)"
 	my %parametersPL2 = (
 		1 => \%parametertop1,
 		2 => \%parameterplaycount2
@@ -2628,7 +2673,7 @@ sub getDynamicPlayLists {
 	$playlist3{'parameters'} = \%parametersPL3;
 	$result{'ratingslight_rated-by_decade'} = \%playlist3;
 
-	# Playlist4: "Rated - by DECADE (with % of rated 3 stars+, un/played)"
+	# Playlist4: "Rated - by DECADE (with % of top rated, un/played)"
 	my %parametersPL4 = (
 		1 => \%parameterdec1,
 		2 => \%parametertop2,
@@ -2645,7 +2690,7 @@ sub getDynamicPlayLists {
 	$playlist5{'parameters'} = \%parametersPL5;
 	$result{'ratingslight_rated-by_genre'} = \%playlist5;
 
-	# Playlist6: "Rated - by GENRE (with % of rated 3 stars+, un/played)"
+	# Playlist6: "Rated - by GENRE (with % of top rated, un/played)"
 	my %parametersPL6 = (
 		1 => \%parametergen1,
 		2 => \%parametertop2,
@@ -2663,7 +2708,7 @@ sub getDynamicPlayLists {
 	$playlist7{'parameters'} = \%parametersPL7;
 	$result{'ratingslight_rated-by_genre_and_decade'} = \%playlist7;
 
-	# Playlist8: "Rated - by GENRE + DECADE (with % of rated 3 stars+, un/played)"
+	# Playlist8: "Rated - by GENRE + DECADE (with % of top rated, un/played)"
 	my %parametersPL8 = (
 		1 => \%parametergen1,
 		2 => \%parameterdec2,
@@ -2673,7 +2718,7 @@ sub getDynamicPlayLists {
 	$playlist8{'parameters'} = \%parametersPL8;
 	$result{'ratingslight_rated-by_genre_and_decade_with_top_percentage'} = \%playlist8;
 
-	# Playlist9: "UNrated (with % of RATED songs, un/played)"
+	# Playlist9: "UNrated (with % of rated songs, un/played)"
 	my %parametersPL9 = (
 		1 => \%parameterrated1,
 		2 => \%parameterplaycount2,
@@ -2681,7 +2726,7 @@ sub getDynamicPlayLists {
 	$playlist9{'parameters'} = \%parametersPL9;
 	$result{'ratingslight_unrated-with_rated_percentage'} = \%playlist9;
 
-	# Playlist10: "UNrated by DECADE (with % of RATED songs, un/played)"
+	# Playlist10: "UNrated by DECADE (with % of rated songs, un/played)"
 	my %parametersPL10 = (
 		1 => \%parameterdec1,
 		2 => \%parameterrated2,
@@ -2690,7 +2735,7 @@ sub getDynamicPlayLists {
 	$playlist10{'parameters'} = \%parametersPL10;
 	$result{'ratingslight_unrated-by_decade_with_rated_percentage'} = \%playlist10;
 
-	# Playlist11: "UNrated by GENRE (with % of RATED songs, un/played)"
+	# Playlist11: "UNrated by GENRE (with % of rated songs, un/played)"
 	my %parametersPL11 = (
 		1 => \%parametergen1,
 		2 => \%parameterrated2,
@@ -2699,7 +2744,7 @@ sub getDynamicPlayLists {
 	$playlist11{'parameters'} = \%parametersPL11;
 	$result{'ratingslight_unrated-by_genre_with_rated_percentage'} = \%playlist11;
 
-	# Playlist12: "UNrated by GENRE + DECADE (with % of RATED songs, un/played)"
+	# Playlist12: "UNrated by GENRE + DECADE (with % of rated songs, un/played)"
 	my %parametersPL12 = (
 		1 => \%parametergen1,
 		2 => \%parameterdec2,
@@ -2722,9 +2767,10 @@ sub getDynamicPlayLists {
 sub getNextDynamicPlayListTracks {
 	my ($client,$playlist,$limit,$offset,$parameters) = @_;
 	my $clientID = $client->id;
-	my $DPLid = @$playlist{dynamicplaylistid};
+	my $DPLid = @{$playlist}{dynamicplaylistid};
 	$log->debug("DynamicPlaylist name = ".$DPLid);
 	my $dstm_minTrackDuration = $prefs->get('dstm_minTrackDuration');
+	my $topratedminrating = $prefs->get('topratedminrating');
 	my $excludedgenrelist = getExcludedGenreList();
 	$log->debug("excludedgenrelist = ".$excludedgenrelist);
 	my $currentLibrary = Slim::Music::VirtualLibraries->getLibraryIdForClient($client);
@@ -2758,14 +2804,14 @@ sub getNextDynamicPlayListTracks {
 		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
 	}
 
-	# Playlist2: "Rated (with % of rated 3 stars+, un/played)"
+	# Playlist2: "Rated (with % of top rated, un/played)"
 	if ($DPLid eq 'ratingslight_rated-with_top_percentage') {
 		my $percentagevalue = $parameters->{1}->{'value'};
 		my $playcountvalue = $parameters->{2}->{'value'};
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
 DROP TABLE IF EXISTS randomweightedratingslow;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49";
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
 		}
@@ -2784,7 +2830,7 @@ create temporary table randomweightedratingslow as select tracks.url as url from
 		$sqlstatement .= " group by tracks.id order by random() limit (100-$percentagevalue);
 ";
 
-		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 49";
+		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
 		}
@@ -2834,7 +2880,7 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
 	}
 
-	# Playlist4: "Rated - by DECADE (with % of rated 3 stars+, un/played)"
+	# Playlist4: "Rated - by DECADE (with % of top rated, un/played)"
 	if ($DPLid eq 'ratingslight_rated-by_decade_with_top_percentage') {
 		my $decade = $parameters->{1}->{'value'};
 		my $percentagevalue = $parameters->{2}->{'value'};
@@ -2842,7 +2888,7 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
 DROP TABLE IF EXISTS randomweightedratingslow;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49";
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
 		}
@@ -2862,7 +2908,7 @@ create temporary table randomweightedratingslow as select tracks.url as url from
 		$sqlstatement .= " group by tracks.id order by random() limit (100-$percentagevalue);
 ";
 
-		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= 50";
+		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
 		}
@@ -2908,7 +2954,7 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
 	}
 
-	# Playlist6: "Rated - by GENRE (with % of rated 3 stars+, un/played)"
+	# Playlist6: "Rated - by GENRE (with % of top rated, un/played)"
 	if ($DPLid eq 'ratingslight_rated-by_genre_with_top_percentage') {
 		my $genre = $parameters->{1}->{'value'};
 		my $percentagevalue = $parameters->{2}->{'value'};
@@ -2916,7 +2962,7 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
 DROP TABLE IF EXISTS randomweightedratingslow;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49";
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
 		}
@@ -2929,7 +2975,7 @@ create temporary table randomweightedratingslow as select tracks.url as url from
 			$sqlstatement .= $shared_completelib_sql;
 		}
 		$sqlstatement .= " order by random() limit (100-$percentagevalue);
-create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= 50";
+create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
 		}
@@ -2969,7 +3015,7 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement .= " and tracks.year>=$decade and tracks.year<$decade+10 group by tracks.id order by random() limit $limit;";
 	}
 
-	# Playlist8: "Rated - by GENRE + DECADE (with % of rated 3 stars+, un/played)"
+	# Playlist8: "Rated - by GENRE + DECADE (with % of top rated, un/played)"
 	if ($DPLid eq 'ratingslight_rated-by_genre_and_decade_with_top_percentage') {
 		my $genre = $parameters->{1}->{'value'};
 		my $decade = $parameters->{2}->{'value'};
@@ -2978,7 +3024,7 @@ DROP TABLE randomweightedratingscombined;";
 		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
 DROP TABLE IF EXISTS randomweightedratingslow;
 DROP TABLE IF EXISTS randomweightedratingscombined;
-create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating <= 49";
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
 		}
@@ -2991,7 +3037,7 @@ create temporary table randomweightedratingslow as select tracks.url as url from
 			$sqlstatement .= $shared_completelib_sql;
 		}
 		$sqlstatement .= " and tracks.year>=$decade and tracks.year<$decade+10 order by random() limit (100-$percentagevalue);
-create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 50";
+create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating >= $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
 		}
@@ -3286,10 +3332,10 @@ sub checkCustomSkipFilterType {
 
 	if($filter->{'id'} eq 'ratingslight_rated') {
 		my $rating100ScaleValue = getRatingFromDB($track);
-		for my $parameter (@$parameters) {
+		for my $parameter (@{$parameters}) {
 			if($parameter->{'id'} eq 'rating') {
 				my $ratings = $parameter->{'value'};
-				my $rating = $ratings->[0] if(defined($ratings) && scalar(@$ratings)>0);
+				my $rating = $ratings->[0] if(defined($ratings) && scalar(@{$ratings})>0);
 				if($rating100ScaleValue <= $rating) {
 					return 1;
 				}
@@ -3365,12 +3411,12 @@ sub getTitleFormat_Rating {
 sub addTitleFormat {
 	my $titleformat = shift;
 	my $titleFormats = $serverPrefs->get('titleFormat');
-	foreach my $format ( @$titleFormats ) {
+	foreach my $format (@{$titleFormats}) {
 		if($titleformat eq $format) {
 			return;
 		}
 	}
-	push @$titleFormats,$titleformat;
+	push @{$titleFormats},$titleformat;
 	$serverPrefs->set('titleFormat',$titleFormats);
 }
 
@@ -3383,6 +3429,20 @@ sub isTimeOrEmpty {
 		return 1;
 	}
 	return 0;
+}
+
+sub ratingSanityCheck {
+	my $rating = shift;
+	if (!defined $rating) {
+		return 0;
+	}
+	if ($rating > 100) {
+		$rating = 100;
+	}
+	if ($rating < 0) {
+		$rating = 0;
+	}
+	return $rating;
 }
 
 sub getCurrentDBH {

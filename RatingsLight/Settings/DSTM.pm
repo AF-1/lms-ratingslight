@@ -46,7 +46,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(dstm_minTrackDuration dstm_percentagerated dstm_percentageratedhigh num_seedtracks));
+	return ($prefs, qw(dstm_minTrackDuration dstm_percentagerated dstm_percentagetoprated num_seedtracks));
 }
 
 sub handler {
@@ -58,10 +58,10 @@ sub handler {
 		my $excludegenres_namelist;
 		my $genres = getGenres();
 
-		# %$paramRef will contain a key called genre_<genre id> for each ticked checkbox on the page
+		# %{$paramRef} will contain a key called genre_<genre id> for each ticked checkbox on the page
 		for my $genre (keys %{$genres}) {
 			if ($paramRef->{'genre_'.$genres->{$genre}->{'id'}}) {
-				push (@$excludegenres_namelist, $genre);
+				push (@{$excludegenres_namelist}, $genre);
 			}
 		}
 		$log->debug("*** SAVED *** excludegenres_namelist = ".Dumper($excludegenres_namelist));
@@ -98,7 +98,7 @@ sub getGenres {
 	# Extract each genre name into a hash
 	my %exclude;
 	if (defined $excludenamelist) {
-		%exclude = map { $_ => 1 } @$excludenamelist;
+		%exclude = map { $_ => 1 } @{$excludenamelist};
 	}
 
 	my $i = 0;

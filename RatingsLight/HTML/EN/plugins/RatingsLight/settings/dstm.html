@@ -8,8 +8,8 @@
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_HIGH" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_HIGH_DESC" %]
-	<input type="text" class="stdedit" name="pref_dstm_percentageratedhigh" id="dstm_percentageratedhigh" value="[% prefs.dstm_percentageratedhigh %]" size="3">
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_TOPRATED" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_TOPRATED_DESC" %]
+	<input type="text" class="stdedit" name="pref_dstm_percentagetoprated" id="dstm_percentagetoprated" value="[% prefs.dstm_percentagetoprated %]" size="3">
 [% END %]
 <br>
 
@@ -19,8 +19,8 @@
 <br><hr>
 [% WRAPPER setting title="" desc="" %]
 [% "PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_HEADER" | string %]
+<br>
 [% END %]
-<span style="height:8px;"></span>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR_DESC" %]
 	<input type="text" class="stdedit" name="pref_dstm_minTrackDuration" id="dstm_minTrackDuration" value="[% prefs.dstm_minTrackDuration %]" size="3">
@@ -35,7 +35,7 @@
 				[%- genreid = "genre_" _ genrelist.item("$genre").id %]
 				<td>
 					<input type="checkbox" name="[% genreid %]" id="[% genreid %]" value="1" [% genrelist.item("$genre").chosen ? "checked" : "" %]>
-					<label for="[% genreid %]">[% genrelist.item("$genre").name | html %]</label>
+					<label style="font-weight: normal;" for="[% genreid %]">[% genrelist.item("$genre").name | html %]</label>
 				</td>
 				[%- END %]
 			</tr>

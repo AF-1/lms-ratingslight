@@ -42,7 +42,7 @@ sub handler {
 	my %currentSubPages = ();
 	for my $key (keys %subPages) {
 		my $pages = $subPages{$key}->pages($client,$params);
-		for my $page (@$pages) {
+		for my $page (@{$pages}) {
 			$currentSubPages{$page->{'name'}} = $page->{'page'};
 		}
 	}

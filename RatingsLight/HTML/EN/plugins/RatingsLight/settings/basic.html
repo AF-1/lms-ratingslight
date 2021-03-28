@@ -22,6 +22,15 @@
 [% END %]
 <br>
 
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING" desc="PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING_DESC" %]
+	<select name="pref_topratedminrating" id="topratedminrating">
+		[% FOREACH ratingvalue = [60,70,80,90,100] %]
+			<option [% IF prefs.topratedminrating == ratingvalue %]selected='selected' [% END %]value="[% ratingvalue %]">[% ratingvalue / 20 %]</option>
+		[% END %]
+	</select>
+[% END %]
+<br>
+
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST" desc="PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_DESC" %]
 	<input name="pref_userecentlyaddedplaylist" id="userecentlyaddedplaylist" type="checkbox" [% IF prefs.userecentlyaddedplaylist %] checked [% END %]>
 [% END %]

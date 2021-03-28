@@ -90,7 +90,7 @@ sub beforeRender {
 
 	if ($playlistcount > 0) {
 		my $playlistarray = $queryresult->getResult("playlists_loop");
-		my @sortedarray = sort {$a->{id} <=> $b->{id}} @$playlistarray;
+		my @sortedarray = sort {$a->{id} <=> $b->{id}} @{$playlistarray};
 		$log->debug("sorted playlists = ".Dumper(\@sortedarray));
 		$paramRef->{playlistcount} = $playlistcount;
 		$paramRef->{allplaylists} = \@sortedarray;

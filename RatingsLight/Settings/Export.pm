@@ -89,14 +89,14 @@ sub handler {
 	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
 	my $exportbasefilepath;
 
-	foreach $exportbasefilepath (@$exportbasefilepathmatrix) {
+	foreach $exportbasefilepath (@{$exportbasefilepathmatrix}) {
 		if ($exportbasefilepath->{'lmsbasepath'}) {
 			push( @{$paramRef->{exportbasefilepathmatrix}}, $exportbasefilepath);
 		}
 	}
 
 	# add empty field (max = 11)
-	if ((scalar @$exportbasefilepathmatrix + 1) < 10) {
+	if ((scalar @{$exportbasefilepathmatrix} + 1) < 10) {
 		push(@{$paramRef->{exportbasefilepathmatrix}}, {lmsbasepath => '', substitutebasepath => ''});
 	}
 
@@ -125,7 +125,7 @@ sub beforeRender {
 		return $match;
 	}
 
-	while (my ($k, $v) = each %$libraries) {
+	while (my ($k, $v) = each %{$libraries}) {
 		my $count = Slim::Utils::Misc::delimitThousands(Slim::Music::VirtualLibraries->getTrackCount($k));
 		my $name = Slim::Music::VirtualLibraries->getNameForId($k);
 

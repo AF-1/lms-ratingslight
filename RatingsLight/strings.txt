@@ -48,7 +48,13 @@ PLUGIN_RATINGSLIGHT_VARIOUS_REMOTEBUTTONS
 	EN	Quick rating with IR remote buttons
 
 PLUGIN_RATINGSLIGHT_VARIOUS_REMOTEBUTTONS_DESC
-	EN	Rate the track that is currently playing on your device by <b>holding down</b> a button on your Logitech IR remote<br>(devices with a VFD display like Squeezebox, Boom, Transporter).<br><br><b>Press and hold</b> the key until you see a message on your display confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5  =  1 to 5 stars<br>0  =  unrate<br>6  =  subtract 1 star from current rating<br>7  =  add 1 star to current rating<br>8  =  subtract 0.5 stars from current rating<br>9  =  add 0.5 stars to current rating<br><br><b>Boom (mini remote) only:</b><br><br>arrow up  =  add 1 star to current rating<br>arrow down  =  subtract 1 star from current rating<br><br>Changing this setting will take effect <b>after a LMS restart.</b>
+	EN	Rate the track that is currently playing on your device by <b>holding down</b> a button on your Logitech IR remote<br>(devices with a VFD display like Squeezebox, Boom, Transporter).<br><br>Press and <b>hold</b> the key until you see a message on your display confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5 = 1 to 5 stars<br>0 = unrate<br>6 = subtract 1 star from current rating<br>7 = add 1 star to current rating<br>8 = subtract 0.5 stars from current rating<br>9 = add 0.5 stars to current rating<br><br><b>Boom (mini remote) only:</b><br><br>arrow up = add 1 star to current rating<br>arrow down = subtract 1 star from current rating<br><br>Changing this setting will take effect <b>after a LMS restart.</b>
+
+PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING
+	EN	Minimum rating for "top" rated tracks 
+
+PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING_DESC
+	EN	Set the <b>minimum rating</b> for tracks to be considered <b>top rated</b>.<br> This is a <i>global</i> setting for browse menus, DSTM, and smart playlists (Dynamic Playlist).
 
 PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST
 	EN	Recently rated playlist
@@ -60,7 +66,7 @@ PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_MAXCOUNT
 	EN	Max. number of tracks<br>in Recently Rated playlist
 
 PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_MAXCOUNT_DESC
-	EN	Limits the number of tracks in the <i>Recently Rated playlist</i> (between 2 and 200).
+	EN	Limits the number of tracks in the <i>Recently Rated playlist</i> (from 2 to 200).
 
 PLUGIN_RATINGSLIGHT_VARIOUS_USELOGFILE
 	EN	Log changed ratings
@@ -267,26 +273,26 @@ PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE_DESC
 PLUGIN_RATINGSLIGHT_MENUS_RATED_TRACKS_MENU_FOLDER
 	EN	Rated Tracks
 
-PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATEDHIGH
-	EN	Artists - with tracks rated 3 stars+
+PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_TOPRATED
+	EN	Top Rated - Artists
 
-PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATEDHIGH
-	EN	Genres - with tracks rated 3 stars+
+PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_TOPRATED
+	EN	Top Rated - Genres
 
 PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATED
-	EN	Artists - with rated tracks
+	EN	Rated - Artists
 
 PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATED
-	EN	Genres - with rated tracks
+	EN	Rated - Genres
 
 PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS
 	EN	Show browse menus for rated tracks
 
 PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_DESC
-	EN	Browse your rated tracks by artist or genre.<br>Enable <b>Rated + Rated High</b> to get extra menus for tracks rated 3 stars and higher.
+	EN	Browse your rated tracks by artist or genre.<br>Enable <b>Rated + Top Rated</b> to get extra menus for top rated tracks.
 
-PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_HIGH
-	EN	Rated + Rated High
+PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_TOPRATED
+	EN	Rated + Top Rated
 
 PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_RATED_ONLY
 	EN	Rated
@@ -338,7 +344,7 @@ PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_LISTHEADER
 	EN	More rated tracks by
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEB_LIMIT
-	EN	Show more rated tracks - web limit
+	EN	Show more rated tracks - web UI limit
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEB_LIMIT_DESC
 	EN	Limits the number of tracks in the <b>LMS web UI</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 200) 
@@ -349,34 +355,34 @@ PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
 	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>Material skin, SB Touch, SB Radio, piCorePlayer</b>. 
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_ALLSONGS
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_ALLSONGS
 	EN	All songs
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_PLAYNOW
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_PLAYNOW
 	EN	Play now
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_APPEND
-	EN	Add to the end of the playlist
-
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEBMENU_PLAYNEXT
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_PLAYNEXT
 	EN	Play next
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_ALLSONGS
-	EN	Insert all songs
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_APPEND
+	EN	Append to queue
+
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_MOREINFO
+	EN	More information
 
 
 
 PLUGIN_RATINGSLIGHT_DSTM_RATED
 	EN	Ratings Light - rated tracks
 
-PLUGIN_RATINGSLIGHT_DSTM_RATED_HIGH
-	EN	Ratings Light - rated tracks (with % of rated high)
+PLUGIN_RATINGSLIGHT_DSTM_TOPRATED
+	EN	Ratings Light - rated tracks (with % of top rated)
 
 PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE
 	EN	Ratings Light - rated tracks (similar genres)
 
-PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE_HIGH
-	EN	Ratings Light - rated tracks (similar genres, with % of rated high)
+PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE_TOPRATED
+	EN	Ratings Light - rated tracks (similar genres, with % of top rated)
 
 PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED
 	EN	Ratings Light - unrated tracks (with % of rated)
@@ -396,17 +402,17 @@ PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_DESC
 	EN	Included a certain percentage of rated songs in "<b>un</b>rated songs" DSTM mixes.
 
-PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_HIGH
-	EN	Percentage of songs rated 3 stars+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_TOPRATED
+	EN	Percentage of top rated songs
 
-PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_HIGH_DESC
-	EN	Percentage of songs rated 3 stars or higher in "rated songs" DSTM mixes.
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_TOPRATED_DESC
+	EN	Percentage of top rated songs in "rated songs" DSTM mixes.<br>You can set/change the minimum rating for tracks to be considered <b>top/b> rated in the <b>Various</b> section of the <i>Ratings Light</i> settings.
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS
 	EN	Number of DSTM seed tracks
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS_DESC
-	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.<br>(between 1 and 20) 
+	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.<br>(from 1 to 20) 
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_HEADER
 	EN	<b>The settings below apply to "Don't Stop The Music" mixes <u>and</u> "Dynamic Playlist" smart playlists.</b>

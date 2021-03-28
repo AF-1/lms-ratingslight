@@ -75,7 +75,7 @@ sub beforeRender {
 	if ((defined $localonlyname) && ($localonlyname ne '') && (defined $preferlocalname) && ($preferlocalname ne '')) {
 		@hiddenVLs = ("Ratings Light - ", $preferlocalname, $localonlyname);
 	} else {
-		@hiddenVLs = ("Ratings Light - ");	
+		@hiddenVLs = ("Ratings Light - ");
 	}
 	$log->debug("hidden libraries: ".Dumper(\@hiddenVLs));
 
@@ -89,7 +89,7 @@ sub beforeRender {
 		return $match;
 	}
 
-	while (my ($k, $v) = each %$libraries) {
+	while (my ($k, $v) = each %{$libraries}) {
 		my $count = Slim::Utils::Misc::delimitThousands(Slim::Music::VirtualLibraries->getTrackCount($k));
 		my $name = Slim::Music::VirtualLibraries->getNameForId($k);
 
