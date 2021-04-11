@@ -48,10 +48,16 @@ PLUGIN_RATINGSLIGHT_VARIOUS_REMOTEBUTTONS
 	EN	Quick rating with IR remote buttons
 
 PLUGIN_RATINGSLIGHT_VARIOUS_REMOTEBUTTONS_DESC
-	EN	Rate the track that is currently playing on your device by <b>holding down</b> a button on your Logitech IR remote<br>(devices with a VFD display like Squeezebox, Boom, Transporter).<br><br>Press and <b>hold</b> the key until you see a message on your display confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5 = 1 to 5 stars<br>0 = unrate<br>6 = subtract 1 star from current rating<br>7 = add 1 star to current rating<br>8 = subtract 0.5 stars from current rating<br>9 = add 0.5 stars to current rating<br><br><b>Boom (mini remote) only:</b><br><br>arrow up = add 1 star to current rating<br>arrow down = subtract 1 star from current rating<br><br>Changing this setting will take effect <b>after a LMS restart.</b>
+	EN	<br>Changing this setting will only take effect <b>after a LMS restart.</b><br><br>Rate the track that is currently playing on your device by <b>holding down</b> a button on your Logitech IR remote<br>(devices with a VFD display like Squeezebox, Boom, Transporter).<br><br>Press and <b>hold</b> the key until you see the new track rating on your display or a message confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5 = 1 to 5 stars<br>0 = unrate<br>6 = subtract 1 star from current rating<br>7 = add 1 star to current rating<br>8 = subtract 0.5 stars from current rating<br>9 = add 0.5 stars to current rating<br><br><b>Boom (mini remote) only:</b><br><br>arrow up = add 1 star to current rating<br>arrow down = subtract 1 star from current rating
+
+PLUGIN_RATINGSLIGHT_VARIOUS_REMOTERATINGCONFIRMMSG
+	EN	Show confirmation message<br>for IR remote rating
+
+PLUGIN_RATINGSLIGHT_VARIOUS_REMOTERATINGCONFIRMMSG_DESC
+	EN	Shows a brief message on the VFD display of your Logitech device confirming the new rating value if you rate a song <i>using IR remote rating</i>.
 
 PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING
-	EN	Minimum rating for "top" rated tracks 
+	EN	Minimum rating for "top" rated tracks
 
 PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING_DESC
 	EN	Set the <b>minimum rating</b> for tracks to be considered <b>top rated</b>.<br> This is a <i>global</i> setting for browse menus, DSTM, and smart playlists (Dynamic Playlist).
@@ -119,7 +125,7 @@ PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION
 	EN	Replace file path
 
 PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_DESC
-	EN	Replace the LMS root file path in your <b>exported</b> file urls with a different file path.<br>Useful if you want to use the exported playlist with another version of your LMS library on another PC. 
+	EN	Replace the LMS root file path in your <b>exported</b> file urls with a different file path.<br>Useful if you want to use the exported playlist with another version of your LMS library on another PC.
 
 PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_LMSPATH
 	EN	LMS base file path
@@ -132,7 +138,7 @@ PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION
 
 PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION_DESC
 	EN	Replace the file extension of your <b>exported</b> file urls. Useful if you want to use the exported playlist with a lossy version of your lossless LMS library.
- 
+
 
 
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS
@@ -347,13 +353,13 @@ PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEB_LIMIT
 	EN	Show more rated tracks - web UI limit
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEB_LIMIT_DESC
-	EN	Limits the number of tracks in the <b>LMS web UI</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 200) 
+	EN	Limits the number of tracks in the <b>LMS web UI</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 200)
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
 	EN	Show more rated tracks - menu limit
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
-	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>Material skin, SB Touch, SB Radio, piCorePlayer</b>. 
+	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>Material skin, SB Touch, SB Radio, piCorePlayer</b>.
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_ALLSONGS
 	EN	All songs
@@ -412,7 +418,7 @@ PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS
 	EN	Number of DSTM seed tracks
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS_DESC
-	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.<br>(from 1 to 20) 
+	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.<br>(from 1 to 20)
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_HEADER
 	EN	<b>The settings below apply to "Don't Stop The Music" mixes <u>and</u> "Dynamic Playlist" smart playlists.</b>
