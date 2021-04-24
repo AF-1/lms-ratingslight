@@ -11,11 +11,11 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
 package Plugins::RatingsLight::Settings::BaseSettings;
@@ -41,15 +41,15 @@ sub new {
 	$plugin = shift;
 	my $default = shift;
 
-	if(!defined($default) || !$default) {
+	if (!defined($default) || !$default) {
 		if ($class->can('page') && $class->can('handler')) {
-			if(UNIVERSAL::can("Slim::Web::Pages","addPageFunction")) {
+			if (UNIVERSAL::can("Slim::Web::Pages","addPageFunction")) {
 				Slim::Web::Pages->addPageFunction($class->page, $class);
-			}else {
+			} else {
 				Slim::Web::HTTP::addPageFunction($class->page, $class);
 			}
 		}
-	}else {
+	} else {
 		$class->SUPER::new();
 	}
 	$subPages{$class->name()} = $class;

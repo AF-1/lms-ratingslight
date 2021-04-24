@@ -312,23 +312,17 @@ PLUGIN_RATINGSLIGHT_MENUS_SOURCE_VL
 PLUGIN_RATINGSLIGHT_MENUS_SOURCE_VL_DESC
 	EN	Select the virtual library for which Ratings Light should create artists and genre browse menus
 
-PLUGIN_RATINGSLIGHT_MENUS_AUTOREBUILD_VLS_AFTER_RATING_CHANGE
-	EN	Auto-refresh browse menus
+PLUGIN_RATINGSLIGHT_MENUS_RATINGDISPLAYCHARACTER
+	EN	Rating character
 
-PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_DISPLAYMODE
-	EN	Display of context menu ratings
+PLUGIN_RATINGSLIGHT_MENUS_RATINGDISPLAYCHARACTER_DESC
+	EN	Choose the displayed rating character for menus and titelformats.<br><br><b>*** IMPORTANT, please read ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> and other players running jivelite <b>do not support displaying the unicode blackstar character out of the box</b>.<br>This character is not part of their <i>default</i> font. If you want to display this character on these devices you'll have to <b>replace the default font</b> on these devices with a font that contains this character like <b>DejaVu Sans Condensed</b>.<br><br>More information and instructions here:<br><b>https://github.com/AF-1/sobras</b>
 
-PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_DISPLAYMODE_DESC
-	EN	Context menu ratings (text) can be displayed as stars, text or both.
+PLUGIN_RATINGSLIGHT_MENUS_RATINGDISPLAYCHARACTER_STAR_TEXT
+	EN	* - common text star
 
-PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_DISPLAYMODE_STARS_TEXT
-	EN	Stars and text
-
-PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_DISPLAYMODE_STARS
-	EN	Stars
-
-PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_DISPLAYMODE_TEXT
-	EN	Text
+PLUGIN_RATINGSLIGHT_MENUS_RATINGDISPLAYCHARACTER_STAR_2605
+	EN	★ - blackstar (unicode 2605)
 
 PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_SETHALFSTARS
 	EN	Allow context menu half-star ratings

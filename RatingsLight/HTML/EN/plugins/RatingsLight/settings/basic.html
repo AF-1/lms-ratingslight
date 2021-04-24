@@ -22,11 +22,6 @@
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_VARIOUS_REMOTERATINGCONFIRMMSG" desc="PLUGIN_RATINGSLIGHT_VARIOUS_REMOTERATINGCONFIRMMSG_DESC" %]
-	<input name="pref_showIRratingConfirmMsg" id="showIRratingConfirmMsg" type="checkbox" [% IF prefs.showIRratingConfirmMsg %] checked [% END %]>
-[% END %]
-<br>
-
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING" desc="PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING_DESC" %]
 	<select name="pref_topratedminrating" id="topratedminrating">
 		[% FOREACH ratingvalue = [60,70,80,90,100] %]

@@ -88,7 +88,7 @@ a {text-decoration: none;}
 	[% FOREACH ratedtrack = moreratedtracks %]
 	<div class="wrapper">
 			<div class="flexitem playlistcover">
-				<img [% IF ratedtrack.artworkid %]src="/music/[% ratedtrack.artworkid %]/cover_350x35_o" srcset="/music/[% artworkid %]/cover_100x100_o 2x"[% ELSE %]src="[% webroot %]plugins/RatingsLight/html/images/coverplaceholder.png"[% END %] width="35" height="35" onload="resize(this, 35)">
+				<img [% IF ratedtrack.artworkid %]src="/music/[% ratedtrack.artworkid %]/cover_350x35_o" srcset="/music/[% ratedtrack.artworkid %]/cover_100x100_o 2x"[% ELSE %]src="[% webroot %]plugins/RatingsLight/html/images/coverplaceholder.png"[% END %] width="35" height="35" onload="resize(this, 35)">
 			</div>
 			<div class="flexitem textwrapper">
 				<div class="tracktitle underline-on-hover">

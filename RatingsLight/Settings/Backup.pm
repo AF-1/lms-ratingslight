@@ -1,7 +1,7 @@
 #
 # Ratings Light
 #
-# 2020-2021 AF-1
+# (c) 2020-2021 AF-1
 #
 # GPLv3 license
 # This program is free software: you can redistribute it and/or modify
@@ -11,11 +11,11 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
 package Plugins::RatingsLight::Settings::Backup;
@@ -75,14 +75,14 @@ sub handler {
 		$result = $class->SUPER::handler($client, $paramRef);
 		$callHandler = 0;
 	}
-	if($paramRef->{'backup'}) {
-		if($callHandler) {
+	if ($paramRef->{'backup'}) {
+		if ($callHandler) {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
 		Plugins::RatingsLight::Plugin::createBackup();
-	}elsif($paramRef->{'restore'}) {
-		if($callHandler) {
+	} elsif ($paramRef->{'restore'}) {
+		if ($callHandler) {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
@@ -97,21 +97,20 @@ sub handler {
 		} else {
 			Plugins::RatingsLight::Plugin::restoreFromBackup();
 		}
-	}elsif($paramRef->{'pref_scheduledbackups'}) {
-		if($callHandler) {
+	} elsif ($paramRef->{'pref_scheduledbackups'}) {
+		if ($callHandler) {
 			$paramRef->{'saveSettings'} = 1;
 
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
 		Plugins::RatingsLight::Plugin::backupScheduler();
-	}elsif($callHandler) {
+	} elsif ($callHandler) {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}
 
 	my $RLfolderpath = ($prefs->get('rlparentfolderpath')).'/Ratingslight';
 	$prefs->set('restorefile', $RLfolderpath);
 	$result = $class->SUPER::handler($client, $paramRef);
-
 	return $result;
 }
 

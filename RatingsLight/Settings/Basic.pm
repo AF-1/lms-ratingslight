@@ -1,7 +1,7 @@
 #
 # Ratings Light
 #
-# 2020-2021 AF-1
+# (c) 2020-2021 AF-1
 #
 # GPLv3 license
 # This program is free software: you can redistribute it and/or modify
@@ -11,11 +11,11 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
 package Plugins::RatingsLight::Settings::Basic;
@@ -64,7 +64,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(enableIRremotebuttons showIRratingConfirmMsg topratedminrating rlparentfolderpath uselogfile userecentlyaddedplaylist recentlymaxcount));
+	return ($prefs, qw(enableIRremotebuttons topratedminrating rlparentfolderpath uselogfile userecentlyaddedplaylist recentlymaxcount));
 }
 
 sub handler {
@@ -75,12 +75,12 @@ sub handler {
 		$result = $class->SUPER::handler($client, $paramRef);
 		$callHandler = 0;
 	}
-	if($paramRef->{'clearallratingsnow'}) {
-		if($callHandler) {
+	if ($paramRef->{'clearallratingsnow'}) {
+		if ($callHandler) {
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
 		Plugins::RatingsLight::Plugin::clearAllRatings();
-	}elsif($callHandler) {
+	} elsif ($callHandler) {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}
 	return $result;

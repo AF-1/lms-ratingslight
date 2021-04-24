@@ -1,7 +1,7 @@
 #
 # Ratings Light
 #
-# 2020-2021 AF-1
+# (c) 2020-2021 AF-1
 #
 # GPLv3 license
 # This program is free software: you can redistribute it and/or modify
@@ -11,11 +11,11 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
 package Plugins::RatingsLight::Settings::Import;
@@ -76,8 +76,8 @@ sub handler {
 		$result = $class->SUPER::handler($client, $paramRef);
 		$callHandler = 0;
 	}
-	if($paramRef->{'manimport'}) {
-		if($callHandler) {
+	if ($paramRef->{'manimport'}) {
+		if ($callHandler) {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
@@ -89,13 +89,13 @@ sub handler {
 		} else {
 			Plugins::RatingsLight::Plugin::importRatingsFromCommentTags();
 		}
-	}elsif($paramRef->{'rateplaylistnow'}) {
-		if($callHandler) {
+	} elsif ($paramRef->{'rateplaylistnow'}) {
+		if ($callHandler) {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
 		Plugins::RatingsLight::Plugin::importRatingsFromPlaylist();
-	}elsif($callHandler) {
+	} elsif ($callHandler) {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}
 

@@ -1,7 +1,7 @@
 #
 # Ratings Light
 #
-# 2020-2021 AF-1
+# (c) 2020-2021 AF-1
 #
 # GPLv3 license
 # This program is free software: you can redistribute it and/or modify
@@ -11,11 +11,11 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
 package Plugins::RatingsLight::Settings::Menus;
@@ -66,15 +66,12 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(ratingcontextmenudisplaymode ratingcontextmenusethalfstars showratedtracksmenus browsemenus_sourceVL_id moreratedtracksbyartistweblimit moreratedtracksbyartistcontextmenulimit));
+	return ($prefs, qw(displayratingchar ratingcontextmenusethalfstars showratedtracksmenus browsemenus_sourceVL_id moreratedtracksbyartistweblimit moreratedtracksbyartistcontextmenulimit));
 }
 
 sub handler {
 	my ($class, $client, $paramRef) = @_;
-
-	if ($paramRef->{'saveSettings'}) {
-
-	}
+	if ($paramRef->{'saveSettings'}) { }
 	my $result = $class->SUPER::handler($client, $paramRef);
 	return $result;
 }
@@ -112,10 +109,11 @@ sub beforeRender {
 	while (my ($k, $v) = each %{$libraries}) {
 		my $count = Slim::Utils::Misc::delimitThousands(Slim::Music::VirtualLibraries->getTrackCount($k));
 		my $name = Slim::Music::VirtualLibraries->getNameForId($k);
+		$log->debug("VL: ".$name." (".$count.")");
 
 		if (regex ($name, @hiddenVLs) != 1) {
 			push @items, {
-				name => $name." (".$count.($count == 1 ? " track)" : " tracks)"),
+				name => $name." (".$count.($count eq '1' ? " track)" : " tracks)"),
 				sortName => $name,
 				library_id => $k,
 			};
