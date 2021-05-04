@@ -593,7 +593,6 @@ sub getRatingMenu {
 	}
 	my $track_id = $request->getParam('_trackid');
 
-	my %baseParams = ();
 	my $baseMenu = {
 		'actions' => {
 			'do' => {
@@ -606,7 +605,7 @@ sub getRatingMenu {
 			},
 		}
 	};
-	$request->addResult('base',$baseMenu);
+	$request->addResult('base', $baseMenu);
 	my $cnt = 0;
 
 	my @ratingValues = ();
@@ -1424,19 +1423,31 @@ sub createBackup {
 			return;
 		};
 		my $trackcount = scalar(@trackURLs);
+		my $ignoredtracks = 0;
+		$log->debug("Found ".$trackcount.($trackcount == 1 ? " rated track" : " rated tracks")." in the LMS persistent database");
 
 		print $output "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
 		print $output "<!-- Backup of Rating Values -->\n";
 		print $output "<!-- ".$backuptimestamp." -->\n";
-		print $output "<!-- contains ".$trackcount.($trackcount == 1 ? " rated track" : " rated tracks")." -->\n";
 		print $output "<RatingsLight>\n";
 		for my $BACKUPtrackURL (@trackURLs) {
 			$track = Slim::Schema->resultset("Track")->objectForUrl($BACKUPtrackURL);
-			$rating100ScaleValue = getRatingFromDB($track);
-			$BACKUPtrackURL = escape($BACKUPtrackURL);
-			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t</track>\n";
+			if (!defined $track) {
+				$log->warn("Warning: ignoring this track, not found in LMS database:\n".$BACKUPtrackURL);
+				$trackcount--;
+				$ignoredtracks++;
+			} else {
+				$rating100ScaleValue = getRatingFromDB($track);
+				$BACKUPtrackURL = escape($BACKUPtrackURL);
+				print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t</track>\n";
+			}
 		}
 		print $output "</RatingsLight>\n";
+
+		if ($ignoredtracks > 0) {
+			print $output "<!-- WARNING: ".$ignoredtracks.($ignoredtracks == 1 ? " track was" : " tracks were")." ignored. Check server.log for more information. -->\n";
+		}
+		print $output "<!-- This backup contains ".$trackcount.($trackcount == 1 ? " rated track" : " rated tracks")." -->\n";
 		close $output;
 		my $ended = time() - $started;
 		$log->debug('Backup completed after '.$ended.' seconds.');
