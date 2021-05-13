@@ -86,6 +86,8 @@ sub initPlugin {
 	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
 	Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'],[0, 1, 0, undef]);
 
+	Slim::Control::Request::subscribe(\&importerPostScanRefresh,[['rescan'],['done']]);
+
 	Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
 
 	addTitleFormat('RL_RATING_STARS');
@@ -366,6 +368,7 @@ sub shutdownPlugin {
 	if (defined $enableIRremotebuttons) {
 		Slim::Control::Request::unsubscribe(\&newPlayerCheck, [['client']],[['new']]);
 	}
+	Slim::Control::Request::unsubscribe(\&importerPostScanRefresh,[['rescan'],['done']]);
 	Plugins::RatingsLight::Importer::shutdownPlugin();
 	$initialised = 0;
 }
@@ -1262,6 +1265,13 @@ sub initExportBaseFilePathMatrix {
 	}
 }
 
+sub importerPostScanRefresh {
+	my $enableautoscan = $prefs->get('autoscan');
+	if (defined $enableautoscan) {
+		$log->debug("post scan refresh after ratings import from comment tags");
+		refreshAll();
+	}
+}
 
 ## backup, restore
 
@@ -3391,6 +3401,7 @@ sub addTitleFormat {
 }
 
 sub refreshTitleFormats {
+	$log->debug("refreshing title formats");
 	for my $client (Slim::Player::Client::clients()) {
 		next unless $client && $client->controller();
 		$client->currentPlaylistUpdateTime(Time::HiRes::time());

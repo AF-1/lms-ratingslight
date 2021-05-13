@@ -26,8 +26,6 @@ use utf8;
 
 use Slim::Utils::Prefs;
 use Slim::Utils::Log;
-use Slim::Utils::Misc;
-use Slim::Utils::Strings;
 use Slim::Schema;
 
 my $importerInitialized = 0;
@@ -37,7 +35,7 @@ my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
 sub initPlugin {
-	$log->debug("checking if we should initialize importer");
+	$log->debug("importer module init");
 	toggleUseImporter();
 }
 
@@ -66,7 +64,7 @@ sub toggleUseImporter {
 }
 
 sub startScan {
-	$log->debug("starting import");
+	$log->debug("starting importer");
 	importRatingsFromCommentTags();
 	Slim::Music::Import->endImporter(__PACKAGE__);
 }
@@ -152,8 +150,6 @@ sub importRatingsFromCommentTags {
 	}
 
 	my $ended = time() - $started;
-
-	Plugins::RatingsLight::Plugin::refreshAll();
 
 	$log->debug('Import completed after '.$ended.' seconds.');
 	$prefs->set('status_importingfromcommenttags', 0);
