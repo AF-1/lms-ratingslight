@@ -50,6 +50,7 @@ use XML::Parser;
 
 use Data::Dumper;
 
+use Plugins::RatingsLight::Importer;
 use Plugins::RatingsLight::Settings::Basic;
 use Plugins::RatingsLight::Settings::Backup;
 use Plugins::RatingsLight::Settings::Import;
@@ -75,87 +76,77 @@ sub initPlugin {
 	return if $initialised;
 
 	initPrefs();
+	initIR();
 
-	Slim::Music::Import->addImporter('Plugins::RatingsLight::Plugin', {
-		'type' => 'post',
-		'weight' => 99,
-		'use' => 1,
-	});
+	Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating','_incremental'], [1, 0, 1, \&setRating]);
+	Slim::Control::Request::addDispatch(['ratingslight','setratingpercent', '_trackid', '_rating','_incremental'], [1, 0, 1, \&setRating]);
+	Slim::Control::Request::addDispatch(['ratingslight','ratingmenu','_trackid'], [0, 1, 1, \&getRatingMenu]);
+	Slim::Control::Request::addDispatch(['ratingslight','moreratedtracksbyartistmenu','_trackid', '_artistid'], [0, 1, 1, \&getMoreRatedTracksbyArtistMenu]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'actionsmenu'], [0, 1, 1, \&getActionsMenu]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
+	Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'],[0, 1, 0, undef]);
 
-	if (!main::SCANNER) {
-		initIR();
+	Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
 
-		Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating','_incremental'], [1, 0, 1, \&setRating]);
-		Slim::Control::Request::addDispatch(['ratingslight','setratingpercent', '_trackid', '_rating','_incremental'], [1, 0, 1, \&setRating]);
-		Slim::Control::Request::addDispatch(['ratingslight','ratingmenu','_trackid'], [0, 1, 1, \&getRatingMenu]);
-		Slim::Control::Request::addDispatch(['ratingslight','moreratedtracksbyartistmenu','_trackid', '_artistid'], [0, 1, 1, \&getMoreRatedTracksbyArtistMenu]);
-		Slim::Control::Request::addDispatch(['ratingslight', 'actionsmenu'], [0, 1, 1, \&getActionsMenu]);
-		Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
-		Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'],[0, 1, 0, undef]);
+	addTitleFormat('RL_RATING_STARS');
+	Slim::Music::TitleFormatter::addFormat('RL_RATING_STARS',\&getTitleFormat_Rating);
 
-		Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
+	addTitleFormat('RL_RATING_STARS_APPENDED');
+	Slim::Music::TitleFormatter::addFormat('RL_RATING_STARS_APPENDED',\&getTitleFormat_Rating_AppendedStars);
 
-		addTitleFormat('RL_RATING_STARS');
-		Slim::Music::TitleFormatter::addFormat('RL_RATING_STARS',\&getTitleFormat_Rating);
+	if (main::WEBUI) {
+		Plugins::RatingsLight::Settings::Basic->new($class);
+		Plugins::RatingsLight::Settings::Backup->new($class);
+		Plugins::RatingsLight::Settings::Import->new($class);
+		Plugins::RatingsLight::Settings::Export->new($class);
+		Plugins::RatingsLight::Settings::Menus->new($class);
+		Plugins::RatingsLight::Settings::DSTM->new($class);
 
-		addTitleFormat('RL_RATING_STARS_APPENDED');
-		Slim::Music::TitleFormatter::addFormat('RL_RATING_STARS_APPENDED',\&getTitleFormat_Rating_AppendedStars);
-
-		if (main::WEBUI) {
-			Plugins::RatingsLight::Settings::Basic->new($class);
-			Plugins::RatingsLight::Settings::Backup->new($class);
-			Plugins::RatingsLight::Settings::Import->new($class);
-			Plugins::RatingsLight::Settings::Export->new($class);
-			Plugins::RatingsLight::Settings::Menus->new($class);
-			Plugins::RatingsLight::Settings::DSTM->new($class);
-
-			Slim::Web::Pages->addPageFunction('showmoreratedtracklist', \&handleMoreRatedWebTrackList);
-		}
-
-		Slim::Menu::TrackInfo->registerInfoProvider(ratingslightrating => (
-				before => 'artwork',
-				func => \&trackInfoHandlerRating,
-		));
-		Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracks => (
-				after => 'ratingslightrating',
-				func => \&showMoreRatedTracksbyArtistInfoHandler,
-		));
-
-		if (Slim::Utils::PluginManager->isEnabled('Slim::Plugin::DontStopTheMusic::Plugin')) {
-			require Slim::Plugin::DontStopTheMusic::Plugin;
-
-			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED', sub {
-				dontStopTheMusic('rated', @_);
-			});
-			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_TOPRATED', sub {
-				dontStopTheMusic('rated_toprated', @_);
-			});
-			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE', sub {
-				dontStopTheMusic('rated_genre', @_);
-			});
-			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE_TOPRATED', sub {
-				dontStopTheMusic('rated_genre_toprated', @_);
-			});
-			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED', sub {
-				dontStopTheMusic('unrated_rated', @_);
-			});
-			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_GENRE', sub {
-				dontStopTheMusic('unrated_rated_genre', @_);
-			});
-			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED', sub {
-				dontStopTheMusic('unrated_rated_unplayed', @_);
-			});
-			Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED_GENRE', sub {
-				dontStopTheMusic('unrated_rated_unplayed_genre', @_);
-			});
-		}
-
-		backupScheduler();
-		initExportBaseFilePathMatrix();
-
-		$class->SUPER::initPlugin(@_);
-		$initialised = 1;
+		Slim::Web::Pages->addPageFunction('showmoreratedtracklist', \&handleMoreRatedWebTrackList);
 	}
+
+	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightrating => (
+			before => 'artwork',
+			func => \&trackInfoHandlerRating,
+	));
+	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracks => (
+			after => 'ratingslightrating',
+			func => \&showMoreRatedTracksbyArtistInfoHandler,
+	));
+
+	if (Slim::Utils::PluginManager->isEnabled('Slim::Plugin::DontStopTheMusic::Plugin')) {
+		require Slim::Plugin::DontStopTheMusic::Plugin;
+
+		Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED', sub {
+			dontStopTheMusic('rated', @_);
+		});
+		Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_TOPRATED', sub {
+			dontStopTheMusic('rated_toprated', @_);
+		});
+		Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE', sub {
+			dontStopTheMusic('rated_genre', @_);
+		});
+		Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE_TOPRATED', sub {
+			dontStopTheMusic('rated_genre_toprated', @_);
+		});
+		Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED', sub {
+			dontStopTheMusic('unrated_rated', @_);
+		});
+		Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_GENRE', sub {
+			dontStopTheMusic('unrated_rated_genre', @_);
+		});
+		Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED', sub {
+			dontStopTheMusic('unrated_rated_unplayed', @_);
+		});
+		Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED_GENRE', sub {
+			dontStopTheMusic('unrated_rated_unplayed_genre', @_);
+		});
+	}
+
+	backupScheduler();
+	initExportBaseFilePathMatrix();
+	$class->SUPER::initPlugin(@_);
+	$initialised = 1;
 }
 
 sub initPrefs {
@@ -354,6 +345,7 @@ sub initPrefs {
 	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 100 }, 'dstm_percentagetoprated');
 	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 20 }, 'num_seedtracks');
 
+	$prefs->setChange(\&Plugins::RatingsLight::Importer::toggleUseImporter, 'autoscan');
 	$prefs->setChange(\&initVirtualLibraries, 'browsemenus_sourceVL_id');
 	$prefs->setChange(\&initVirtualLibraries, 'showratedtracksmenus');
 	$prefs->setChange(\&initIR, 'enableIRremotebuttons');
@@ -364,9 +356,7 @@ sub initPrefs {
 }
 
 sub postinitPlugin {
-	if (!main::SCANNER) {
-		initVirtualLibraries();
-	}
+	initVirtualLibraries();
 }
 
 sub shutdownPlugin {
@@ -376,7 +366,7 @@ sub shutdownPlugin {
 	if (defined $enableIRremotebuttons) {
 		Slim::Control::Request::unsubscribe(\&newPlayerCheck, [['client']],[['new']]);
 	}
-	Slim::Music::Import->useImporter('Plugins::RatingsLight::Plugin',0);
+	Plugins::RatingsLight::Importer::shutdownPlugin();
 	$initialised = 0;
 }
 
@@ -460,16 +450,13 @@ sub setRating {
 
 	writeRatingToDB($trackURL, $rating100ScaleValue);
 
-	Slim::Music::Info::clearFormatDisplayCache();
 	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackId, $rating100ScaleValue/20, $rating100ScaleValue]);
 	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackId, $rating100ScaleValue/20, $rating100ScaleValue]);
-	refreshTitleFormats();
 
 	$request->addResult('rating', $rating100ScaleValue/20);
 	$request->addResult('ratingpercentage', $rating100ScaleValue/20);
 	$request->setStatusDone();
-
-	refreshVirtualLibraries();
+	refreshAll();
 }
 
 sub VFD_deviceRating {
@@ -479,7 +466,6 @@ sub VFD_deviceRating {
 	$log->debug('VFD_deviceRating - trackID = '.$trackID);
 	$log->debug('VFD_deviceRating - rating = '.$rating);
 	writeRatingToDB($trackURL, $rating);
-	Slim::Music::Info::clearFormatDisplayCache();
 
 	my $cbtext = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating));
 	$callback->([{
@@ -491,9 +477,7 @@ sub VFD_deviceRating {
 
 	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackID, $rating/20, $rating]);
 	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackID, $rating/20, $rating]);
-	refreshTitleFormats();
-
-	refreshVirtualLibraries();
+	refreshAll();
 }
 
 
@@ -645,7 +629,7 @@ sub showMoreRatedTracksbyArtistInfoHandler {
 	my $artistID = $track->primary_artist->id;
 
 	my $artistname = $track->primary_artist->name;
-	$artistname = trimString($artistname, 50);
+	$artistname = trimStringLength($artistname, 50);
 
 	my $curTrackRating = getRatingFromDB($track);
 	if ($curTrackRating > 0) {
@@ -726,7 +710,7 @@ sub handleMoreRatedWebTrackList {
 	my $moreratedtracks = getMoreRatedTracks($client, $trackID, $artistID, $moreratedtracksbyartistweblimit);
 
 	my $artistname = (@{$moreratedtracks})[0]->artist->name;
-	$artistname = trimString($artistname, 50);
+	$artistname = trimStringLength($artistname, 50);
 	$params->{artistname} = $artistname;
 
 	my @moreratedtracks_webpage = ();
@@ -741,10 +725,10 @@ sub handleMoreRatedWebTrackList {
 		}
 
  		my $track_id = $ratedtrack->id;
- 		my $tracktitle = trimString($ratedtrack->title, 70);
+ 		my $tracktitle = trimStringLength($ratedtrack->title, 70);
 
 		my $albumname = 'Album: '.$ratedtrack->album->name;
-		$albumname = trimString($albumname, 80);
+		$albumname = trimStringLength($albumname, 80);
 		my $albumID = $ratedtrack->album->id;
 		my $artworkID = $ratedtrack->album->artwork;
 
@@ -811,10 +795,10 @@ sub getMoreRatedTracksbyArtistMenu {
 
 		my ($tracktitle, $albumname, $ratingtext) = '';
 		my $rating = getRatingFromDB($ratedtrack);
-		$tracktitle = trimString($ratedtrack->title, 60);
+		$tracktitle = trimStringLength($ratedtrack->title, 60);
 
 		$albumname = 'Album: '.$ratedtrack->album->name;
-		$albumname = trimString($albumname, 70);
+		$albumname = trimStringLength($albumname, 70);
 
 		$ratingtext = getRatingTextLine($rating, 'appended');
 		my $returntext = $tracktitle.$ratingtext."\n".$albumname;
@@ -966,7 +950,7 @@ sub VFD_moreratedtracksbyartist {
 
  		my $track_id = $ratedtrack->id;
  		my $tracktitle = $ratedtrack->title;
-		$tracktitle = trimString($tracktitle, 70);
+		$tracktitle = trimStringLength($tracktitle, 70);
 
 		my $rating = getRatingFromDB($ratedtrack);
 		my $ratingtext = getRatingTextLine($rating, 'appended');
@@ -1069,101 +1053,6 @@ sub getMoreRatedTracks {
 
 ## import, export
 
-sub startScan {
-	my $enableautoscan = $prefs->get('autoscan');
-	if (defined $enableautoscan) {
-		importRatingsFromCommentTags();
-	}
-	Slim::Music::Import->endImporter(__PACKAGE__);
-}
-
-sub importRatingsFromCommentTags {
-	my $class = shift;
-	my $status_importingfromcommenttags = $prefs->get('status_importingfromcommenttags');
-	if ($status_importingfromcommenttags == 1) {
-		$log->warn('Import is already in progress, please wait for the previous import to finish');
-		return;
-	}
-	$prefs->set('status_importingfromcommenttags', 1);
-	my $started = time();
-
-	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
-	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
-
-	my $dbh = getCurrentDBH();
-	if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
-		$log->warn('Error: no rating keywords found.');
-		$prefs->set('status_importingfromcommenttags', 0);
-		return
-	} else {
-		my $sqlunrate = "UPDATE tracks_persistent
-			SET rating = NULL
-			WHERE (tracks_persistent.rating > 0
-				AND tracks_persistent.urlmd5 IN (
-					SELECT tracks.urlmd5
-					FROM tracks
-					LEFT JOIN comments ON comments.track = tracks.id
-					WHERE (comments.value NOT LIKE ? OR comments.value IS NULL))
-				);";
-
-		my $sqlrate = "UPDATE tracks_persistent
-			SET rating = ?
-			WHERE tracks_persistent.urlmd5 IN (
-				SELECT tracks.urlmd5
-					FROM tracks
-				JOIN comments ON comments.track = tracks.id
-					WHERE comments.value LIKE ?
-			);";
-
-		# unrate previously rated tracks in LMS if comment tag does no longer contain keyword(s)
-		my $ratingkeyword_unrate = "%%".$rating_keyword_prefix."_".$rating_keyword_suffix."%%";
-
-		my $sth = $dbh->prepare($sqlunrate);
-		eval {
-			$sth->bind_param(1, $ratingkeyword_unrate);
-			$sth->execute();
-			commit($dbh);
-		};
-		if ($@) {
-			$log->warn("Database error: $DBI::errstr");
-			eval {
-				rollback($dbh);
-			};
-		}
-		$sth->finish();
-
-		# rate tracks according to comment tag keyword
-		my $rating = 1;
-
-		until ($rating > 5) {
-			my $rating100scalevalue = ($rating * 20);
-			my $ratingkeyword = "%%".$rating_keyword_prefix.$rating.$rating_keyword_suffix."%%";
-			my $sth = $dbh->prepare($sqlrate);
-			eval {
-				$sth->bind_param(1, $rating100scalevalue);
-				$sth->bind_param(2, $ratingkeyword);
-				$sth->execute();
-				commit($dbh);
-			};
-			if ($@) {
-				$log->warn("Database error: $DBI::errstr");
-				eval {
-					rollback($dbh);
-				};
-			}
-			$rating++;
-			$sth->finish();
-		}
-	}
-
-	my $ended = time() - $started;
-
-	refreshVirtualLibraries();
-
-	$log->debug('Import completed after '.$ended.' seconds.');
-	$prefs->set('status_importingfromcommenttags', 0);
-}
-
 sub importRatingsFromPlaylist {
 	if (Slim::Music::Import->stillScanning) {
 		$log->warn('Warning: access to rating values blocked until library scan is completed');
@@ -1194,7 +1083,7 @@ sub importRatingsFromPlaylist {
 	}
 	my $ended = time() - $started;
 
-	refreshVirtualLibraries();
+	refreshAll();
 
 	$log->debug('Rating playlist tracks completed after '.$ended.' seconds.');
 	$prefs->set('ratethisplaylistid', '');
@@ -1263,7 +1152,7 @@ sub exportRatingsToPlaylistFiles {
 		}
 		$sth->finish();
 		my $trackcount = scalar(@trackURLs);
-		$log->debug('number of tracks rated $rating100ScaleValue to export: '.$trackcount);
+		$log->debug('number of tracks rated '.$rating100ScaleValue.' to export: '.$trackcount);
 		$totaltrackcount = $totaltrackcount + $trackcount;
 
 		if (@trackURLs) {
@@ -1635,7 +1524,7 @@ sub doneScanning {
 	my $ended = time() - $restorestarted;
 	$log->debug('Restore completed after '.$ended.' seconds.');
 
-	refreshVirtualLibraries();
+	refreshAll();
 
 	$prefs->set('status_restoringfrombackup', 0);
 	Slim::Utils::Scheduler::remove_task(\&scanFunction);
@@ -2195,7 +2084,7 @@ sub clearAllRatings {
 	$log->debug('Clearing all ratings completed after '.$ended.' seconds.');
 	$prefs->set('status_clearingallratings', 0);
 
-	refreshVirtualLibraries();
+	refreshAll();
 }
 
 
@@ -3459,6 +3348,12 @@ sub getExcludedGenreList {
 	return $excludedgenreString;
 }
 
+sub refreshAll {
+	Slim::Music::Info::clearFormatDisplayCache();
+	refreshTitleFormats();
+	refreshVirtualLibraries();
+}
+
 # title format
 
 sub getTitleFormat_Rating {
@@ -3609,7 +3504,7 @@ sub parse_duration {
 	sprintf("%02dh:%02dm", $_[0]/3600, $_[0]/60%60);
 }
 
-sub trimString {
+sub trimStringLength {
 	my ($thisString, $maxlength) = @_;
 	if (length($thisString) > $maxlength) {
 		$thisString = substr($thisString, 0, $maxlength).'...';

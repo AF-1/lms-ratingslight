@@ -87,7 +87,7 @@ sub handler {
 			$paramRef->{'missingkeywords'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
 		} else {
-			Plugins::RatingsLight::Plugin::importRatingsFromCommentTags();
+			Plugins::RatingsLight::Importer::importRatingsFromCommentTags();
 		}
 	} elsif ($paramRef->{'rateplaylistnow'}) {
 		if ($callHandler) {

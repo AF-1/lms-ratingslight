@@ -3,10 +3,10 @@
 	<id>afc9f784-9381-2021-5477-479eca380cf5</id>
 	<name>PLUGIN_RATINGSLIGHT</name>
 	<module>Plugins::RatingsLight::Plugin</module>
-	<version>1.9.1</version>
+	<version>1.9.2</version>
 	<description>PLUGIN_RATINGSLIGHT_DESC</description>
 	<creator>AF</creator>
-	<importmodule>Plugins::RatingsLight::Plugin</importmodule>
+	<importmodule>Plugins::RatingsLight::Importer</importmodule>
 	<optionsURL>plugins/RatingsLight/settings/basic.html</optionsURL>
 	<homepageURL>https://forums.slimdevices.com/showthread.php?113344-Announce-Ratings-Light</homepageURL>
 	<defaultState>enabled</defaultState>
