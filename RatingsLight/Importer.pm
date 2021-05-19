@@ -28,8 +28,6 @@ use Slim::Utils::Prefs;
 use Slim::Utils::Log;
 use Slim::Schema;
 
-my $importerInitialized = 0;
-
 my $log = Slim::Utils::Log::logger('plugin.ratingslight');
 my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
@@ -37,13 +35,6 @@ my $serverPrefs = preferences('server');
 sub initPlugin {
 	$log->debug("importer module init");
 	toggleUseImporter();
-}
-
-sub shutdownPlugin {
-	return if !$importerInitialized;
-	$log->debug("shutting down importer");
-	Slim::Music::Import->useImporter('Plugins::RatingsLight::Importer',0);
-	$importerInitialized = 0;
 }
 
 sub toggleUseImporter {
@@ -55,11 +46,9 @@ sub toggleUseImporter {
 			'weight' => 99,
 			'use' => 1,
 		});
-		$importerInitialized = 1;
 	} else {
 		$log->debug("disabling importer");
 		Slim::Music::Import->useImporter('Plugins::RatingsLight::Importer',0);
-		$importerInitialized = 0;
 	}
 }
 

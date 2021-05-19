@@ -67,13 +67,11 @@ my $log = Slim::Utils::Log->addLogCategory({
 my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
-my $initialised = 0;
 my (%restoreitem, $currentKey, $inTrack, $inValue, $backupParser, $backupParserNB, $restorestarted);
 my $opened = 0;
 
 sub initPlugin {
 	my $class = shift;
-	return if $initialised;
 
 	initPrefs();
 	initIR();
@@ -148,7 +146,6 @@ sub initPlugin {
 	backupScheduler();
 	initExportBaseFilePathMatrix();
 	$class->SUPER::initPlugin(@_);
-	$initialised = 1;
 }
 
 sub initPrefs {
@@ -276,6 +273,11 @@ sub initPrefs {
 	my $status_clearingallratings;
 	$prefs->set('status_clearingallratings', '0');
 
+	my $lastPostScanRefresh = $prefs->get('lastPostScanRefresh');
+	if (!defined $lastPostScanRefresh) {
+		$prefs->set('lastPostScanRefresh', time());
+	}
+
 	$prefs->init({
 		enableIRremotebuttons => $enableIRremotebuttons,
 		topratedminrating => $topratedminrating,
@@ -314,6 +316,7 @@ sub initPrefs {
 		status_creatingbackup => $status_creatingbackup,
 		status_restoringfrombackup => $status_restoringfrombackup,
 		status_clearingallratings => $status_clearingallratings,
+		lastPostScanRefresh => $lastPostScanRefresh,
 	});
 
 	$prefs->setValidate({
@@ -359,18 +362,6 @@ sub initPrefs {
 
 sub postinitPlugin {
 	initVirtualLibraries();
-}
-
-sub shutdownPlugin {
-	return if !$initialised;
-	$log->debug('Shutting down');
-	my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
-	if (defined $enableIRremotebuttons) {
-		Slim::Control::Request::unsubscribe(\&newPlayerCheck, [['client']],[['new']]);
-	}
-	Slim::Control::Request::unsubscribe(\&importerPostScanRefresh,[['rescan'],['done']]);
-	Plugins::RatingsLight::Importer::shutdownPlugin();
-	$initialised = 0;
 }
 
 
@@ -1267,11 +1258,22 @@ sub initExportBaseFilePathMatrix {
 
 sub importerPostScanRefresh {
 	my $enableautoscan = $prefs->get('autoscan');
-	if (defined $enableautoscan) {
-		$log->debug("post scan refresh after ratings import from comment tags");
-		refreshAll();
+	my $lastPostScanRefresh = $prefs->get('lastPostScanRefresh');
+	my $waitingperiod = 30; # in seconds
+	$log->debug("time of *last* post-scan refresh request = ".$lastPostScanRefresh);
+	my $currentPostScanRefreshReq = time();
+	$log->debug("time of *current* post-scan refresh request = ".$currentPostScanRefreshReq);
+	if ($currentPostScanRefreshReq - $lastPostScanRefresh >= $waitingperiod) {
+		if (defined $enableautoscan) {
+			$log->debug("post-scan refresh after ratings import from comment tags");
+			refreshAll();
+		}
+		$prefs->set('lastPostScanRefresh', $currentPostScanRefreshReq);
+	} else {
+		$log->debug("*current* post-scan refresh request not executed because time since *last* post-scan request < ".$waitingperiod." seconds");
 	}
 }
+
 
 ## backup, restore
 
@@ -3364,6 +3366,7 @@ sub refreshAll {
 	refreshVirtualLibraries();
 }
 
+
 # title format
 
 sub getTitleFormat_Rating {
@@ -3407,6 +3410,7 @@ sub refreshTitleFormats {
 		$client->currentPlaylistUpdateTime(Time::HiRes::time());
 	}
 }
+
 
 # Custom Skip
 
@@ -3467,6 +3471,7 @@ sub checkCustomSkipFilterType {
 	}
 	return 0;
 }
+
 
 # misc
 
