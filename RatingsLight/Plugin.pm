@@ -11,11 +11,11 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
 package Plugins::RatingsLight::Plugin;
@@ -84,7 +84,7 @@ sub initPlugin {
 	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
 	Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'],[0, 1, 0, undef]);
 
-	Slim::Control::Request::subscribe(\&importerPostScanRefresh,[['rescan'],['done']]);
+	Slim::Control::Request::subscribe(\&setRefreshCBTimer,[['rescan'],['done']]);
 
 	Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
 
@@ -273,10 +273,8 @@ sub initPrefs {
 	my $status_clearingallratings;
 	$prefs->set('status_clearingallratings', '0');
 
-	my $lastPostScanRefresh = $prefs->get('lastPostScanRefresh');
-	if (!defined $lastPostScanRefresh) {
-		$prefs->set('lastPostScanRefresh', time());
-	}
+	my $postScanScheduleDelay;
+	$prefs->set('postScanScheduleDelay', '10');
 
 	$prefs->init({
 		enableIRremotebuttons => $enableIRremotebuttons,
@@ -316,7 +314,7 @@ sub initPrefs {
 		status_creatingbackup => $status_creatingbackup,
 		status_restoringfrombackup => $status_restoringfrombackup,
 		status_clearingallratings => $status_clearingallratings,
-		lastPostScanRefresh => $lastPostScanRefresh,
+		postScanScheduleDelay => $postScanScheduleDelay,
 	});
 
 	$prefs->setValidate({
@@ -1256,21 +1254,25 @@ sub initExportBaseFilePathMatrix {
 	}
 }
 
-sub importerPostScanRefresh {
+sub setRefreshCBTimer {
+	$log->debug("Killing existing timers");
+	Slim::Utils::Timers::killOneTimer(undef, \&delayedPostScanRefresh);
+	$log->debug("Scheduling a delayed post-scan refresh");
+	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + $prefs->get('postScanScheduleDelay'), \&delayedPostScanRefresh);
+}
+
+sub delayedPostScanRefresh {
 	my $enableautoscan = $prefs->get('autoscan');
-	my $lastPostScanRefresh = $prefs->get('lastPostScanRefresh');
-	my $waitingperiod = 30; # in seconds
-	$log->debug("time of *last* post-scan refresh request = ".$lastPostScanRefresh);
-	my $currentPostScanRefreshReq = time();
-	$log->debug("time of *current* post-scan refresh request = ".$currentPostScanRefreshReq);
-	if ($currentPostScanRefreshReq - $lastPostScanRefresh >= $waitingperiod) {
+	$log->debug("Delayed post-scan refresh invoked");
+
+	if (Slim::Music::Import->stillScanning) {
+		$log->debug("Scan in progress. Waiting for current scan to finish.");
+		setCallbackTimer();
+	} else {
 		if (defined $enableautoscan) {
-			$log->debug("post-scan refresh after ratings import from comment tags");
+			$log->debug("Starting post-scan refresh after ratings import from comment tags");
 			refreshAll();
 		}
-		$prefs->set('lastPostScanRefresh', $currentPostScanRefreshReq);
-	} else {
-		$log->debug("*current* post-scan refresh request not executed because time since *last* post-scan request < ".$waitingperiod." seconds");
 	}
 }
 
@@ -1450,7 +1452,7 @@ sub restoreFromBackup {
 			clearAllRatings();
 		}
 		initRestore();
-		Slim::Utils::Scheduler::add_task(\&scanFunction);
+		Slim::Utils::Scheduler::add_task(\&restoreScanFunction);
 	} else {
 		$log->error('Error: No backup file specified');
 		$prefs->set('status_restoringfrombackup', 0);
@@ -1475,7 +1477,7 @@ sub initRestore {
 	);
 }
 
-sub scanFunction {
+sub restoreScanFunction {
 	my $restorefile = $prefs->get('restorefile');
 	if ($opened != 1) {
 		open(BACKUPFILE, $restorefile) || do {
@@ -1539,7 +1541,7 @@ sub doneScanning {
 	refreshAll();
 
 	$prefs->set('status_restoringfrombackup', 0);
-	Slim::Utils::Scheduler::remove_task(\&scanFunction);
+	Slim::Utils::Scheduler::remove_task(\&restoreScanFunction);
 	my $RLfolderpath = $rlparentfolderpath.'/Ratingslight';
 	$prefs->set('restorefile', $RLfolderpath);
 }
@@ -3245,7 +3247,7 @@ sub getSeedGenres {
 }
 
 
-######  helpers  ######
+###### helpers ######
 
 sub writeRatingToDB {
 	my ($trackURL, $rating100ScaleValue, $logthis) = @_;
