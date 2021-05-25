@@ -3,6 +3,9 @@
 #
 # (c) 2020-2021 AF-1
 #
+# Portions of code derived from the TrackStat plugin
+# (c) 2006 Erland Isaksson (erland_i@hotmail.com)
+#
 # GPLv3 license
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
