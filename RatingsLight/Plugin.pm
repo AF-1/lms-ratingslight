@@ -115,6 +115,7 @@ sub initPlugin {
 	));
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbyartist => (
 			after => 'ratingslightrating',
+			before => 'ratingslightmoreratedtracksbyalbum',
 			func => \&showMoreRatedTracksbyArtistInfoHandler,
 	));
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbyalbum => (
