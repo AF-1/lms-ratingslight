@@ -65,7 +65,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(rating_keyword_prefix rating_keyword_suffix autoscan ratethisplaylistid ratethisplaylistrating));
+	return ($prefs, qw(rating_keyword_prefix rating_keyword_suffix autoscan ratethisplaylistid ratethisplaylistrating playlistimport_maxtracks plimportct_dontunrate));
 }
 
 sub handler {

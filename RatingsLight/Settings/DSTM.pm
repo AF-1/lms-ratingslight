@@ -66,7 +66,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(dstm_minTrackDuration dstm_percentagerated dstm_percentagetoprated num_seedtracks));
+	return ($prefs, qw(dstm_minTrackDuration dstm_percentagerated dstm_percentagetoprated dstm_num_seedtracks dstm_playedtrackstokeep dstm_batchsizenewtracks));
 }
 
 sub handler {

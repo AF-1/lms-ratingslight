@@ -71,6 +71,7 @@ sub importRatingsFromCommentTags {
 
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
+	my $plimportct_dontunrate = $prefs->get('plimportct_dontunrate');
 
 	my $dbh = getCurrentDBH();
 	if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
@@ -97,22 +98,24 @@ sub importRatingsFromCommentTags {
 					WHERE comments.value LIKE ?
 			);";
 
-		# unrate previously rated tracks in LMS if comment tag does no longer contain keyword(s)
-		my $ratingkeyword_unrate = "%%".$rating_keyword_prefix."_".$rating_keyword_suffix."%%";
+		if (!defined $plimportct_dontunrate) {
+			# unrate previously rated tracks in LMS if comment tag does no longer contain keyword(s)
+			my $ratingkeyword_unrate = "%%".$rating_keyword_prefix."_".$rating_keyword_suffix."%%";
 
-		my $sth = $dbh->prepare($sqlunrate);
-		eval {
-			$sth->bind_param(1, $ratingkeyword_unrate);
-			$sth->execute();
-			commit($dbh);
-		};
-		if ($@) {
-			$log->warn("Database error: $DBI::errstr");
+			my $sth = $dbh->prepare($sqlunrate);
 			eval {
-				rollback($dbh);
+				$sth->bind_param(1, $ratingkeyword_unrate);
+				$sth->execute();
+				commit($dbh);
 			};
+			if ($@) {
+				$log->warn("Database error: $DBI::errstr");
+				eval {
+					rollback($dbh);
+				};
+			}
+			$sth->finish();
 		}
-		$sth->finish();
 
 		# rate tracks according to comment tag keyword
 		my $rating = 1;

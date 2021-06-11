@@ -1,8 +1,8 @@
 [% IF wtitle > 0 %]
-[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_LISTHEADER' | string; pagetitle = pagetitle _ " " _ artistname %]
+[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM_LISTHEADER' | string; pagetitle = pagetitle _ " " _ albumnamelistheader %]
 [% pwd_list = [ pagetitle ] %]
 [% ELSE %]
-[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_LISTHEADER' | string; pagetitle = pagetitle _ " " _ artistname %]
+[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM_LISTHEADER' | string; pagetitle = pagetitle _ " " _ albumnamelistheader %]
 [% pwd_list = [ pagetitle ] %]
 [% END %]
 [% PROCESS pageheader.html %]
@@ -52,7 +52,7 @@ a {text-decoration: none;}
 	font-family: sans-serif;
 	font-size: 12px;
 }
-.albumtitle {
+.artistname {
 	margin-top: 2px;
 	font-family: sans-serif;
 	font-size: 11px;
@@ -74,13 +74,13 @@ a {text-decoration: none;}
 			</div>
 			<div class="flexitem textwrapper">
 				<span class="tracktitle">
-					[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_ALLSONGS" | string %] ([% trackcount %])
+					[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_ALLSONGS" | string %] ([% trackcount %])
 				</span>
 			</div>
 			<div class="flexitem buttons">
-				<span class="play_btn" onclick="playallnow();" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_PLAYNOW" | string %]"></span>
-				<span class="append_btn" onclick="appendall();" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_APPEND" | string %]"></span>
-				<span class="playnext_btn" onclick="playallnext();" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_PLAYNEXT" | string %]"></span>
+				<span class="play_btn" onclick="playallnow();" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNOW" | string %]"></span>
+				<span class="append_btn" onclick="appendall();" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_APPEND" | string %]"></span>
+				<span class="playnext_btn" onclick="playallnext();" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNEXT" | string %]"></span>
 			</div>
 	</div>
 	[% END %]
@@ -96,16 +96,16 @@ a {text-decoration: none;}
 						[% ratedtrack.tracktitle %]
 					</a>
 				</div>
-				<div class="albumtitle underline-on-hover">
-					<a href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=albums&album_id=[% ratedtrack.albumid %]&player=[% playerURI %]/index.html?index=0">
-						[% ratedtrack.albumname %]
+				<div class="artistname underline-on-hover">
+					<a href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&linktitle=[% pagetitle %]&mode=artists&artist_id=[% ratedtrack.artistID %]&player=[% playerURI %]/index.html?index=0">
+						[% ratedtrack.artistname %]
 					</a>
 				</div>
 			</div>
 			<div class="buttons">
-				<span class="play_btn" onclick="playnow([% ratedtrack.trackid %]);" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_PLAYNOW" | string %]"></span>
-				<span class="append_btn" onclick="append([% ratedtrack.trackid %]);" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_APPEND" | string %]"></span>
-				<span class="playnext_btn" onclick="playnext([% ratedtrack.trackid %]);" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_PLAYNEXT" | string %]"></span>
+				<span class="play_btn" onclick="playnow([% ratedtrack.trackid %]);" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNOW" | string %]"></span>
+				<span class="append_btn" onclick="append([% ratedtrack.trackid %]);" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_APPEND" | string %]"></span>
+				<span class="playnext_btn" onclick="playnext([% ratedtrack.trackid %]);" title="[% "PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNEXT" | string %]"></span>
 			</div>
 	</div>
 	<div class="filler"></div>

@@ -14,7 +14,17 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS_DESC" %]
-	<input type="text" class="stdedit" name="pref_num_seedtracks" id="num_seedtracks" value="[% prefs.num_seedtracks %]" size="3">
+	<input type="text" class="stdedit" name="pref_dstm_num_seedtracks" id="dstm_num_seedtracks" value="[% prefs.dstm_num_seedtracks %]" size="3">
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PLAYEDTRACKSTOKEEP" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PLAYEDTRACKSTOKEEP_DESC" %]
+	<input type="text" class="stdedit" name="pref_dstm_playedtrackstokeep" id="dstm_playedtrackstokeep" value="[% prefs.dstm_playedtrackstokeep %]" size="3">
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS_DESC" %]
+	<input type="text" class="stdedit" name="pref_dstm_batchsizenewtracks" id="dstm_batchsizenewtracks" value="[% prefs.dstm_batchsizenewtracks %]" size="3">
 [% END %]
 <br><hr>
 [% WRAPPER setting title="" desc="" %]

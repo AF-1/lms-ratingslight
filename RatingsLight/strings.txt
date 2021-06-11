@@ -57,7 +57,7 @@ PLUGIN_RATINGSLIGHT_VARIOUS_REMOTERATINGCONFIRMMSG_DESC
 	EN	Shows a brief message on the VFD display of your Logitech device confirming the new rating value if you rate a song <i>using IR remote rating</i>.
 
 PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING
-	EN	Minimum rating for "top" rated tracks
+	EN	Minimum rating for <b>top</b> rated tracks
 
 PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING_DESC
 	EN	Set the <b>minimum rating</b> for tracks to be considered <b>top rated</b>.<br> This is a <i>global</i> setting for browse menus, DSTM, and smart playlists (Dynamic Playlist).
@@ -90,13 +90,10 @@ PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_NOW
 	EN	Clear all ratings
 
 PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_NOW_DESC
-	EN	This will clear all ratings in your database.
+	EN	This will clear <b>all</b> ratings in your database!
 
 PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_NOW_BUTTON
 	EN	Clear ratings now
-
-PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_NOW_WARNING
-	EN	This will clear all ratings!
 
 PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_INPROGRESS
 	EN	clearing...
@@ -116,7 +113,7 @@ PLUGIN_RATINGSLIGHT_EXPORT_INPROGRESS
 	EN	exporting...
 
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF
-	EN	Export only tracks with rating values different from comment tag ratings
+	EN	Export only tracks with rating values different from comment tag ratings.
 
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF_DESC
 	EN	If set to yes, only those tracks will be exported whose LMS rating differs from the rating value derived from comment tag keywords.<br> So if you've marked a track as 2-star rated in its comment tag and its rating hasn't changed it won't be part of the exported playlists.
@@ -125,7 +122,7 @@ PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION
 	EN	Replace file path
 
 PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_DESC
-	EN	Replace the LMS root file path in your <b>exported</b> file urls with a different file path.<br>Useful if you want to use the exported playlist with another version of your LMS library on another PC.
+	EN	Replace the LMS root file path in your <b>exported</b> file urls with a different file path.<br>Helpful if you want to use the exported playlist with another version of your LMS library on another PC.
 
 PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_LMSPATH
 	EN	LMS base file path
@@ -137,12 +134,15 @@ PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION
 	EN	Replace file extension
 
 PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION_DESC
-	EN	Replace the file extension of your <b>exported</b> file urls. Useful if you want to use the exported playlist with a lossy version of your lossless LMS library.
+	EN	Replace the file extension of your <b>exported</b> file urls. Helpful if you want to use the exported playlist with a lossy version of your lossless LMS library.
 
 
 
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS
 	EN	Playlists
+
+PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_DESC
+	EN	<b>Playlists that contain remote tracks cannot be imported!</b>
 
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_HEADER
 	EN	<b>Import ratings by setting a rating value for <b>all</b> tracks in a playlist.</b>
@@ -156,8 +156,17 @@ PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLRATING
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLRATING_NOPLFOUND
 	EN	No playlists found
 
+PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_INPROGRESS
+	EN	rating...
+
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON
 	EN	Rate Playlist Now
+
+PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLMAXTRACKS
+	EN	Max. number of playlist tracks
+
+PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLMAXTRACKS_DESC
+	EN	Set the maximum number of tracks for import playlists. The default is 1000 tracks (which is already quite high). Larger playlists are probably more likely to cause problems.
 
 
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS
@@ -185,13 +194,19 @@ PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN
 	EN	Include ratings import in LMS scan
 
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN_DESC
-	EN	Always import ratings from comment tags when LMS performs a scan.<br>This will <b>reset all ratings</b> to values based on keywords in comment tags.
+	EN	Always import ratings from comment tags when LMS performs a scan.<br>This will <b>reset <u>all</u> ratings</b> to values based on keywords in comment tags.
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_DONTUNRATE
+	EN	Don't unrate tracks
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_DONTUNRATE_DESC
+	EN	Importing ratings from comment tags was designed to have the LMS database mirror all track ratings it finds in your comment tags and unrate all other tracks (resulting in synced track ratings).<br>If you check this setting new and changed track ratings will show in the LMS database after import but <b><i>formerly</i> rated tracks which no longer have rating keywords in their comment tags will <u>not</u> be unrated</b>.
 
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT
 	EN	Manual Import
 
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_DESC
-	EN	<b>Manually</b> import ratings based on keywords in comment tags <b>now</b>.<br>This will <b>reset all ratings to values derived from the keywords in the comment tags.</b>
+	EN	<b>Manually</b> import ratings based on keywords in comment tags <b>now</b>.<br>Unless you've enabled the <i>Don't unrate</i> option this will <b>reset <u>all</u> ratings to values derived from the keywords in the comment tags.</b>
 
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON
 	EN	Import now
@@ -201,9 +216,6 @@ PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_MISSINGKEYWORDS
 
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_INPROGRESS
 	EN	importing...
-
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON_WARNING
-	EN	This will reset all ratings and overwrite them with rating values derived from the keywords in the comment tags.
 
 
 
@@ -316,7 +328,7 @@ PLUGIN_RATINGSLIGHT_MENUS_RATINGDISPLAYCHARACTER
 	EN	Rating character
 
 PLUGIN_RATINGSLIGHT_MENUS_RATINGDISPLAYCHARACTER_DESC
-	EN	Choose the displayed rating character for menus and titelformats.<br><br><b>*** IMPORTANT, please read ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> and other players running jivelite <b>do not support displaying the unicode blackstar character out of the box</b>.<br>This character is not part of their <i>default</i> font. If you want to display this character on these devices you'll have to <b>replace the default font</b> on these devices with a font that contains this character like <b>DejaVu Sans Condensed</b>.<br><br>More information and instructions here:<br><b>https://github.com/AF-1/sobras</b>
+	EN	Choose the displayed rating character for menus and titelformats.<br><br><b>*** IMPORTANT, please read ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> and other players running jivelite <b>do not support displaying the unicode blackstar character out of the box</b>.<br>This character is not part of their <i>default</i> font. If you want to display this character on these devices you'll have to <b>replace the default font</b> on these devices with a font that contains this character.<br><br>More information, instructions, and fonts here: <b>https://github.com/AF-1/sobras</b>
 
 PLUGIN_RATINGSLIGHT_MENUS_RATINGDISPLAYCHARACTER_STAR_TEXT
 	EN	* - common text star
@@ -343,6 +355,18 @@ PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_LISTHEADER
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_LISTHEADER
 	EN	More rated tracks by
 
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM
+	EN	Show rated tracks in
+
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM
+	EN	Show more rated tracks in
+
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM_LISTHEADER
+	EN	Rated tracks in
+
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM_LISTHEADER
+	EN	More rated tracks in
+
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEB_LIMIT
 	EN	Show more rated tracks - web UI limit
 
@@ -353,21 +377,21 @@ PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
 	EN	Show more rated tracks - menu limit
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
-	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>Material skin, SB Touch, SB Radio, piCorePlayer</b>.
+	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>piCorePlayer, Material skin, SB Touch, SB Radio</b>.
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_ALLSONGS
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_ALLSONGS
 	EN	All songs
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_PLAYNOW
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNOW
 	EN	Play now
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_PLAYNEXT
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNEXT
 	EN	Play next
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_APPEND
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_APPEND
 	EN	Append to queue
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_MENU_MOREINFO
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_MOREINFO
 	EN	More information
 
 
@@ -406,13 +430,25 @@ PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_TOPRATED
 	EN	Percentage of top rated songs
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_TOPRATED_DESC
-	EN	Percentage of top rated songs in "rated songs" DSTM mixes.<br>You can set/change the minimum rating for tracks to be considered <b>top/b> rated in the <b>Various</b> section of the <i>Ratings Light</i> settings.
+	EN	Percentage of top rated songs in "rated songs" DSTM mixes.<br>You can set/change the minimum rating for tracks to be considered <b>top</b> rated in the <b>Various</b> section of the <i>Ratings Light</i> settings.
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS
 	EN	Number of DSTM seed tracks
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS_DESC
-	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.<br>(from 1 to 20)
+	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix (from 1 to 20).
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PLAYEDTRACKSTOKEEP
+	EN	Number of played tracks in playlist
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PLAYEDTRACKSTOKEEP_DESC
+	EN	Sets the number of <b>played</b> tracks to keep in the DSTM playlist when new tracks are added (from 1 to 200).
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS
+	EN	New tracks added in one batch
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS_DESC
+	EN	Sets the number of new tracks DSTM adds in one batch (from 5 to 50).
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_HEADER
 	EN	<b>The settings below apply to "Don't Stop The Music" mixes <u>and</u> "Dynamic Playlist" smart playlists.</b>
