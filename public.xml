@@ -5,7 +5,7 @@
     <plugins>
         <plugin name="RatingsLight" version="1.9.2" minTarget="7.9" maxTarget="*">
             <title lang="EN">Ratings Light</title>
-            <desc lang="EN">Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Browse rated tracks by artist or genre. Keep track of your recently rated songs with a dedicated playlist or log file. Supports "Don't Stop The Music". Includes ratings-based smart playlists for DynamicPlaylists. Skip (un-)rated tracks with CustomSkip.</desc>
+            <desc lang="EN">A plugin that takes care of rating your local tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Browse rated tracks by artist or genre. Keep track of your recently rated songs with a dedicated playlist or log file. Show (more) rated tracks by an artist or in an album. Supports "Don't Stop The Music". Includes ratings-based smart playlists for DynamicPlaylists. Skip (un-)rated tracks with CustomSkip.</desc>
         	<url>https://github.com/AF-1/lms-ratingslight/releases/download/1.9.2/lms-ratingslight-1.9.2.zip</url>
             <creator>AF</creator>
             <sha>780683d6de0282d886a952a79f3a92edb219a407</sha>

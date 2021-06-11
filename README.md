@@ -1,7 +1,7 @@
 Ratings Light
 ====
 
-A plugin for [Logitech Media Server](https://github.com/Logitech/slimserver)<br>
+A plugin that takes care of rating local tracks in your [Logitech Media Server](https://github.com/Logitech/slimserver) library.<br>
 
 ## Features:
 
