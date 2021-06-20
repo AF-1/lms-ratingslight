@@ -105,7 +105,7 @@ sub handler {
 sub beforeRender {
 	my ($class, $paramRef) = @_;
 	my @allplaylists = ();
-	my $queryresult = Slim::Control::Request::executeRequest(undef, ['playlists', '0', '50']);
+	my $queryresult = Slim::Control::Request::executeRequest(undef, ['playlists', '0', '500']);
 	my $playlistcount = $queryresult->getResult("count");
 
 	if ($playlistcount > 0) {

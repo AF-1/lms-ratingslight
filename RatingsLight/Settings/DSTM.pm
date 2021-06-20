@@ -138,7 +138,7 @@ sub getSortedGenres {
 	my $genres = getGenres();
 	return sort {
 		$genres->{$a}->{sort} <=> $genres->{$b}->{sort};
-	} keys %$genres;
+	} keys %{$genres};
 }
 
 1;
