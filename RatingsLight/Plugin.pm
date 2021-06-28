@@ -2364,6 +2364,13 @@ sub getDynamicPlayLists {
 			'name' => 'Select genre'
 	);
 
+	# artist #
+	my %parameterartist1 = (
+			'id' => 1,
+			'type' => 'artist',
+			'name' => 'Select artist'
+	);
+
 	# decade #
 	my %parameterdec1 = (
 			'id' => 1,
@@ -2468,6 +2475,11 @@ sub getDynamicPlayLists {
 	my %playlist13 = (
 		'name' => 'Rated (un/played)',
 		'url' => 'plugins/RatingsLight/html/dpldesc/rated_unplayed.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist14 = (
+		'name' => 'Rated tracks by this artist',
+		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_artist.html?dummyparam=1',
 		'groups' => [['Ratings Light ']]
 	);
 
@@ -2577,6 +2589,14 @@ sub getDynamicPlayLists {
 	);
 	$playlist13{'parameters'} = \%parametersPL13;
 	$result{'ratingslight_rated-unplayed'} = \%playlist13;
+
+	# Playlist14: "Rated by this artist"
+	my %parametersPL14 = (
+		1 => \%parameterartist1,
+		2 => \%parameterplaycount1
+	);
+	$playlist14{'parameters'} = \%parametersPL14;
+	$result{'ratingslight_rated-by_artist'} = \%playlist14;
 
 	return \%result;
 }
@@ -3082,6 +3102,25 @@ DROP TABLE randomweightedratingscombined;";
 
 		if ($excludedgenrelist ne '') {
 			$sqlstatement .= $excludegenre_sql;
+		}
+		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
+	}
+
+	# Playlist14: "Rated - by artist (un/played)"
+	if ($DPLid eq 'ratingslight_rated-by_artist') {
+		my $artist = $parameters->{1}->{'value'};
+		my $playcountvalue = $parameters->{2}->{'value'};
+		$sqlstatement = "select tracks.url from tracks 	join contributor_track on tracks.id=contributor_track.track and contributor_track.contributor=$artist join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0";
+		if ($playcountvalue == 1) {
+			$sqlstatement .= $playcount_unplayed_sql;
+		}
+		if ($playcountvalue == 2) {
+			$sqlstatement .= $playcount_played_sql;
+		}
+		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
+			$sqlstatement .= $shared_curlib_sql;
+		} else {
+			$sqlstatement .= $shared_completelib_sql;
 		}
 		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
 	}
