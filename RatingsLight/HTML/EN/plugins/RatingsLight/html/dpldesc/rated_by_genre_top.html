@@ -1,5 +1,10 @@
-[% pagetitle = 'Playlist info: Rated - by GENRE (with % of top rated)' %]
-[% pwd_list = [ pagetitle ] %]
+[% pagetitle = 'PLUGIN_DYNAMICPLAYLIST' | string; pageicon = 'PLUGIN_DYNAMICPLAYLIST' %]
+[%- pwd_list = BLOCK -%]
+	<a href="[% webroot %]plugins/DynamicPlayList/dynamicplaylist_list.html?player=[% player | uri %]">
+		[% "PLUGIN_DYNAMICPLAYLIST" | string %]
+	</a>
+	&nbsp;/&nbsp;<a href="[% webroot %]plugins/DynamicPlayList/dynamicplaylist_list.html?&group1=Ratings%20Light%20&player=[% player | uri %]">[% 'PLUGIN_RATINGSLIGHT' | string %]</a> > Playlist info: Rated - by GENRE (with % of top rated)
+[% END -%]
 [% PROCESS pageheader.html %]
 <br>
 <div style="font-family:sans-serif;font-size:12px;">
