@@ -2385,6 +2385,13 @@ sub getDynamicPlayLists {
 			'definition' => "select cast(((tracks.year/10)*10) as int),case when tracks.year>0 then cast(((tracks.year/10)*10) as int)||'s' else 'Unknown' end from tracks where tracks.audio=1 group by cast(((tracks.year/10)*10) as int) order by tracks.year desc"
 	);
 
+	# year #
+	my %parameteryear1 = (
+			'id' => 1,
+			'type' => 'year',
+			'name' => 'Select year'
+	);
+
 	# % play count #
 	my %parameterplaycount1 = (
 			'id' => 1,
@@ -2480,6 +2487,11 @@ sub getDynamicPlayLists {
 	my %playlist14 = (
 		'name' => 'Rated tracks by this artist',
 		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_artist.html?dummyparam=1',
+		'groups' => [['Ratings Light ']]
+	);
+	my %playlist15 = (
+		'name' => 'Rated tracks from this year',
+		'url' => 'plugins/RatingsLight/html/dpldesc/rated_by_year.html?dummyparam=1',
 		'groups' => [['Ratings Light ']]
 	);
 
@@ -2597,6 +2609,14 @@ sub getDynamicPlayLists {
 	);
 	$playlist14{'parameters'} = \%parametersPL14;
 	$result{'ratingslight_rated-by_artist'} = \%playlist14;
+
+	# Playlist15: "Rated from this year"
+	my %parametersPL15 = (
+		1 => \%parameteryear1,
+		2 => \%parameterplaycount1
+	);
+	$playlist15{'parameters'} = \%parametersPL15;
+	$result{'ratingslight_rated-by_year'} = \%playlist15;
 
 	return \%result;
 }
@@ -3110,7 +3130,7 @@ DROP TABLE randomweightedratingscombined;";
 	if ($DPLid eq 'ratingslight_rated-by_artist') {
 		my $artist = $parameters->{1}->{'value'};
 		my $playcountvalue = $parameters->{2}->{'value'};
-		$sqlstatement = "select tracks.url from tracks 	join contributor_track on tracks.id=contributor_track.track and contributor_track.contributor=$artist join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0";
+		$sqlstatement = "select tracks.url from tracks join contributor_track on tracks.id=contributor_track.track and contributor_track.contributor=$artist join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
 		}
@@ -3122,6 +3142,26 @@ DROP TABLE randomweightedratingscombined;";
 		} else {
 			$sqlstatement .= $shared_completelib_sql;
 		}
+		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
+	}
+
+	# Playlist15: "Rated - by year (un/played)"
+	if ($DPLid eq 'ratingslight_rated-by_year') {
+		my $year = $parameters->{1}->{'value'};
+		my $playcountvalue = $parameters->{2}->{'value'};
+		$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating > 0";
+		if ($playcountvalue == 1) {
+			$sqlstatement .= $playcount_unplayed_sql;
+		}
+		if ($playcountvalue == 2) {
+			$sqlstatement .= $playcount_played_sql;
+		}
+		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
+			$sqlstatement .= $shared_curlib_sql;
+		} else {
+			$sqlstatement .= $shared_completelib_sql;
+		}
+		$sqlstatement .= " and tracks.year=$year";
 		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
 	}
 
