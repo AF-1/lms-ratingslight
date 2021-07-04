@@ -379,6 +379,8 @@ sub initPrefs {
 	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 20 }, 'dstm_num_seedtracks');
 	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 200 }, 'dstm_playedtrackstokeep');
 	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 50 }, 'dstm_batchsizenewtracks');
+	$prefs->setValidate('dir', 'rlparentfolderpath');
+	$prefs->setValidate('file', 'restorefile');
 
 	$prefs->setChange(\&Plugins::RatingsLight::Importer::toggleUseImporter, 'autoscan');
 	$prefs->setChange(\&initVirtualLibraries, 'browsemenus_sourceVL_id', 'showratedtracksmenus');
