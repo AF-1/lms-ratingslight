@@ -1333,9 +1333,9 @@ sub exportRatingsToPlaylistFiles {
 				return
 			} else {
 				if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-						$sql = "SELECT tracks.url FROM tracks LEFT JOIN tracks_persistent persistent ON persistent.urlmd5 = tracks.urlmd5 LEFT JOIN library_track library_track ON library_track.track = tracks.id WHERE tracks.audio = 1 AND (persistent.rating >= $rating100ScaleValue AND persistent.rating <= $rating100ScaleValueCeil) AND persistent.urlmd5 IN (SELECT tracks.urlmd5 FROM tracks LEFT JOIN comments ON comments.track = tracks.id WHERE (comments.value NOT LIKE ? OR comments.value IS NULL)) AND library_track.library = \"$exportVL_id\"";
+						$sql = "select tracks.url from tracks left join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 left join library_track library_track on library_track.track = tracks.id where tracks.audio = 1 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) and persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null)) and library_track.library = \"$exportVL_id\"";
 				} else {
-						$sql = "SELECT tracks_persistent.url FROM tracks_persistent WHERE (tracks_persistent.rating >= $rating100ScaleValue AND tracks_persistent.rating <= $rating100ScaleValueCeil AND tracks_persistent.urlmd5 IN (SELECT tracks.urlmd5 FROM tracks LEFT JOIN comments ON comments.track = tracks.id WHERE (comments.value NOT LIKE ? OR comments.value IS NULL)));";
+						$sql = "select tracks_persistent.url from tracks_persistent where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null)))";
 				}
 				$sth = $dbh->prepare($sql);
 				my $ratingkeyword = "%%".$rating_keyword_prefix.($rating100ScaleValue/20).$rating_keyword_suffix."%%";
@@ -1343,9 +1343,9 @@ sub exportRatingsToPlaylistFiles {
 			}
 		} else {
 			if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-				$sql = "SELECT tracks.url FROM tracks LEFT JOIN tracks_persistent persistent ON persistent.urlmd5 = tracks.urlmd5 LEFT JOIN library_track library_track ON library_track.track = tracks.id WHERE tracks.audio = 1 AND (persistent.rating >= $rating100ScaleValue AND persistent.rating <= $rating100ScaleValueCeil) AND library_track.library = \"$exportVL_id\"";
+				$sql = "select tracks.url from tracks left join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 left join library_track library_track on library_track.track = tracks.id where tracks.audio = 1 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) and library_track.library = \"$exportVL_id\"";
 			} else {
-				$sql = "SELECT tracks_persistent.url FROM tracks_persistent WHERE (tracks_persistent.rating >= $rating100ScaleValue AND tracks_persistent.rating <= $rating100ScaleValueCeil);";
+				$sql = "select tracks_persistent.url from tracks_persistent where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil)";
 			}
 			$sth = $dbh->prepare($sql);
 		}
@@ -1515,7 +1515,7 @@ sub createBackup {
 	my $backuptimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
 
-	$sql = "SELECT tracks_persistent.url FROM tracks_persistent WHERE tracks_persistent.rating > 0";
+	$sql = "select tracks_persistent.url from tracks_persistent where tracks_persistent.rating > 0";
 	$sth = $dbh->prepare($sql);
 	$sth->execute();
 
@@ -1836,29 +1836,13 @@ sub initVirtualLibraries {
 			push @libraries,{
 				id => 'RL_RATED',
 				name => 'Ratings Light - Rated Tracks',
-				sql => qq{
-					INSERT OR IGNORE INTO library_track (library, track)
-					SELECT '%s', tracks.id
-					FROM tracks
-					LEFT JOIN tracks_persistent tracks_persistent ON tracks_persistent.urlmd5 = tracks.urlmd5
-					WHERE tracks_persistent.rating > 0
-					GROUP by tracks.id
-				},
+				sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks left join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 where tracks_persistent.rating > 0 group by tracks.id},
 			};
 		} else {
 			push @libraries,{
 				id => 'RL_RATED',
 				name => 'Ratings Light - Rated Tracks',
-				sql => qq{
-					INSERT OR IGNORE INTO library_track (library, track)
-					SELECT '%s', tracks.id
-					FROM tracks
-					LEFT JOIN tracks_persistent tracks_persistent ON tracks_persistent.urlmd5 = tracks.urlmd5
-					LEFT JOIN library_track library_track ON library_track.track = tracks.id
-					WHERE tracks_persistent.rating > 0
-					AND library_track.library = "$browsemenus_sourceVL_id"
-					GROUP by tracks.id
-				},
+				sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks left join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 left join library_track library_track on library_track.track = tracks.id where tracks_persistent.rating > 0 and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id},
 			};
 		}
 
@@ -1867,29 +1851,13 @@ sub initVirtualLibraries {
 				push @libraries,{
 					id => 'RL_TOPRATED',
 					name => 'Ratings Light - Top Rated Tracks',
-					sql => qq{
-						INSERT OR IGNORE INTO library_track (library, track)
-						SELECT '%s', tracks.id
-						FROM tracks
-						LEFT JOIN tracks_persistent tracks_persistent ON tracks_persistent.urlmd5 = tracks.urlmd5
-							WHERE tracks_persistent.rating >= $topratedminrating
-						GROUP by tracks.id
-					}
+					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks left join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 where tracks_persistent.rating >= $topratedminrating group by tracks.id}
 				};
 			} else {
 				push @libraries,{
 					id => 'RL_TOPRATED',
 					name => 'Ratings Light - Top Rated Tracks',
-					sql => qq{
-						INSERT OR IGNORE INTO library_track (library, track)
-						SELECT '%s', tracks.id
-						FROM tracks
-						LEFT JOIN tracks_persistent tracks_persistent ON tracks_persistent.urlmd5 = tracks.urlmd5
-						LEFT JOIN library_track library_track ON library_track.track = tracks.id
-							WHERE tracks_persistent.rating >= $topratedminrating
-							AND library_track.library = "$browsemenus_sourceVL_id"
-						GROUP by tracks.id
-					}
+					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks left join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 left join library_track library_track on library_track.track = tracks.id where tracks_persistent.rating >= $topratedminrating and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}
 				};
 			}
 		}
@@ -2286,7 +2254,7 @@ sub clearAllRatings {
 	my $started = time();
 
 	my $status_restoringfrombackup = $prefs->get('status_restoringfrombackup');
-	my $sqlunrateall = "UPDATE tracks_persistent SET rating = NULL WHERE tracks_persistent.rating > 0;";
+	my $sqlunrateall = "UPDATE tracks_persistent SET rating = NULL where tracks_persistent.rating > 0;";
 	my $dbh = getCurrentDBH();
 	my $sth = $dbh->prepare($sqlunrateall);
 	eval {
@@ -2374,13 +2342,13 @@ sub getDynamicPlayLists {
 	# decade #
 	my %parameterdec1 = (
 			'id' => 1,
-			'type' => 'custom',
+			'type' => 'customdecade',
 			'name' => 'Select decade',
 			'definition' => "select cast(((tracks.year/10)*10) as int),case when tracks.year>0 then cast(((tracks.year/10)*10) as int)||'s' else 'Unknown' end from tracks where tracks.audio=1 group by cast(((tracks.year/10)*10) as int) order by tracks.year desc"
 	);
 	my %parameterdec2 = (
 			'id' => 2,
-			'type' => 'custom',
+			'type' => 'customdecade',
 			'name' => 'Select decade',
 			'definition' => "select cast(((tracks.year/10)*10) as int),case when tracks.year>0 then cast(((tracks.year/10)*10) as int)||'s' else 'Unknown' end from tracks where tracks.audio=1 group by cast(((tracks.year/10)*10) as int) order by tracks.year desc"
 	);
@@ -2645,6 +2613,10 @@ sub getNextDynamicPlayListTracks {
 	my $excludegenre_sql = " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
 	my $playcount_unplayed_sql = " and (tracks_persistent.playCount = 0 or tracks_persistent.playCount is null)";
 	my $playcount_played_sql = " and (tracks_persistent.playCount > 0)";
+	my $limit_sql;
+	if (defined $limit) {
+		$limit_sql = " limit $limit";
+	}
 
 	### DPL smart playlists
 	# Playlist1: "Rated"
@@ -2658,16 +2630,19 @@ sub getNextDynamicPlayListTracks {
 		if ($excludedgenrelist ne '') {
 			$sqlstatement .= $excludegenre_sql;
 		}
-		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
+		$sqlstatement .= " group by tracks.id order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
 	}
 
 	# Playlist2: "Rated (with % of top rated, un/played)"
 	if ($DPLid eq 'ratingslight_rated-with_top_percentage') {
 		my $percentagevalue = $parameters->{1}->{'value'};
 		my $playcountvalue = $parameters->{2}->{'value'};
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
-DROP TABLE IF EXISTS randomweightedratingslow;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingshigh;
+drop table if exists randomweightedratingslow;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
@@ -2706,11 +2681,15 @@ create temporary table randomweightedratingslow as select tracks.url as url from
 		$sqlstatement .= " group by tracks.id order by random() limit $percentagevalue;
 ";
 
-		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
-DROP TABLE randomweightedratingshigh;
-DROP TABLE randomweightedratingslow;
-DROP TABLE randomweightedratingscombined;";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as select * from randomweightedratingslow union select * from randomweightedratingshigh;
+select * from randomweightedratingscombined order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
+		$sqlstatement .= ";
+drop table randomweightedratingshigh;
+drop table randomweightedratingslow;
+drop table randomweightedratingscombined;";
 	}
 
 	# Playlist3: "Rated - by DECADE (un/played)"
@@ -2734,7 +2713,10 @@ DROP TABLE randomweightedratingscombined;";
 		if ($excludedgenrelist ne '') {
 			$sqlstatement .= $excludegenre_sql;
 		}
-		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
+		$sqlstatement .= " group by tracks.id order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
 	}
 
 	# Playlist4: "Rated - by DECADE (with % of top rated, un/played)"
@@ -2742,9 +2724,9 @@ DROP TABLE randomweightedratingscombined;";
 		my $decade = $parameters->{1}->{'value'};
 		my $percentagevalue = $parameters->{2}->{'value'};
 		my $playcountvalue = $parameters->{3}->{'value'};
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
-DROP TABLE IF EXISTS randomweightedratingslow;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingshigh;
+drop table if exists randomweightedratingslow;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
@@ -2785,11 +2767,15 @@ create temporary table randomweightedratingslow as select tracks.url as url from
 		$sqlstatement .= " group by tracks.id order by random() limit $percentagevalue;
 ";
 
-		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
-SELECT * from randomweightedratingscombined ORDER BY random()limit $limit;
-DROP TABLE randomweightedratingshigh;
-DROP TABLE randomweightedratingslow;
-DROP TABLE randomweightedratingscombined;";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as select * from randomweightedratingslow union select * from randomweightedratingshigh;
+select * from randomweightedratingscombined order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
+		$sqlstatement .= ";
+drop table randomweightedratingshigh;
+drop table randomweightedratingslow;
+drop table randomweightedratingscombined;";
 	}
 
 	# Playlist5: "Rated - by GENRE (un/played)"
@@ -2808,7 +2794,10 @@ DROP TABLE randomweightedratingscombined;";
 		} else {
 			$sqlstatement .= $shared_completelib_sql;
 		}
-		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
+		$sqlstatement .= " group by tracks.id order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
 	}
 
 	# Playlist6: "Rated - by GENRE (with % of top rated, un/played)"
@@ -2816,9 +2805,9 @@ DROP TABLE randomweightedratingscombined;";
 		my $genre = $parameters->{1}->{'value'};
 		my $percentagevalue = $parameters->{2}->{'value'};
 		my $playcountvalue = $parameters->{3}->{'value'};
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
-DROP TABLE IF EXISTS randomweightedratingslow;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingshigh;
+drop table if exists randomweightedratingslow;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
@@ -2845,11 +2834,15 @@ create temporary table randomweightedratingshigh as select tracks.url as url fro
 			$sqlstatement .= $shared_completelib_sql;
 		}
 		$sqlstatement .= " order by random() limit $percentagevalue;
-create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
-DROP TABLE randomweightedratingshigh;
-DROP TABLE randomweightedratingslow;
-DROP TABLE randomweightedratingscombined;";
+create temporary table randomweightedratingscombined as select * from randomweightedratingslow union select * from randomweightedratingshigh;
+select * from randomweightedratingscombined order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
+		$sqlstatement .= ";
+drop table randomweightedratingshigh;
+drop table randomweightedratingslow;
+drop table randomweightedratingscombined;";
 	}
 
 	# Playlist7: "Rated - by GENRE + DECADE, un/played"
@@ -2869,7 +2862,10 @@ DROP TABLE randomweightedratingscombined;";
 		} else {
 			$sqlstatement .= $shared_completelib_sql;
 		}
-		$sqlstatement .= " and tracks.year>=$decade and tracks.year<$decade+10 group by tracks.id order by random() limit $limit;";
+		$sqlstatement .= " and tracks.year>=$decade and tracks.year<$decade+10 group by tracks.id order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
 	}
 
 	# Playlist8: "Rated - by GENRE + DECADE (with % of top rated, un/played)"
@@ -2878,9 +2874,9 @@ DROP TABLE randomweightedratingscombined;";
 		my $decade = $parameters->{2}->{'value'};
 		my $percentagevalue = $parameters->{3}->{'value'};
 		my $playcountvalue = $parameters->{4}->{'value'};
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
-DROP TABLE IF EXISTS randomweightedratingslow;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingshigh;
+drop table if exists randomweightedratingslow;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
@@ -2907,20 +2903,24 @@ create temporary table randomweightedratingshigh as select tracks.url as url fro
 			$sqlstatement .= $shared_completelib_sql;
 		}
 		$sqlstatement .= " and tracks.year>=$decade and tracks.year<$decade+10 order by random() limit $percentagevalue;
-create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
-DROP TABLE randomweightedratingshigh;
-DROP TABLE randomweightedratingslow;
-DROP TABLE randomweightedratingscombined;";
+create temporary table randomweightedratingscombined as select * from randomweightedratingslow union select * from randomweightedratingshigh;
+select * from randomweightedratingscombined order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
+		$sqlstatement .= ";
+drop table randomweightedratingshigh;
+drop table randomweightedratingslow;
+drop table randomweightedratingscombined;";
 	}
 
 	# Playlist9: "UNrated (with % of RATED Songs, un/played)"
 	if ($DPLid eq 'ratingslight_unrated-with_rated_percentage') {
 		my $percentagevalue = $parameters->{1}->{'value'};
 		my $playcountvalue = $parameters->{2}->{'value'};
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
-DROP TABLE IF EXISTS randomweightedratingsunrated;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingsrated;
+drop table if exists randomweightedratingsunrated;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null)";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
@@ -2959,11 +2959,15 @@ create temporary table randomweightedratingsunrated as select tracks.url as url 
 		$sqlstatement .= " group by tracks.id order by random() limit $percentagevalue;
 ";
 
-		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
-DROP TABLE randomweightedratingsrated;
-DROP TABLE randomweightedratingsunrated;
-DROP TABLE randomweightedratingscombined;";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as select * from randomweightedratingsunrated union select * from randomweightedratingsrated;
+select * from randomweightedratingscombined order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
+		$sqlstatement .= ";
+drop table randomweightedratingsrated;
+drop table randomweightedratingsunrated;
+drop table randomweightedratingscombined;";
 	}
 
 	# Playlist10: "UNrated by DECADE (with % of RATED Songs, un/played)"
@@ -2971,9 +2975,9 @@ DROP TABLE randomweightedratingscombined;";
 		my $decade = $parameters->{1}->{'value'};
 		my $percentagevalue = $parameters->{2}->{'value'};
 		my $playcountvalue = $parameters->{3}->{'value'};
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
-DROP TABLE IF EXISTS randomweightedratingsunrated;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingsrated;
+drop table if exists randomweightedratingsunrated;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null)";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
@@ -3014,11 +3018,15 @@ create temporary table randomweightedratingsunrated as select tracks.url as url 
 		$sqlstatement .= " group by tracks.id order by random() limit $percentagevalue;
 ";
 
-		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
-DROP TABLE randomweightedratingsrated;
-DROP TABLE randomweightedratingsunrated;
-DROP TABLE randomweightedratingscombined;";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as select * from randomweightedratingsunrated union select * from randomweightedratingsrated;
+select * from randomweightedratingscombined order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
+		$sqlstatement .= ";
+drop table randomweightedratingsrated;
+drop table randomweightedratingsunrated;
+drop table randomweightedratingscombined;";
 	}
 
 	# Playlist11: "UNrated by GENRE (with % of RATED songs, un/played)"
@@ -3026,9 +3034,9 @@ DROP TABLE randomweightedratingscombined;";
 		my $genre = $parameters->{1}->{'value'};
 		my $percentagevalue = $parameters->{2}->{'value'};
 		my $playcountvalue = $parameters->{3}->{'value'};
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
-DROP TABLE IF EXISTS randomweightedratingsunrated;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingsrated;
+drop table if exists randomweightedratingsunrated;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null)";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
@@ -3055,11 +3063,15 @@ create temporary table randomweightedratingsrated as select tracks.url as url fr
 			$sqlstatement .= $shared_completelib_sql;
 		}
 		$sqlstatement .= " order by random() limit $percentagevalue;
-create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
-DROP TABLE randomweightedratingsrated;
-DROP TABLE randomweightedratingsunrated;
-DROP TABLE randomweightedratingscombined;";
+create temporary table randomweightedratingscombined as select * from randomweightedratingsunrated union select * from randomweightedratingsrated;
+select * from randomweightedratingscombined order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
+		$sqlstatement .= ";
+drop table randomweightedratingsrated;
+drop table randomweightedratingsunrated;
+drop table randomweightedratingscombined;";
 	}
 
 	# Playlist12: "UNrated by GENRE + DECADE (with % of RATED songs, un/played)"
@@ -3068,9 +3080,9 @@ DROP TABLE randomweightedratingscombined;";
 		my $decade = $parameters->{2}->{'value'};
 		my $percentagevalue = $parameters->{3}->{'value'};
 		my $playcountvalue = $parameters->{4}->{'value'};
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
-DROP TABLE IF EXISTS randomweightedratingsunrated;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingsrated;
+drop table if exists randomweightedratingsunrated;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre=$genre join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null)";
 		if ($playcountvalue == 1) {
 			$sqlstatement .= $playcount_unplayed_sql;
@@ -3097,11 +3109,15 @@ create temporary table randomweightedratingsrated as select tracks.url as url fr
 			$sqlstatement .= $shared_completelib_sql;
 		}
 		$sqlstatement .= " and tracks.year>=$decade and tracks.year<$decade+10 order by random() limit $percentagevalue;
-create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $limit;
-DROP TABLE randomweightedratingsrated;
-DROP TABLE randomweightedratingsunrated;
-DROP TABLE randomweightedratingscombined;";
+create temporary table randomweightedratingscombined as select * from randomweightedratingsunrated union select * from randomweightedratingsrated;
+select * from randomweightedratingscombined order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
+		$sqlstatement .= ";
+drop table randomweightedratingsrated;
+drop table randomweightedratingsunrated;
+drop table randomweightedratingscombined;";
 	}
 
 	# Playlist13: "Rated (un/played)"
@@ -3123,7 +3139,10 @@ DROP TABLE randomweightedratingscombined;";
 		if ($excludedgenrelist ne '') {
 			$sqlstatement .= $excludegenre_sql;
 		}
-		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
+		$sqlstatement .= " group by tracks.id order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
 	}
 
 	# Playlist14: "Rated - by artist (un/played)"
@@ -3142,7 +3161,10 @@ DROP TABLE randomweightedratingscombined;";
 		} else {
 			$sqlstatement .= $shared_completelib_sql;
 		}
-		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
+		$sqlstatement .= " group by tracks.id order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
 	}
 
 	# Playlist15: "Rated - by year (un/played)"
@@ -3162,7 +3184,10 @@ DROP TABLE randomweightedratingscombined;";
 			$sqlstatement .= $shared_completelib_sql;
 		}
 		$sqlstatement .= " and tracks.year=$year";
-		$sqlstatement .= " group by tracks.id order by random() limit $limit;";
+		$sqlstatement .= " group by tracks.id order by random()";
+		if (defined $limit) {
+			$sqlstatement .= $limit_sql;
+		}
 	}
 
 	my $dbh = getCurrentDBH();
@@ -3172,7 +3197,7 @@ DROP TABLE randomweightedratingscombined;";
 			$sth->execute() or do {
 				$sql = undef;
 			};
-			if ($sql =~ /^\(*SELECT+/oi) {
+			if ($sql =~ /^\(*select+/oi) {
 				my $trackURL;
 				$sth->bind_col(1,\$trackURL);
 
@@ -3232,9 +3257,9 @@ sub dontStopTheMusic {
 
 	# Mix: "Rated (with % of top rated)"
 	if ($mixtype eq 'rated_toprated') {
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
-DROP TABLE IF EXISTS randomweightedratingslow;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingshigh;
+drop table if exists randomweightedratingslow;
+drop table if exists randomweightedratingscombined;
 ";
 		$sqlstatement .="create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
@@ -3259,11 +3284,11 @@ DROP TABLE IF EXISTS randomweightedratingscombined;
 		}
 		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentagetoprated;
 ";
-		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $dstm_batchsizenewtracks;
-DROP TABLE randomweightedratingshigh;
-DROP TABLE randomweightedratingslow;
-DROP TABLE randomweightedratingscombined;";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as select * from randomweightedratingslow union select * from randomweightedratingshigh;
+select * from randomweightedratingscombined order by random() limit $dstm_batchsizenewtracks;
+drop table randomweightedratingshigh;
+drop table randomweightedratingslow;
+drop table randomweightedratingscombined;";
 	}
 
 	# Mix: "Rated (seed genres)"
@@ -3284,9 +3309,9 @@ DROP TABLE randomweightedratingscombined;";
 	# Mix: "Rated (seed genres with % of top rated)"
 	if ($mixtype eq 'rated_genre_toprated') {
 		my $dstm_includegenres = getSeedGenres($client);
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingshigh;
-DROP TABLE IF EXISTS randomweightedratingslow;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingshigh;
+drop table if exists randomweightedratingslow;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and tracks_persistent.rating < $topratedminrating";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
@@ -3309,18 +3334,18 @@ create temporary table randomweightedratingslow as select tracks.url as url from
 		}
 		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentagetoprated;
 ";
-		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingslow UNION SELECT * from randomweightedratingshigh;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $dstm_batchsizenewtracks;
-DROP TABLE randomweightedratingshigh;
-DROP TABLE randomweightedratingslow;
-DROP TABLE randomweightedratingscombined;";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as select * from randomweightedratingslow union select * from randomweightedratingshigh;
+select * from randomweightedratingscombined order by random() limit $dstm_batchsizenewtracks;
+drop table randomweightedratingshigh;
+drop table randomweightedratingslow;
+drop table randomweightedratingscombined;";
 	}
 
 	# Mix: "Unrated (with % of rated songs)"
 	if ($mixtype eq 'unrated_rated') {
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
-DROP TABLE IF EXISTS randomweightedratingsunrated;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingsrated;
+drop table if exists randomweightedratingsunrated;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null)";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
@@ -3344,19 +3369,19 @@ create temporary table randomweightedratingsunrated as select tracks.url as url 
 		}
 		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentagerated;
 ";
-		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $dstm_batchsizenewtracks;
-DROP TABLE randomweightedratingsrated;
-DROP TABLE randomweightedratingsunrated;
-DROP TABLE randomweightedratingscombined;";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as select * from randomweightedratingsunrated union select * from randomweightedratingsrated;
+select * from randomweightedratingscombined order by random() limit $dstm_batchsizenewtracks;
+drop table randomweightedratingsrated;
+drop table randomweightedratingsunrated;
+drop table randomweightedratingscombined;";
 	}
 
 	# Mix: "Unrated (seed genres with % of rated songs)"
 	if ($mixtype eq 'unrated_rated_genre') {
 		my $dstm_includegenres = getSeedGenres($client);
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
-DROP TABLE IF EXISTS randomweightedratingsunrated;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingsrated;
+drop table if exists randomweightedratingsunrated;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null)";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
@@ -3380,18 +3405,18 @@ create temporary table randomweightedratingsunrated as select tracks.url as url 
 		}
 		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentagerated;
 ";
-		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $dstm_batchsizenewtracks;
-DROP TABLE randomweightedratingsrated;
-DROP TABLE randomweightedratingsunrated;
-DROP TABLE randomweightedratingscombined;";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as select * from randomweightedratingsunrated union select * from randomweightedratingsrated;
+select * from randomweightedratingscombined order by random() limit $dstm_batchsizenewtracks;
+drop table randomweightedratingsrated;
+drop table randomweightedratingsunrated;
+drop table randomweightedratingscombined;";
 	}
 
 	# Mix: "Unrated (unplayed, with % of rated songs)"
 	if ($mixtype eq 'unrated_rated_unplayed') {
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
-DROP TABLE IF EXISTS randomweightedratingsunrated;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingsrated;
+drop table if exists randomweightedratingsunrated;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) and (tracks_persistent.playCount = 0 or tracks_persistent.playCount is null)";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
@@ -3415,19 +3440,19 @@ create temporary table randomweightedratingsunrated as select tracks.url as url 
 		}
 		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentagerated;
 ";
-		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $dstm_batchsizenewtracks;
-DROP TABLE randomweightedratingsrated;
-DROP TABLE randomweightedratingsunrated;
-DROP TABLE randomweightedratingscombined;";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as select * from randomweightedratingsunrated union select * from randomweightedratingsrated;
+select * from randomweightedratingscombined order by random() limit $dstm_batchsizenewtracks;
+drop table randomweightedratingsrated;
+drop table randomweightedratingsunrated;
+drop table randomweightedratingscombined;";
 	}
 
 	# Mix: "Unrated (unplayed, seed genres with % of rated songs)"
 	if ($mixtype eq 'unrated_rated_unplayed_genre') {
 		my $dstm_includegenres = getSeedGenres($client);
-		$sqlstatement = "DROP TABLE IF EXISTS randomweightedratingsrated;
-DROP TABLE IF EXISTS randomweightedratingsunrated;
-DROP TABLE IF EXISTS randomweightedratingscombined;
+		$sqlstatement = "drop table if exists randomweightedratingsrated;
+drop table if exists randomweightedratingsunrated;
+drop table if exists randomweightedratingscombined;
 create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on tracks.id=genre_track.track join genres on genre_track.genre=genres.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks.url=tracks_persistent.url and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) and (tracks_persistent.playCount = 0 or tracks_persistent.playCount is null)";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
@@ -3451,11 +3476,11 @@ create temporary table randomweightedratingsunrated as select tracks.url as url 
 		}
 		$sqlstatement .= " group by tracks.id order by random() limit $dstm_percentagerated;
 ";
-		$sqlstatement .= "create temporary table randomweightedratingscombined as SELECT * FROM randomweightedratingsunrated UNION SELECT * from randomweightedratingsrated;
-SELECT * from randomweightedratingscombined ORDER BY random() limit $dstm_batchsizenewtracks;
-DROP TABLE randomweightedratingsrated;
-DROP TABLE randomweightedratingsunrated;
-DROP TABLE randomweightedratingscombined;";
+		$sqlstatement .= "create temporary table randomweightedratingscombined as select * from randomweightedratingsunrated union select * from randomweightedratingsrated;
+select * from randomweightedratingscombined order by random() limit $dstm_batchsizenewtracks;
+drop table randomweightedratingsrated;
+drop table randomweightedratingsunrated;
+drop table randomweightedratingscombined;";
 	}
 
 	my $dbh = getCurrentDBH();
@@ -3465,7 +3490,7 @@ DROP TABLE randomweightedratingscombined;";
 			$sth->execute() or do {
 				$sql = undef;
 			};
-			if ($sql =~ /^\(*SELECT+/oi) {
+			if ($sql =~ /^\(*select+/oi) {
 				my $trackURL;
 				$sth->bind_col(1,\$trackURL);
 
