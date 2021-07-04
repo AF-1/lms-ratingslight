@@ -3,12 +3,12 @@
         <title lang="EN">AF-1 Repo</title>
     </details>
     <plugins>
-        <plugin name="RatingsLight" version="1.9.5" minTarget="7.9" maxTarget="*">
+        <plugin name="RatingsLight" version="1.9.6" minTarget="7.9" maxTarget="*">
             <title lang="EN">Ratings Light</title>
             <desc lang="EN">A plugin that takes care of rating your local tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Browse rated tracks by artist or genre. Keep track of your recently rated songs with a dedicated playlist or log file. Show (more) rated tracks by an artist or in an album. Supports "Don't Stop The Music". Includes ratings-based smart playlists for DynamicPlaylists. Skip (un-)rated tracks with CustomSkip.</desc>
-        	<url>https://github.com/AF-1/lms-ratingslight/releases/download/1.9.5/lms-ratingslight-1.9.5.zip</url>
+        	<url>https://github.com/AF-1/lms-ratingslight/releases/download/1.9.6/lms-ratingslight-1.9.6.zip</url>
             <creator>AF</creator>
-            <sha>8b4f2707d217123943bf0039a1edc3c3af23eef8</sha>
+            <sha>8e3099767ed3918716cdc2290db6a4c8c822bdfa</sha>
         </plugin>
         <plugin name="UseCommentTagInfo" version="1.2.4" minTarget="7.9" maxTarget="*">
             <title lang="EN">Use Comment Tag Info</title>
