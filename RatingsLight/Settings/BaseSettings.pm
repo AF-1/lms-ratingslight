@@ -72,9 +72,6 @@ sub handler {
 	}
 	$params->{'subpages'} = \%currentSubPages;
 	$params->{'subpage'} = $class->currentPage($client,$params);
-	my $pluginversion = Slim::Utils::PluginManager->dataForPlugin('Plugins::RatingsLight::Plugin')->{'version'} // 'n/a';
-	my $settingsgrouptitle = string('PLUGIN_RATINGSLIGHT').' ('.$pluginversion.')';
-	$params->{'settingsgrouptitle'} = $settingsgrouptitle;
 	return $class->SUPER::handler($client, $params);
 }
 
