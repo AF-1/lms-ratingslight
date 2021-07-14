@@ -72,7 +72,7 @@ PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_MAXCOUNT
 	EN	Max. number of tracks<br>in Recently Rated playlist
 
 PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_MAXCOUNT_DESC
-	EN	Limits the number of tracks in the <i>Recently Rated playlist</i> (from 2 to 200).
+	EN	Limits the number of tracks in the <i>Recently Rated playlist</i><br>(min. 2, max. 200)
 
 PLUGIN_RATINGSLIGHT_VARIOUS_USELOGFILE
 	EN	Log changed ratings
@@ -250,7 +250,7 @@ PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP
 	EN	Delete backups older than
 
 PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP_DESC
-	EN	Set the number of days after which old backups will be deleted.
+	EN	Set the number of days after which old backups will be deleted.<br>(min. 1, max. 365)
 
 
 PLUGIN_RATINGSLIGHT_RESTORE
@@ -328,7 +328,7 @@ PLUGIN_RATINGSLIGHT_MENUS_RATINGDISPLAYCHARACTER
 	EN	Rating character
 
 PLUGIN_RATINGSLIGHT_MENUS_RATINGDISPLAYCHARACTER_DESC
-	EN	Choose the displayed rating character for menus and titelformats.<br><br><b>*** IMPORTANT, please read ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> and other players running jivelite <b>do not support displaying the unicode blackstar character out of the box</b>.<br>This character is not part of their <i>default</i> font. If you want to display this character on these devices you'll have to <b>replace the default font</b> on these devices with a font that contains this character.<br><br>More information, instructions, and fonts here: <b>https://github.com/AF-1/sobras</b>
+	EN	Choose the displayed rating character for menus and titelformats.<br><br><b>*** IMPORTANT, please read ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> and other players running jivelite <b>do not support displaying the unicode blackstar character out of the box</b>.<br>This character is not part of their <i>default</i> font. If you want to display this character on these devices you'll have to <b>replace the default font</b> on these devices with a font that contains this character.<br><br>More information, instructions, and fonts here: <b>https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font</b>
 
 PLUGIN_RATINGSLIGHT_MENUS_RATINGDISPLAYCHARACTER_STAR_TEXT
 	EN	* - common text star
@@ -436,19 +436,19 @@ PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS
 	EN	Number of DSTM seed tracks
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS_DESC
-	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix (from 1 to 20).
+	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.<br>(min. 1, max. 20)
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PLAYEDTRACKSTOKEEP
 	EN	Number of played tracks in playlist
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PLAYEDTRACKSTOKEEP_DESC
-	EN	Sets the number of <b>played</b> tracks to keep in the DSTM playlist when new tracks are added (from 1 to 200).
+	EN	Sets the number of <b>played</b> tracks to keep in the DSTM playlist when new tracks are added.<br>(min. 1, max. 200)
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS
 	EN	New tracks added in one batch
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS_DESC
-	EN	Sets the number of new tracks DSTM adds in one batch (from 5 to 50).
+	EN	Sets the number of new tracks DSTM adds in one batch.<br>(min. 5, max. 50)
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_HEADER
 	EN	<b>The settings below apply to "Don't Stop The Music" mixes <u>and</u> "Dynamic Playlist" smart playlists.</b>

@@ -250,7 +250,7 @@ sub initPrefs {
 
 	my $moreratedtrackscontextmenulimit = $prefs->get('moreratedtrackscontextmenulimit');
 	if (!defined $moreratedtrackscontextmenulimit) {
-		$prefs->set('moreratedtrackscontextmenulimit', '30');
+		$prefs->set('moreratedtrackscontextmenulimit', '60');
 	}
 
 	my $dstm_minTrackDuration = $prefs->get('dstm_minTrackDuration');
@@ -389,6 +389,11 @@ sub initPrefs {
 			Slim::Music::Info::clearFormatDisplayCache();
 			refreshTitleFormats();
 		}, 'displayratingchar');
+	$prefs->setChange(sub {
+		my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
+		my $rlfolderpath = $rlparentfolderpath.'/RatingsLight';
+		mkdir($rlfolderpath, 0755) unless (-d $rlfolderpath);
+		}, 'rlparentfolderpath');
 }
 
 sub postinitPlugin {
