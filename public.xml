@@ -10,12 +10,12 @@
             <creator>AF</creator>
             <sha>13ab2f253968ec7d06880d08bd109f0be953a0ac</sha>
         </plugin>
-        <plugin name="UseCommentTagInfo" version="1.2.5" minTarget="7.9" maxTarget="*">
+        <plugin name="UseCommentTagInfo" version="1.2.6" minTarget="7.9" maxTarget="*">
             <title lang="EN">Use Comment Tag Info</title>
             <desc lang="EN">This plugin uses (key)words in your music files' comment tags to: add extra information to the song details page, define and display custom title formats, create virtual libraries with browse menus, skip songs with CustomSkip.</desc>
-        	<url>https://github.com/AF-1/lms-usecommenttaginfo/releases/download/1.2.5/lms-usecommenttaginfo-1.2.5.zip</url>
+        	<url>https://github.com/AF-1/lms-usecommenttaginfo/releases/download/1.2.6/lms-usecommenttaginfo-1.2.6.zip</url>
             <creator>AF</creator>
-            <sha>bdafe4118bbb6e73c2f0582698a2c5b570fe94d2</sha>
+            <sha>8b873f82a7127bbe6585422bc8f261e4c399f905</sha>
         </plugin>
     </plugins>
 </extensions>
