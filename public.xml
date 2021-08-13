@@ -17,12 +17,12 @@
             <creator>AF</creator>
             <sha>8b873f82a7127bbe6585422bc8f261e4c399f905</sha>
         </plugin>
-        <plugin name="VisualStatistics" version="1.0.2" minTarget="7.9" maxTarget="*">
+        <plugin name="VisualStatistics" version="1.0.3" minTarget="7.9" maxTarget="*">
             <title lang="EN">Visual Statistics</title>
-            <desc lang="EN">Have a look at your library statistics with charts. Makes them look better but not more interesting.</desc>
-        	<url>https://github.com/AF-1/lms-visualstatistics/releases/download/1.0.2/lms-visualstatistics-1.0.2.zip</url>
+            <desc lang="EN">Have a look at your library statistics with charts</desc>
+        	<url>https://github.com/AF-1/lms-visualstatistics/releases/download/1.0.3/lms-visualstatistics-1.0.3.zip</url>
             <creator>AF</creator>
-            <sha>fbf5278402c0932c639f2467de0bccb076f796d3</sha>
+            <sha>0c7b0111ddec823d3fccf37df1f9b17ee8ec8148</sha>
         </plugin>
     </plugins>
 </extensions>
