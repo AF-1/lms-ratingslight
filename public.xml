@@ -3,19 +3,19 @@
         <title lang="EN">AF-1 Repo</title>
     </details>
     <plugins>
-        <plugin name="RatingsLight" version="1.9.7" minTarget="7.9" maxTarget="*">
+        <plugin name="RatingsLight" version="1.9.8" minTarget="7.9" maxTarget="*">
             <title lang="EN">Ratings Light</title>
             <desc lang="EN">A plugin that takes care of rating your local tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Create virtual libraries for (top) rated tracks. Browse (top) rated tracks by artist or genre (browse menus). Keep track of your recently rated songs with a dedicated playlist or log file. One click to show (more) rated tracks by an artist or in an album from the context menu/song details page. Includes "Don't Stop The Music" mixes.</desc>
-        	<url>https://github.com/AF-1/lms-ratingslight/releases/download/1.9.7/lms-ratingslight-1.9.7.zip</url>
+        	<url>https://github.com/AF-1/lms-ratingslight/releases/download/1.9.8/lms-ratingslight-1.9.8.zip</url>
             <creator>AF</creator>
-            <sha>13ab2f253968ec7d06880d08bd109f0be953a0ac</sha>
+            <sha>41243191a5dd976c51e9a0cc488f0cc2248ddcea</sha>
         </plugin>
-        <plugin name="UseCommentTagInfo" version="1.2.6" minTarget="7.9" maxTarget="*">
+        <plugin name="UseCommentTagInfo" version="1.2.7" minTarget="7.9" maxTarget="*">
             <title lang="EN">Use Comment Tag Info</title>
             <desc lang="EN">This plugin uses (key)words in your music files' comment tags to: add extra information to the song details page, define and display custom title formats, create virtual libraries with browse menus.</desc>
-        	<url>https://github.com/AF-1/lms-usecommenttaginfo/releases/download/1.2.6/lms-usecommenttaginfo-1.2.6.zip</url>
+        	<url>https://github.com/AF-1/lms-usecommenttaginfo/releases/download/1.2.7lms-usecommenttaginfo-1.2.7.zip</url>
             <creator>AF</creator>
-            <sha>8b873f82a7127bbe6585422bc8f261e4c399f905</sha>
+            <sha>0561369d57379396c9651d98b90b25e169b0c52f</sha>
         </plugin>
         <plugin name="VisualStatistics" version="1.0.5" minTarget="7.9" maxTarget="*">
             <title lang="EN">Visual Statistics</title>
