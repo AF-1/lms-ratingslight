@@ -26,18 +26,14 @@
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS_DESC" %]
 	<input type="text" class="stdedit" name="pref_dstm_batchsizenewtracks" id="dstm_batchsizenewtracks" value="[% prefs.dstm_batchsizenewtracks %]" size="3">
 [% END %]
-<br><hr>
-[% WRAPPER setting title="" desc="" %]
-[% "PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_HEADER" | string %]
 <br>
-[% END %]
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_MINTRACKDUR" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_MINTRACKDUR_DESC" %]
 	<input type="text" class="stdedit" name="pref_dstm_minTrackDuration" id="dstm_minTrackDuration" value="[% prefs.dstm_minTrackDuration %]" size="3">
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_EXCLUDEDGENRES" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_EXCLUDEDGENRES_DESC" %]
 	<table border="0" width="100%">[% USE table genrelistsorted, cols=3, pad=0 %]
 		[%- FOREACH genrerow = table.rows %]
 			<tr>

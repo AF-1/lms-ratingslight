@@ -79,7 +79,7 @@ sub handler {
 sub beforeRender {
 	my ($class, $paramRef) = @_;
 
-	my (@items, @hiddenVLs);
+	my @items;
 	my $libraries = Slim::Music::VirtualLibraries->getLibraries();
 	$log->debug("Menu Settings - ALL libraries: ".Dumper($libraries));
 
@@ -89,33 +89,29 @@ sub beforeRender {
 	my $localonlyname = Slim::Music::VirtualLibraries->getNameForId("localTracksOnly");
 	my $preferlocalname = Slim::Music::VirtualLibraries->getNameForId("preferLocalLibraryOnly");
 
+	my %hiddenVLs;
 	if ((defined $localonlyname) && ($localonlyname ne '') && (defined $preferlocalname) && ($preferlocalname ne '')) {
-		@hiddenVLs = ("Ratings Light - ", $preferlocalname, $localonlyname);
+		%hiddenVLs = map {
+		$_ => 1
+		} ("Ratings Light - Rated Tracks", "Ratings Light - Top Rated Tracks", $preferlocalname, $localonlyname);
 	} else {
-		@hiddenVLs = ("Ratings Light - ");
+		%hiddenVLs = map {
+		$_ => 1
+		} ("Ratings Light - Rated Tracks", "Ratings Light - Top Rated Tracks");
 	}
-	$log->debug("hidden libraries: ".Dumper(\@hiddenVLs));
-
-	sub regex {
-		my ($VLname, @hiddenVLs) = @_;
-		my $match = 0;
-		my $re = join '|', map { quotemeta } @hiddenVLs;
-		if ($VLname =~ /^($re)/) {
-			$match = 1;
-		}
-		return $match;
-	}
+	$log->debug("hidden libraries: ".Dumper(\%hiddenVLs));
 
 	while (my ($k, $v) = each %{$libraries}) {
 		my $count = Slim::Utils::Misc::delimitThousands(Slim::Music::VirtualLibraries->getTrackCount($k));
 		my $name = Slim::Music::VirtualLibraries->getNameForId($k);
 		$log->debug("VL: ".$name." (".$count.")");
 
-		if (regex ($name, @hiddenVLs) != 1) {
+		unless ($hiddenVLs{$name}) {
 			push @items, {
-				name => $name." (".$count.($count eq '1' ? " track)" : " tracks)"),
-				sortName => $name,
-				library_id => $k,
+				name => Slim::Utils::Unicode::utf8decode($name, 'utf8')." (".$count.($count eq '1' ? " track)" : " tracks)"),
+				sortName => Slim::Utils::Unicode::utf8decode($name, 'utf8'),
+				value => $k,
+				id => $k,
 			};
 		}
 	}

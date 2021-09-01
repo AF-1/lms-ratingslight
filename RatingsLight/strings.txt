@@ -2,7 +2,7 @@ PLUGIN_RATINGSLIGHT
 	EN	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
-	EN	A plugin that takes care of rating your local tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Browse rated tracks by artist or genre. Keep track of your recently rated songs with a dedicated playlist or log file. Show (more) rated tracks by an artist or in an album. Supports "Don't Stop The Music". Includes ratings-based smart playlists for DynamicPlaylists. Skip (un-)rated tracks with CustomSkip.
+	EN	A plugin that takes care of rating your local tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Create virtual libraries for (top) rated tracks. Browse (top) rated tracks by artist or genre (browse menus). Keep track of your recently rated songs with a dedicated playlist or log file. One click to show (more) rated tracks by an artist or in an album from the context menu/song details page. Includes "Don't Stop The Music" mixes.
 
 PLUGIN_RATINGSLIGHT_LOG_DESC
 	EN	Log of plugin RatingsLight
@@ -60,7 +60,7 @@ PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING
 	EN	Minimum rating for <b>top</b> rated tracks
 
 PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING_DESC
-	EN	Set the <b>minimum rating</b> for tracks to be considered <b>top rated</b>.<br> This is a <i>global</i> setting for browse menus, DSTM, and smart playlists (Dynamic Playlist).
+	EN	Set the <b>minimum rating</b> for tracks to be considered <b>top rated</b>.<br> This is a <b>global</b> setting for browse menus and DSTM.
 
 PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST
 	EN	Recently rated playlist
@@ -450,17 +450,14 @@ PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS_DESC
 	EN	Sets the number of new tracks DSTM adds in one batch.<br>(min. 5, max. 50)
 
-PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_HEADER
-	EN	<b>The settings below apply to "Don't Stop The Music" mixes <u>and</u> "Dynamic Playlist" smart playlists.</b>
-
-PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_MINTRACKDUR
 	EN	Minimum track duration
 
-PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_MINTRACKDUR_DESC
-	EN	Set the minimum track duration for tracks in <b>Don't Stop The Music</b> mixes and <b>Dynamic Playlist</b> smart playlists.
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_MINTRACKDUR_DESC
+	EN	Set the minimum track duration for tracks in <b>Don't Stop The Music</b> mixes.
 
-PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_EXCLUDEDGENRES
 	EN	Exclude genres
 
-PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_UNIVERSAL_EXCLUDEDGENRES_DESC
-	EN	Choose genres to exclude from <b>Don't Stop The Music</b> mixes and <b>Dynamic Playlist</b> smart playlists.
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_EXCLUDEDGENRES_DESC
+	EN	Choose genres to exclude from <b>Don't Stop The Music</b> mixes.
