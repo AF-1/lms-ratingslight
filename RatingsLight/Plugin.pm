@@ -699,9 +699,9 @@ sub showMoreRatedTracksbyArtistInfoHandler {
 	$log->debug('current client VlibID = '.$currentLibrary);
 
 	if ((defined $currentLibrary) && ($currentLibrary ne '')) {
-		$sqlstatement = "select count (*) from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join left library_track on library_track.track = tracks.id where tracks.primary_artist = $artistID and tracks.id != $trackID and library_track.library = \"$currentLibrary\"";
+		$sqlstatement = "select count (*) from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id where tracks.primary_artist = $artistID and tracks.id != $trackID and library_track.library = \"$currentLibrary\"";
 	} else {
-		$sqlstatement = "select count (*) from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.primary_artist = $artistID and tracks.id != $trackID";
+		$sqlstatement = "select count (*) from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.primary_artist = $artistID and tracks.id != $trackID";
 	}
 
 	eval{
@@ -794,9 +794,9 @@ sub showMoreRatedTracksbyAlbumInfoHandler {
 	$log->debug('current client VlibID = '.$currentLibrary);
 
 	if ((defined $currentLibrary) && ($currentLibrary ne '')) {
-		$sqlstatement = "select count (*) from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 left join library_track on library_track.track = tracks.id where tracks.album = $albumID and tracks.id != $trackID and library_track.library = \"$currentLibrary\"";
+		$sqlstatement = "select count (*) from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id where tracks.album = $albumID and tracks.id != $trackID and library_track.library = \"$currentLibrary\"";
 	} else {
-		$sqlstatement = "select count (*) from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.album = $albumID and tracks.id != $trackID";
+		$sqlstatement = "select count (*) from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.album = $albumID and tracks.id != $trackID";
 	}
 
 	eval{
@@ -1104,15 +1104,15 @@ sub getMoreRatedTracks {
 	my $sqlstatement;
 	if ($queryclass eq 'album') {
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
-			$sqlstatement = "select tracks.url from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 left join library_track on library_track.track = tracks.id where tracks.album = $thisID and tracks.id != $trackID and library_track.library = \"$currentLibrary\" limit $listlimit";
+			$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where tracks.album = $thisID and tracks.id != $trackID limit $listlimit";
 		} else {
-			$sqlstatement = "select tracks.url from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.album = $thisID and tracks.id != $trackID limit $listlimit";
+			$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.album = $thisID and tracks.id != $trackID limit $listlimit";
 		}
 	} else {
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
-			$sqlstatement = "select tracks.url from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 left join library_track library_track on library_track.track = tracks.id where tracks.primary_artist = $thisID and tracks.id != $trackID and library_track.library = \"$currentLibrary\" limit $listlimit";
+			$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where tracks.primary_artist = $thisID and tracks.id != $trackID limit $listlimit";
 		} else {
-			$sqlstatement = "select tracks.url from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.primary_artist = $thisID and tracks.id != $trackID limit $listlimit";
+			$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.primary_artist = $thisID and tracks.id != $trackID limit $listlimit";
 		}
 	}
 
@@ -1340,7 +1340,7 @@ sub exportRatingsToPlaylistFiles {
 				return
 			} else {
 				if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-						$sql = "select tracks.url from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 left join library_track on library_track.track = tracks.id where tracks.audio = 1 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) and persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null)) and library_track.library = \"$exportVL_id\"";
+						$sql = "select tracks.url from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))";
 				} else {
 						$sql = "select tracks_persistent.url from tracks_persistent where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null)))";
 				}
@@ -1350,7 +1350,7 @@ sub exportRatingsToPlaylistFiles {
 			}
 		} else {
 			if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-				$sql = "select tracks.url from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 left join library_track on library_track.track = tracks.id where tracks.audio = 1 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) and library_track.library = \"$exportVL_id\"";
+				$sql = "select tracks.url from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1";
 			} else {
 				$sql = "select tracks_persistent.url from tracks_persistent where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil)";
 			}
@@ -1843,13 +1843,13 @@ sub initVirtualLibraries {
 			push @libraries,{
 				id => 'RL_RATED',
 				name => 'Ratings Light - Rated Tracks',
-				sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks left join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 where tracks_persistent.rating > 0 group by tracks.id},
+				sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 group by tracks.id},
 			};
 		} else {
 			push @libraries,{
 				id => 'RL_RATED',
 				name => 'Ratings Light - Rated Tracks',
-				sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks left join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 left join library_track on library_track.track = tracks.id where tracks_persistent.rating > 0 and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id},
+				sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id},
 			};
 		}
 
@@ -1858,13 +1858,13 @@ sub initVirtualLibraries {
 				push @libraries,{
 					id => 'RL_TOPRATED',
 					name => 'Ratings Light - Top Rated Tracks',
-					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks left join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 where tracks_persistent.rating >= $topratedminrating group by tracks.id}
+					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating group by tracks.id}
 				};
 			} else {
 				push @libraries,{
 					id => 'RL_TOPRATED',
 					name => 'Ratings Light - Top Rated Tracks',
-					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks left join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 left join library_track on library_track.track = tracks.id where tracks_persistent.rating >= $topratedminrating and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}
+					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}
 				};
 			}
 		}
@@ -2306,7 +2306,7 @@ sub dontStopTheMusic {
 
 	### shared sql
 	# exclude comment, track min duration, library view
-	my $shared_curlib_sql = " left join library_track on library_track.track = tracks.id where audio=1 and library_track.library = \"$currentLibrary\" and tracks.secs >= $dstm_minTrackDuration";
+	my $shared_curlib_sql = " join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where audio=1 and tracks.secs >= $dstm_minTrackDuration";
 	# exclude comment, track min duration
 	my $shared_completelib_sql = " where audio=1 and tracks.secs >= $dstm_minTrackDuration";
 	# excluded genres
@@ -2315,7 +2315,7 @@ sub dontStopTheMusic {
 	### Mix sql
 	# Mix: Rated
 	if ($mixtype eq 'rated') {
-		$sqlstatement = "select tracks.url from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0";
+		$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2333,7 +2333,7 @@ sub dontStopTheMusic {
 drop table if exists randomweightedratingslow;
 drop table if exists randomweightedratingscombined;
 ";
-		$sqlstatement .="create temporary table randomweightedratingslow as select tracks.url as url from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating < $topratedminrating";
+		$sqlstatement .="create temporary table randomweightedratingslow as select tracks.url as url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating < $topratedminrating";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2345,7 +2345,7 @@ drop table if exists randomweightedratingscombined;
 		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentagetoprated);
 ";
 
-		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating";
+		$sqlstatement .= "create temporary table randomweightedratingshigh as select tracks.url as url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2366,7 +2366,7 @@ drop table randomweightedratingscombined;";
 	# Mix: "Rated (seed genres)"
 	if ($mixtype eq 'rated_genre') {
 		my $dstm_includegenres = getSeedGenres($client);
-		$sqlstatement = "select tracks.url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0";
+		$sqlstatement = "select tracks.url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2384,7 +2384,7 @@ drop table randomweightedratingscombined;";
 		$sqlstatement = "drop table if exists randomweightedratingshigh;
 drop table if exists randomweightedratingslow;
 drop table if exists randomweightedratingscombined;
-create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating < $topratedminrating";
+create temporary table randomweightedratingslow as select tracks.url as url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating < $topratedminrating";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2395,7 +2395,7 @@ create temporary table randomweightedratingslow as select tracks.url as url from
 		}
 		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentagetoprated);
 ";
-		$sqlstatement .="create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating";
+		$sqlstatement .="create temporary table randomweightedratingshigh as select tracks.url as url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2418,7 +2418,7 @@ drop table randomweightedratingscombined;";
 		$sqlstatement = "drop table if exists randomweightedratingsrated;
 drop table if exists randomweightedratingsunrated;
 drop table if exists randomweightedratingscombined;
-create temporary table randomweightedratingsunrated as select tracks.url as url from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and (tracks_persistent.rating = 0 or tracks_persistent.rating is null)";
+create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and (tracks_persistent.rating = 0 or tracks_persistent.rating is null)";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2430,7 +2430,7 @@ create temporary table randomweightedratingsunrated as select tracks.url as url 
 		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentagerated);
 ";
 
-		$sqlstatement .= "create temporary table randomweightedratingsrated as select tracks.url as url from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0";
+		$sqlstatement .= "create temporary table randomweightedratingsrated as select tracks.url as url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2454,7 +2454,7 @@ drop table randomweightedratingscombined;";
 		$sqlstatement = "drop table if exists randomweightedratingsrated;
 drop table if exists randomweightedratingsunrated;
 drop table if exists randomweightedratingscombined;
-create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and (tracks_persistent.rating = 0 or tracks_persistent.rating is null)";
+create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and (tracks_persistent.rating = 0 or tracks_persistent.rating is null)";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2489,7 +2489,7 @@ drop table randomweightedratingscombined;";
 		$sqlstatement = "drop table if exists randomweightedratingsrated;
 drop table if exists randomweightedratingsunrated;
 drop table if exists randomweightedratingscombined;
-create temporary table randomweightedratingsunrated as select tracks.url as url from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) and (tracks_persistent.playCount = 0 or tracks_persistent.playCount is null)";
+create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) and (tracks_persistent.playCount = 0 or tracks_persistent.playCount is null)";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2501,7 +2501,7 @@ create temporary table randomweightedratingsunrated as select tracks.url as url 
 		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentagerated);
 ";
 
-		$sqlstatement .= "create temporary table randomweightedratingsrated as select tracks.url as url from tracks left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 and (tracks_persistent.playCount = 0 or tracks_persistent.playCount is null)";
+		$sqlstatement .= "create temporary table randomweightedratingsrated as select tracks.url as url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 and (tracks_persistent.playCount = 0 or tracks_persistent.playCount is null)";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2525,7 +2525,7 @@ drop table randomweightedratingscombined;";
 		$sqlstatement = "drop table if exists randomweightedratingsrated;
 drop table if exists randomweightedratingsunrated;
 drop table if exists randomweightedratingscombined;
-create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) and (tracks_persistent.playCount = 0 or tracks_persistent.playCount is null)";
+create temporary table randomweightedratingsunrated as select tracks.url as url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and (tracks_persistent.rating = 0 or tracks_persistent.rating is null) and (tracks_persistent.playCount = 0 or tracks_persistent.playCount is null)";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
@@ -2537,7 +2537,7 @@ create temporary table randomweightedratingsunrated as select tracks.url as url 
 		$sqlstatement .= " group by tracks.id order by random() limit (100-$dstm_percentagerated);
 ";
 
-		$sqlstatement .= "create temporary table randomweightedratingsrated as select tracks.url as url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) left join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 and (tracks_persistent.playCount = 0 or tracks_persistent.playCount is null)";
+		$sqlstatement .= "create temporary table randomweightedratingsrated as select tracks.url as url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 and (tracks_persistent.playCount = 0 or tracks_persistent.playCount is null)";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
 		} else {
