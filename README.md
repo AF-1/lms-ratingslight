@@ -1,7 +1,7 @@
 Ratings Light
 ====
 
-A plugin that takes care of rating local tracks in your [Logitech Media Server](https://github.com/Logitech/slimserver) library.<br>
+A plugin that takes care of rating tracks in your [Logitech Media Server](https://github.com/Logitech/slimserver) library.<br>
 
 #### LMS web ui view:
 ![LMS web UI](screenshots/lms_webui.jpg)
@@ -32,11 +32,13 @@ A plugin that takes care of rating local tracks in your [Logitech Media Server](
 * **browse rated tracks by artist or genre** (with optional library view filter)
 * *create* (scheduled) **backups** of your ratings and *restore* your ratings from backups
 * keep track of your **recently rated songs** with a dedicated *playlist* or a plain text *log file*
-* **show (more) rated songs by an artist or in an album** - only one click away from the song details page (webUI, Material) or the track context menu (Radio, Touch, piCorePlayer)
+* **show rated songs** for *artist, album, genre, year, playlist* - one click away from the song details/more page (webUI, Material) or from the context menu (Radio, Touch, piCorePlayer)
 * provides mixes for **Don't Stop The Music** plugin
 * *display track ratings* in *LMS menus* (web UI and text) or on older devices using the *Now Playing screensaver* or the *Music Information Screen* plugin
+* most features should work with **online library tracks** **(*)**
 
-**Some features are not enabled by default.** Please go to the plugin's settings page to enable them.
+**Some features are not enabled by default.** Please go to the plugin's settings page to enable them.<br><br>
+**(*)** You **can't rate online tracks** that have **not** been **added to your LMS library as part of an album**. Single online tracks or tracks of online playlists are not imported as library tracks (by LMS) and can therefore not be processed by Ratings Light.
 <br><br><br><br>
 
 ## Installation, bug reports
