@@ -2848,7 +2848,7 @@ sub isTimeOrEmpty {
 	my $arg = shift;
 	if (!$arg || $arg eq '') {
 		return 1;
-	}elsif ($arg =~ m/^([0\s]?[0-9]|1[0-9]|2[0-4]):([0-5][0-9])\s*(P|PM|A|AM)?$/isg) {
+	} elsif ($arg =~ m/^([0\s]?[0-9]|1[0-9]|2[0-4]):([0-5][0-9])\s*(P|PM|A|AM)?$/isg) {
 		return 1;
 	}
 	return 0;
@@ -2890,7 +2890,7 @@ sub parse_duration {
 
 sub trimStringLength {
 	my ($thisString, $maxlength) = @_;
-	if (length($thisString) > $maxlength) {
+	if (defined $thisString && (length($thisString) > $maxlength)) {
 		$thisString = substr($thisString, 0, $maxlength).'...';
 	}
 	return $thisString;
