@@ -102,13 +102,15 @@ sub handler {
 	}
 
 	# push to settings page
-
 	$paramRef->{exportbasefilepathmatrix} = [];
-
 	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
-	my $exportbasefilepath;
 
-	foreach $exportbasefilepath (@{$exportbasefilepathmatrix}) {
+	if (scalar @{$exportbasefilepathmatrix} == 0) {
+		Plugins::RatingsLight::Plugin::initExportBaseFilePathMatrix();
+		$exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
+	}
+
+	foreach my $exportbasefilepath (@{$exportbasefilepathmatrix}) {
 		if ($exportbasefilepath->{'lmsbasepath'}) {
 			push( @{$paramRef->{exportbasefilepathmatrix}}, $exportbasefilepath);
 		}
@@ -120,7 +122,6 @@ sub handler {
 	}
 
 	$result = $class->SUPER::handler($client, $paramRef);
-
 	return $result;
 }
 

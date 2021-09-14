@@ -64,7 +64,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(scheduledbackups backuptime backupsdaystokeep restorefile clearallbeforerestore));
+	return ($prefs, qw(scheduledbackups backuptime backupsdaystokeep restorefile selectiverestore clearallbeforerestore));
 }
 
 sub handler {

@@ -2,7 +2,7 @@ PLUGIN_RATINGSLIGHT
 	EN	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
-	EN	A plugin that takes care of rating your local tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Create virtual libraries for (top) rated tracks. Browse (top) rated tracks by artist or genre (browse menus). Keep track of your recently rated songs with a dedicated playlist or log file. One click to show (more) rated tracks by an artist or in an album from the context menu/song details page. Includes "Don't Stop The Music" mixes.
+	EN	A plugin that takes care of rating your tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Create virtual libraries for (top) rated tracks. Browse (top) rated tracks by artist or genre (browse menus). Keep track of your recently rated songs with a dedicated playlist or log file. Show rated songs for artist, album, genre, year or playlist (webUI and context menu). Support for online library tracks where applicable. Includes "Don't Stop The Music" mixes.
 
 PLUGIN_RATINGSLIGHT_LOG_DESC
 	EN	Log of plugin RatingsLight
@@ -280,6 +280,21 @@ PLUGIN_RATINGSLIGHT_RESTORE_NOXMLFILE
 PLUGIN_RATINGSLIGHT_RESTORE_INPROGESS
 	EN	restoring...
 
+PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE
+	EN	Choose what to restore
+
+PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_DESC
+	EN	You can limit restoring to local file tracks or online tracks.
+
+PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_ALL
+	EN	All tracks
+
+PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_LOCALONLY
+	EN	Local file tracks only
+
+PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_REMOTEONLY
+	EN	Online tracks only
+
 PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE
 	EN	Clear all ratings before restore
 
@@ -367,31 +382,46 @@ PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM_LISTHEADER
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM_LISTHEADER
 	EN	More rated tracks in
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEB_LIMIT
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINGENRE
+	EN	Show random selection of rated tracks in
+
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINGENRE_LISTHEADER
+	EN	Random selection of rated tracks in
+
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMYEAR
+	EN	Show random selection of rated tracks from
+
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSFROMYEAR_LISTHEADER
+	EN	Random selection of rated tracks from
+
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINPLAYLIST
+	EN	Show rated tracks in
+
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_WEB_LIMIT
 	EN	Show more rated tracks - web UI limit
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_WEB_LIMIT_DESC
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_WEB_LIMIT_DESC
 	EN	Limits the number of tracks in the <b>LMS web UI</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 200)
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
 	EN	Show more rated tracks - menu limit
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
 	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>piCorePlayer, Material skin, SB Touch, SB Radio</b>.
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_ALLSONGS
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_ALLSONGS
 	EN	All songs
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNOW
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW
 	EN	Play now
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNEXT
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT
 	EN	Play next
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_APPEND
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND
 	EN	Append to queue
 
-PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_MOREINFO
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_MOREINFO
 	EN	More information
 
 

@@ -105,12 +105,17 @@ sub handler {
 sub beforeRender {
 	my ($class, $paramRef) = @_;
 	my @allplaylists = ();
-	my $queryresult = Slim::Control::Request::executeRequest(undef, ['playlists', '0', '500']);
-	my $playlistcount = $queryresult->getResult("count");
+	my @localPlaylists = ();
+	my $queryresult = Slim::Control::Request::executeRequest(undef, ['playlists', '0', '500', 'tags:x']);
+	my $playlistarray = $queryresult->getResult("playlists_loop");
+
+	foreach my $thisPlaylist (@{$playlistarray}) {
+		push @localPlaylists, $thisPlaylist if $thisPlaylist->{'remote'} == 0;
+	}
+	my $playlistcount = scalar (@localPlaylists);
 
 	if ($playlistcount > 0) {
-		my $playlistarray = $queryresult->getResult("playlists_loop");
-		my @sortedarray = sort {$a->{id} <=> $b->{id}} @{$playlistarray};
+		my @sortedarray = sort {$a->{id} <=> $b->{id}} @localPlaylists;
 		$log->debug("sorted playlists = ".Dumper(\@sortedarray));
 		$paramRef->{playlistcount} = $playlistcount;
 		$paramRef->{allplaylists} = \@sortedarray;

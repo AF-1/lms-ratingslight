@@ -82,7 +82,7 @@ sub initPlugin {
 	Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating','_incremental'], [1, 0, 1, \&setRating]);
 	Slim::Control::Request::addDispatch(['ratingslight','setratingpercent', '_trackid', '_rating','_incremental'], [1, 0, 1, \&setRating]);
 	Slim::Control::Request::addDispatch(['ratingslight','ratingmenu','_trackid'], [0, 1, 1, \&getRatingMenu]);
-	Slim::Control::Request::addDispatch(['ratingslight','moreratedtracksmenu','_trackid', '_thisid', '_queryclass'], [0, 1, 1, \&getMoreRatedTracksMenu]);
+	Slim::Control::Request::addDispatch(['ratingslight','ratedtracksmenu','_trackid', '_thisid', '_objecttype'], [0, 1, 1, \&getRatedTracksMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'actionsmenu'], [0, 1, 1, \&getActionsMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
 	Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'],[0, 1, 0, undef]);
@@ -105,23 +105,57 @@ sub initPlugin {
 		Plugins::RatingsLight::Settings::Menus->new($class);
 		Plugins::RatingsLight::Settings::DSTM->new($class);
 
-		Slim::Web::Pages->addPageFunction('showmoreratedtracksbyartistlist', \&handleMoreRatedWebTrackList);
-		Slim::Web::Pages->addPageFunction('showmoreratedtracksinalbumlist', \&handleMoreRatedWebTrackList);
+		Slim::Web::Pages->addPageFunction('showratedtrackslist', \&handleRatedWebTrackList);
 	}
 
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightrating => (
-			before => 'artwork',
-			func => \&trackInfoHandlerRating,
+		before => 'artwork',
+		func => \&trackInfoHandlerRating,
 	));
-	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbyartist => (
-			after => 'ratingslightrating',
-			before => 'ratingslightmoreratedtracksbyalbum',
-			func => \&showMoreRatedTracksbyArtistInfoHandler,
+	Slim::Menu::TrackInfo->registerInfoProvider(ratingslighttrackratedtracksbyartist => (
+		after => 'ratingslightrating',
+		before => 'ratingslighttrackratedtracksinalbum',
+		func => sub {
+			return objectInfoHandler('trackArtist', @_);
+		},
 	));
-	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbyalbum => (
-			after => 'ratingslightrating',
-			func => \&showMoreRatedTracksbyAlbumInfoHandler,
+
+	Slim::Menu::TrackInfo->registerInfoProvider(ratingslighttrackratedtracksinalbum => (
+		after => 'ratingslightrating',
+		func => sub {
+			return objectInfoHandler('trackAlbum', @_);
+		},
 	));
+    Slim::Menu::ArtistInfo->registerInfoProvider(ratingslightartistratedtracksbyartist => (
+		after => 'top',
+		func => sub {
+			return objectInfoHandler('artist', @_);
+		},
+    ));
+    Slim::Menu::AlbumInfo->registerInfoProvider(ratingslightalbumratedtracksinalbum => (
+		after => 'top',
+		func => sub {
+			return objectInfoHandler('album', @_);
+		},
+    ));
+    Slim::Menu::GenreInfo->registerInfoProvider(ratingslightgenreratedtracksingenre => (
+		after => 'top',
+		func => sub {
+			return objectInfoHandler('genre', @_);
+		},
+    ));
+    Slim::Menu::YearInfo->registerInfoProvider(ratingslightgenreratedtracksfromyear => (
+		after => 'top',
+		func => sub {
+			return objectInfoHandler('year', @_);
+		},
+    ));
+    Slim::Menu::PlaylistInfo->registerInfoProvider(ratingslightgenreratedtracksinplaylist => (
+		after => 'top',
+		func => sub {
+			return objectInfoHandler('playlist', @_);
+		},
+    ));
 
 	if (Slim::Utils::PluginManager->isEnabled('Slim::Plugin::DontStopTheMusic::Plugin')) {
 		require Slim::Plugin::DontStopTheMusic::Plugin;
@@ -171,13 +205,7 @@ sub initPrefs {
 		$prefs->set('rlparentfolderpath', $playlistdir);
 	}
 
-	my $uselogfile = $prefs->get('uselogfile');
-	my $userecentlyaddedplaylist = $prefs->get('userecentlyaddedplaylist');
-
-	my $ratethisplaylistid;
 	$prefs->set('ratethisplaylistid', '');
-
-	my $ratethisplaylistrating;
 	$prefs->set('ratethisplaylistrating', '');
 
 	my $playlistimport_maxtracks = $prefs->get('playlistimport_maxtracks');
@@ -195,15 +223,7 @@ sub initPrefs {
 		$prefs->set('rating_keyword_suffix', '');
 	}
 
-	my $autoscan = $prefs->get('autoscan');
-	my $plimportct_dontunrate = $prefs->get('plimportct_dontunrate');
-
-	my $exportVL_id;
 	$prefs->set('exportVL_id', '');
-
-	my $onlyratingnotmatchcommenttag = $prefs->get('onlyratingnotmatchcommenttag');
-	my $exportextension = $prefs->get('exportextension');
-	my $scheduledbackups = $prefs->get('scheduledbackups');
 
 	my $backuptime = $prefs->get('backuptime');
 	if (!defined $backuptime) {
@@ -220,37 +240,34 @@ sub initPrefs {
 		$prefs->set('backupsdaystokeep', '10');
 	}
 
-	my $clearallbeforerestore = $prefs->get('clearallbeforerestore');
-
-	my $restorefile;
+	my $selectiverestore = $prefs->get('selectiverestore');
+	if (!defined $selectiverestore) {
+		$prefs->set('selectiverestore', '0');
+	}
 
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 	if (!defined $showratedtracksmenus) {
 		$prefs->set('showratedtracksmenus', '0');
 	}
 
-	my $browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
-
 	my $displayratingchar = $prefs->get('displayratingchar');
 	if (!defined $displayratingchar) {
 		$prefs->set('displayratingchar', '0');
 	}
-
-	my $ratingcontextmenusethalfstars = $prefs->get('ratingcontextmenusethalfstars');
 
 	my $recentlymaxcount = $prefs->get('recentlymaxcount');
 	if (!defined $recentlymaxcount) {
 		$prefs->set('recentlymaxcount', '30');
 	}
 
-	my $moreratedtracksweblimit = $prefs->get('moreratedtracksweblimit');
-	if (!defined $moreratedtracksweblimit) {
-		$prefs->set('moreratedtracksweblimit', '60');
+	my $ratedtracksweblimit = $prefs->get('ratedtracksweblimit');
+	if (!defined $ratedtracksweblimit) {
+		$prefs->set('ratedtracksweblimit', '60');
 	}
 
-	my $moreratedtrackscontextmenulimit = $prefs->get('moreratedtrackscontextmenulimit');
-	if (!defined $moreratedtrackscontextmenulimit) {
-		$prefs->set('moreratedtrackscontextmenulimit', '60');
+	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
+	if (!defined $ratedtrackscontextmenulimit) {
+		$prefs->set('ratedtrackscontextmenulimit', '60');
 	}
 
 	my $dstm_minTrackDuration = $prefs->get('dstm_minTrackDuration');
@@ -285,66 +302,13 @@ sub initPrefs {
 		$prefs->set('dstm_batchsizenewtracks', '30');
 	}
 
-	my $status_exportingtoplaylistfiles;
 	$prefs->set('status_exportingtoplaylistfiles', '0');
-	my $status_importingfromcommenttags;
 	$prefs->set('status_importingfromcommenttags', '0');
-	my $status_batchratingplaylisttracks;
 	$prefs->set('status_batchratingplaylisttracks', '0');
-	my $status_creatingbackup;
 	$prefs->set('status_creatingbackup', '0');
-	my $status_restoringfrombackup;
 	$prefs->set('status_restoringfrombackup', '0');
-	my $status_clearingallratings;
 	$prefs->set('status_clearingallratings', '0');
-
-	my $postScanScheduleDelay;
 	$prefs->set('postScanScheduleDelay', '10');
-
-	$prefs->init({
-		enableIRremotebuttons => $enableIRremotebuttons,
-		topratedminrating => $topratedminrating,
-		rlparentfolderpath => $rlparentfolderpath,
-		userecentlyaddedplaylist => $userecentlyaddedplaylist,
-		recentlymaxcount => $recentlymaxcount,
-		uselogfile => $uselogfile,
-		ratethisplaylistid => $ratethisplaylistid,
-		ratethisplaylistrating => $ratethisplaylistrating,
-		playlistimport_maxtracks => $playlistimport_maxtracks,
-		rating_keyword_prefix => $rating_keyword_prefix,
-		rating_keyword_suffix => $rating_keyword_suffix,
-		autoscan => $autoscan,
-		plimportct_dontunrate => $plimportct_dontunrate,
-		exportVL_id => $exportVL_id,
-		onlyratingnotmatchcommenttag => $onlyratingnotmatchcommenttag,
-		exportextension => $exportextension,
-		dstm_percentagerated => $dstm_percentagerated,
-		dstm_percentagetoprated => $dstm_percentagetoprated,
-		dstm_num_seedtracks => $dstm_num_seedtracks,
-		dstm_playedtrackstokeep => $dstm_playedtrackstokeep,
-		dstm_batchsizenewtracks => $dstm_batchsizenewtracks,
-		dstm_minTrackDuration => $dstm_minTrackDuration,
-		excludegenres_namelist => $excludegenres_namelist,
-		scheduledbackups => $scheduledbackups,
-		backuptime => $backuptime,
-		backup_lastday => $backup_lastday,
-		backupsdaystokeep => $backupsdaystokeep,
-		restorefile => $restorefile,
-		clearallbeforerestore => $clearallbeforerestore,
-		showratedtracksmenus => $showratedtracksmenus,
-		browsemenus_sourceVL_id => $browsemenus_sourceVL_id,
-		displayratingchar => $displayratingchar,
-		ratingcontextmenusethalfstars => $ratingcontextmenusethalfstars,
-		moreratedtracksweblimit => $moreratedtracksweblimit,
-		moreratedtrackscontextmenulimit => $moreratedtrackscontextmenulimit,
-		status_exportingtoplaylistfiles => $status_exportingtoplaylistfiles,
-		status_importingfromcommenttags => $status_importingfromcommenttags,
-		status_batchratingplaylisttracks => $status_batchratingplaylisttracks,
-		status_creatingbackup => $status_creatingbackup,
-		status_restoringfrombackup => $status_restoringfrombackup,
-		status_clearingallratings => $status_clearingallratings,
-		postScanScheduleDelay => $postScanScheduleDelay,
-	});
 
 	$prefs->setValidate({
 		validator => sub {
@@ -371,8 +335,8 @@ sub initPrefs {
 	$prefs->setValidate({ 'validator' => \&isTimeOrEmpty }, 'backuptime');
 	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 365 }, 'backupsdaystokeep');
 	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 2, 'high' => 200 }, 'recentlymaxcount');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 200 }, 'moreratedtracksweblimit');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 100 }, 'moreratedtrackscontextmenulimit');
+	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 200 }, 'ratedtracksweblimit');
+	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 100 }, 'ratedtrackscontextmenulimit');
 	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 1800 }, 'dstm_minTrackDuration');
 	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 100 }, 'dstm_percentagerated');
 	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 100 }, 'dstm_percentagetoprated');
@@ -449,6 +413,19 @@ sub setRating {
 
 	my $track = Slim::Schema->resultset("Track")->find($trackId);
 	my $trackURL = $track->url;
+
+	# check if remote track is part of online library
+	if ((Slim::Music::Info::isRemoteURL($trackURL) == 1) && (!defined($track->extid))) {
+		$log->debug('track is remote but not part of online library');
+		return;
+	}
+
+	# check for dead/moved local tracks
+	if ((Slim::Music::Info::isRemoteURL($trackURL) != 1) && (!defined($track->filesize))) {
+		$log->debug('track dead or moved??? Track URL: '.$trackURL);
+		return;
+	}
+
 	my $rating100ScaleValue = 0;
 
 	if (defined($incremental) && (($incremental eq '+') || ($incremental eq '-'))) {
@@ -495,6 +472,19 @@ sub VFD_deviceRating {
 	$log->debug('VFD_deviceRating - trackURL = '.$trackURL);
 	$log->debug('VFD_deviceRating - trackID = '.$trackID);
 	$log->debug('VFD_deviceRating - rating = '.$rating);
+	my $track = Slim::Schema->resultset("Track")->find($trackID);
+
+	# check if remote track is part of online library
+	if ((Slim::Music::Info::isRemoteURL($trackURL) == 1) && (!defined($track->extid))) {
+		$log->debug('track is remote but not part of online library');
+		return;
+	}
+
+	# check for dead/moved local tracks
+	if ((Slim::Music::Info::isRemoteURL($trackURL) != 1) && (!defined($track->filesize))) {
+		$log->debug('track dead or moved??? Track URL: '.$trackURL);
+		return;
+	}
 	writeRatingToDB($trackURL, $rating);
 
 	my $cbtext = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating));
@@ -511,10 +501,11 @@ sub VFD_deviceRating {
 }
 
 
-## infohandlers, context menus
+### infohandlers, context menus
 
+## rating menu
 sub trackInfoHandlerRating {
- 	my $rating100ScaleValue = 0;
+	my $rating100ScaleValue = 0;
 	my $ratingcontextmenusethalfstars = $prefs->get('ratingcontextmenusethalfstars');
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING');
 
@@ -537,14 +528,15 @@ sub trackInfoHandlerRating {
 		}
 	}
 
-	# check for remote or dead tracks
-	if (Slim::Music::Info::isRemoteURL($track->url) == 1) {
-		$log->debug("track is remote");
+	# check if remote track is part of online library
+	if ((Slim::Music::Info::isRemoteURL($url) == 1) && (!defined($track->extid))) {
+		$log->debug('track is remote but not part of online library');
 		return;
 	}
-	my $trackAliveCheck = $track->filesize;
-	if (!defined $trackAliveCheck) {
-		$log->debug("track = dead or moved?");
+
+	# check for dead/moved local tracks
+	if ((Slim::Music::Info::isRemoteURL($url) != 1) && (!defined($track->filesize))) {
+		$log->debug('track dead or moved??? Track URL: '.$url);
 		return;
 	}
 
@@ -657,275 +649,83 @@ sub getRatingMenu {
 	$request->setStatusDone();
 }
 
-sub showMoreRatedTracksbyArtistInfoHandler {
-	my ($client, $url, $track, $remoteMeta, $tags) = @_;
-	$tags ||= {};
-
-	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: not available until library scan is completed');
-		return;
-	}
-
-	# check for remote or dead tracks
-	if (Slim::Music::Info::isRemoteURL($track->url) == 1) {
-		$log->debug("track is remote");
-		return;
-	}
-	my $trackAliveCheck = $track->filesize;
-	if (!defined $trackAliveCheck) {
-		$log->debug("track = dead or moved?");
-		return;
-	}
-
-	my ($text, $wtitle, $sqlstatement);
-	my $trackID = $track->id;
-	my $artistID = $track->primary_artist->id;
-
-	my $artistname = $track->primary_artist->name;
-	$artistname = trimStringLength($artistname, 50);
-
-	my $curTrackRating = getRatingFromDB($track);
-	if ($curTrackRating > 0) {
-		$text = string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST').' '.$artistname;
-		$wtitle = 1;
-	} else {
-		$text = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST').' '.$artistname;
-		$wtitle = 0;
-	}
-	my $trackcount = 0;
-	my $dbh = getCurrentDBH();
-
-	my $currentLibrary = Slim::Music::VirtualLibraries->getLibraryIdForClient($client);
-	$log->debug('current client VlibID = '.$currentLibrary);
-
-	if ((defined $currentLibrary) && ($currentLibrary ne '')) {
-		$sqlstatement = "select count (*) from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id where tracks.primary_artist = $artistID and tracks.id != $trackID and library_track.library = \"$currentLibrary\"";
-	} else {
-		$sqlstatement = "select count (*) from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.primary_artist = $artistID and tracks.id != $trackID";
-	}
-
-	eval{
-		my $sth = $dbh->prepare($sqlstatement);
-		$sth->execute() or do {	$sqlstatement = undef;};
-		$trackcount = $sth->fetchrow;
-	};
-	if ($@) {$log->debug("error: $@");}
-
-	if ($trackcount > 0) {
-		my $queryclass = 'artist';
-		if ($tags->{menuMode}) {
-			my $jive = {};
-			my $actions = {
-				go => {
-					player => 0,
-					cmd => ['ratingslight', 'moreratedtracksmenu', $trackID, $artistID, $queryclass, $artistname],
-				},
-			};
-			$jive->{actions} = $actions;
-			return {
-				type => 'redirect',
-				name => $text,
-				jive => $jive,
-			};
-		} else {
-
-			my $item = {
-				type => 'text',
-				name => $text,
-				trackid => $trackID,
-				artistname => $artistname,
-				artistid => $artistID,
-				wtitle => $wtitle,
-				web => {
-					'type' => 'htmltemplate',
-					'value' => 'plugins/RatingsLight/html/showmoreratedtracksbyartist.html'
-				},
-			};
-
-			delete $item->{type};
-			my @items = ();
-			my $ratedsongsbyartist = VFD_moreratedtracks($client, $trackID, $artistID, $queryclass);
-			$item->{items} = \@{$ratedsongsbyartist};
-			return $item;
-		}
-	} else {
-		return;
-	}
-}
-
-sub showMoreRatedTracksbyAlbumInfoHandler {
-	my ($client, $url, $track, $remoteMeta, $tags) = @_;
-	$tags ||= {};
-
-	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: not available until library scan is completed');
-		return;
-	}
-
-	# check for remote or dead tracks
-	if (Slim::Music::Info::isRemoteURL($track->url) == 1) {
-		$log->debug("track is remote");
-		return;
-	}
-	my $trackAliveCheck = $track->filesize;
-	if (!defined $trackAliveCheck) {
-		$log->debug("track = dead or moved?");
-		return;
-	}
-
-	my ($text, $wtitle, $sqlstatement);
-	my $trackID = $track->id;
-	my $albumID = $track->album->id;
-	my $albumname = $track->album->name;
-	$albumname = trimStringLength($albumname, 70);
-
- 	my $curTrackRating = getRatingFromDB($track);
-	if ($curTrackRating > 0) {
-		$text = string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM').' '.$albumname;
-		$wtitle = 1;
-	} else {
-		$text = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM').' '.$albumname;
-		$wtitle = 0;
-	}
-	my $trackcount = 0;
-	my $dbh = getCurrentDBH();
-
-	my $currentLibrary = Slim::Music::VirtualLibraries->getLibraryIdForClient($client);
-	$log->debug('current client VlibID = '.$currentLibrary);
-
-	if ((defined $currentLibrary) && ($currentLibrary ne '')) {
-		$sqlstatement = "select count (*) from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id where tracks.album = $albumID and tracks.id != $trackID and library_track.library = \"$currentLibrary\"";
-	} else {
-		$sqlstatement = "select count (*) from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.album = $albumID and tracks.id != $trackID";
-	}
-
-	eval{
-		my $sth = $dbh->prepare($sqlstatement);
-		$sth->execute() or do {	$sqlstatement = undef;};
-		$trackcount = $sth->fetchrow;
-	};
-	if ($@) {$log->debug("error: $@");}
-
-	if ($trackcount > 0) {
-		my $queryclass = 'album';
-		if ($tags->{menuMode}) {
-			my $jive = {};
-			my $actions = {
-				go => {
-					player => 0,
-					cmd => ['ratingslight', 'moreratedtracksmenu', $trackID, $albumID, $queryclass, $albumname],
-				},
-			};
-			$jive->{actions} = $actions;
-			return {
-				type => 'redirect',
-				name => $text,
-				jive => $jive,
-			};
-		} else {
-
-			my $item = {
-				type => 'text',
-				name => $text,
-				trackid => $trackID,
-				albumname => $albumname,
-				albumid => $albumID,
-				wtitle => $wtitle,
-				web => {
-					'type' => 'htmltemplate',
-					'value' => 'plugins/RatingsLight/html/showmoreratedtracksinalbum.html'
-				},
-			};
-
-			delete $item->{type};
-			my @items = ();
-			my $ratedsongsinalbum = VFD_moreratedtracks($client, $trackID, $albumID, $queryclass);
-			$item->{items} = \@{$ratedsongsinalbum};
-			return $item;
-		}
-	} else {
-		return;
-	}
-}
-
-sub handleMoreRatedWebTrackList {
-	my $moreratedtracksweblimit = $prefs->get('moreratedtracksweblimit');
+## show rated tracks menus (web & jive)
+# web
+sub handleRatedWebTrackList {
+	my $ratedtracksweblimit = $prefs->get('ratedtracksweblimit');
 	my ($client, $params, $callback, $httpClient, $response) = @_;
 
-	my $trackID = $params->{trackid};
-	$log->debug("trackid = ".$trackID);
+	my $trackID = $params->{trackid} || 0;
+	my $objectType = $params->{objecttype};
+	my $objectID = $params->{objectid};
+	my $objectName = $params->{objectname};
+	$log->debug('objectType = '.$objectType.' ## objectID = '.$objectID.' ## trackID = '.$trackID);
 
-	my ($thisID, $moreratedtracks);
-	my $queryclass = $params->{queryclass};
-	$log->debug("query class = ".$queryclass);
-	if ($queryclass eq 'album') {
-		$thisID = $params->{thisalbumid};
-		$moreratedtracks = getMoreRatedTracks($client, $trackID, $thisID, $queryclass, $moreratedtracksweblimit);
-		my $albumnamelistheader = (@{$moreratedtracks})[0]->album->name;
-		$albumnamelistheader = trimStringLength($albumnamelistheader, 50);
-		$params->{albumnamelistheader} = $albumnamelistheader;
-	} else {
-		$thisID = $params->{thisartistid};
-		$moreratedtracks = getMoreRatedTracks($client, $trackID, $thisID, $queryclass, $moreratedtracksweblimit);
-		my $artistnamelistheader = (@{$moreratedtracks})[0]->artist->name;
-		$artistnamelistheader = trimStringLength($artistnamelistheader, 50);
-		$params->{artistnamelistheader} = $artistnamelistheader;
-	}
-	$log->debug("thisID = ".$thisID);
+	my $ratedtracks = getRatedTracks(0, $client, $objectType, $objectID, $trackID, $ratedtracksweblimit);
 
-	my @moreratedtracks_webpage = ();
- 	my $alltrackids = '';
+	my @ratedtracks_webpage = ();
+	my @alltrackids = ();
 
-	foreach my $ratedtrack (@{$moreratedtracks}) {
-
-		if ($alltrackids eq '') {
-			$alltrackids = $ratedtrack->id;
-		} else {
-			$alltrackids .= ','.($ratedtrack->id);
-		}
-
- 		my $track_id = $ratedtrack->id;
- 		my $tracktitle = trimStringLength($ratedtrack->title, 70);
+	foreach my $ratedtrack (@{$ratedtracks}) {
+		my $track_id = $ratedtrack->id;
+		my $tracktitle = trimStringLength($ratedtrack->title, 70);
 		my $rating = getRatingFromDB($ratedtrack);
 		my $ratingtext = getRatingTextLine($rating, 'appended');
 		$tracktitle = $tracktitle.$ratingtext;
 		my $artworkID = $ratedtrack->album->artwork;
 
-		if ($queryclass eq 'album') {
+		if ($objectType eq 'album') {
 			my $artistname = $ratedtrack->artist->name;
 			$artistname = trimStringLength($artistname, 80);
 			my $artistID = $ratedtrack->artist->id;
-			push (@moreratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, artistname => $artistname, artistID => $artistID, artworkid => $artworkID});
-		} else {
+			push (@ratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, artistname => $artistname, artistID => $artistID, artworkid => $artworkID});
+		} elsif ($objectType eq 'artist') {
 			my $albumname = $ratedtrack->album->name;
 			$albumname = trimStringLength($albumname, 80);
 			my $albumID = $ratedtrack->album->id;
-			push (@moreratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, albumname => $albumname, albumID => $albumID, artworkid => $artworkID});
+			push (@ratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, albumname => $albumname, albumID => $albumID, artworkid => $artworkID});
+		} elsif (($objectType eq 'genre') || ($objectType eq 'year') || ($objectType eq 'playlist')) {
+			my $artistname = $ratedtrack->artist->name;
+			$artistname = trimStringLength($artistname, 80);
+			my $artistID = $ratedtrack->artist->id;
+			my $albumname = $ratedtrack->album->name;
+			$albumname = trimStringLength($albumname, 80);
+			my $albumID = $ratedtrack->album->id;
+			push (@ratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, artistname => $artistname, artistID => $artistID, albumname => $albumname, albumID => $albumID, artworkid => $artworkID});
 		}
+		push @alltrackids, $track_id;
+	}
+	my $listalltrackids = join (',', @alltrackids);
 
-		if ($alltrackids eq '') {
-			$alltrackids = $track_id;
-		} else {
-			$alltrackids .= ','.$track_id;
-		}
+	my $listheadername;
+	if ($objectType eq 'album') {
+		$listheadername = (@{$ratedtracks})[0]->album->name;
+	} elsif ($objectType eq 'artist') {
+		$listheadername = (@{$ratedtracks})[0]->artist->name;
+	} elsif ($objectType eq 'genre') {
+		$listheadername = (@{$ratedtracks})[0]->genre->name;
+	} elsif ($objectType eq 'year') {
+		$listheadername = "".(@{$ratedtracks})[0]->year;
+	} elsif ($objectType eq 'playlist') {
+		$listheadername = $objectName || 'this playlist';
 	}
 
-	$params->{trackcount} = scalar(@moreratedtracks_webpage);
-	$params->{alltrackids} = $alltrackids;
-	$params->{moreratedtracks} = \@moreratedtracks_webpage;
-	if ($queryclass eq 'album') {
-		return Slim::Web::HTTP::filltemplatefile('plugins/RatingsLight/showmoreratedtracksinalbumlist.html', $params);
-	} else {
-		return Slim::Web::HTTP::filltemplatefile('plugins/RatingsLight/showmoreratedtracksbyartistlist.html', $params);
-	}
+	$listheadername = trimStringLength($listheadername, 50);
+	$params->{listheadername} = $listheadername;
+
+	$params->{trackcount} = scalar(@ratedtracks_webpage);
+	$params->{alltrackids} = $listalltrackids;
+	$params->{ratedtracks} = \@ratedtracks_webpage;
+	return Slim::Web::HTTP::filltemplatefile('plugins/RatingsLight/html/showratedtrackslist.html', $params);
 }
 
-sub getMoreRatedTracksMenu {
-	my $moreratedtrackscontextmenulimit = $prefs->get('moreratedtrackscontextmenulimit');
+# jive
+sub getRatedTracksMenu {
+	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
 	my $request = shift;
 	my $client = $request->client();
 
-	if (!$request->isQuery([['ratingslight'],['moreratedtracksmenu']])) {
+	if (!$request->isQuery([['ratingslight'],['ratedtracksmenu']])) {
 		$log->warn('incorrect command');
 		$request->setStatusBadDispatch();
 		return;
@@ -935,12 +735,12 @@ sub getMoreRatedTracksMenu {
 		$request->setStatusNeedsClient();
 		return;
 	}
-	my $trackID = $request->getParam('_trackid');
+	my $trackID = $request->getParam('_trackid') || 0;
 	my $thisID = $request->getParam('_thisid');
-	my $queryclass = $request->getParam('_queryclass');;
-	$log->debug('query class = '.$queryclass);
+	my $objectType = $request->getParam('_objecttype');;
+	$log->debug('objectType = '.$objectType.' ## thisID = '.$thisID.' ## trackID = '.$trackID);
 
-	my $moreratedtracks = getMoreRatedTracks($client, $trackID, $thisID, $queryclass, $moreratedtrackscontextmenulimit);
+	my $ratedtracks = getRatedTracks(0, $client, $objectType, $thisID, $trackID, $ratedtrackscontextmenulimit);
 
 	my %menuStyle = ();
 	$menuStyle{'titleStyle'} = 'mymusic';
@@ -949,34 +749,36 @@ sub getMoreRatedTracksMenu {
 	$request->addResult('window',\%menuStyle);
 
 	my $cnt = 0;
- 	my $trackcount = scalar(@{$moreratedtracks});
-	if ($trackcount > 1) {
+	my $trackCount = scalar(@{$ratedtracks});
+	if ($trackCount > 1) {
 		$cnt = 1;
 	}
-	my $alltrackids = '';
+	my @alltrackids = ();
 
-	foreach my $ratedtrack (@{$moreratedtracks}) {
+	foreach my $ratedtrack (@{$ratedtracks}) {
 		$request->addResultLoop('item_loop',$cnt,'icon-id',$ratedtrack->coverid);
+		push @alltrackids, $ratedtrack->id;
 
-		if ($alltrackids eq '') {
-			$alltrackids = $ratedtrack->id;
-		} else {
-			$alltrackids .= ','.($ratedtrack->id);
-		}
-
-		my ($tracktitle, $artistname, $albumname, $ratingtext, $returntext) = '';
+		my ($tracktitle, $ratingtext, $returntext) = '';
 		my $rating = getRatingFromDB($ratedtrack);
 		$ratingtext = getRatingTextLine($rating, 'appended');
 		$tracktitle = trimStringLength($ratedtrack->title, 60);
 
-		if ($queryclass eq 'album') {
+		if ($objectType eq 'album') {
 			my $artistname = $ratedtrack->artist->name;
 			$artistname = trimStringLength($artistname, 70);
 			$returntext = $tracktitle.$ratingtext."\n".$artistname;
-		} else {
-			$albumname = $ratedtrack->album->name;
+		} elsif ($objectType eq 'artist') {
+			my $albumname = $ratedtrack->album->name;
 			$albumname = trimStringLength($albumname, 70);
 			$returntext = $tracktitle.$ratingtext."\n".$albumname;
+		} else {
+			my $sepchar = HTML::Entities::decode_entities('&#x2022;'); # "bullet" - HTML Entity (hex): &#x2022;
+			my $artistname = $ratedtrack->artist->name;
+			$artistname = trimStringLength($artistname, 70);
+			my $albumname = $ratedtrack->album->name;
+			$albumname = trimStringLength($albumname, 70);
+			$returntext = $tracktitle.$ratingtext."\n".$artistname.' '.$sepchar.' '.$albumname;
 		}
 
 		my $actions = {
@@ -992,142 +794,24 @@ sub getMoreRatedTracksMenu {
 		$cnt++;
 	}
 
-	if ($trackcount > 1) {
+	if ($trackCount > 1) {
+		my $listalltrackids = join (',', @alltrackids);
 		my $actions = {
 			'go' => {
 				'player' => 0,
-				'cmd' => ['ratingslight', 'actionsmenu', 'track_id:'.$alltrackids, 'allsongs:1'],
+				'cmd' => ['ratingslight', 'actionsmenu', 'track_id:'.$listalltrackids, 'allsongs:1'],
 			},
 		};
-		$request->addResultLoop('item_loop',0,'type','redirect');
-		$request->addResultLoop('item_loop',0,'actions',$actions);
-		$request->addResultLoop('item_loop',0,'icon', 'plugins/RatingsLight/html/images/coverplaceholder.png');
-		$request->addResultLoop('item_loop',0,'text',string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_ALLSONGS').' ('.$trackcount.')');
+		$request->addResultLoop('item_loop', 0, 'type', 'redirect');
+		$request->addResultLoop('item_loop' ,0, 'actions', $actions);
+		$request->addResultLoop('item_loop', 0, 'icon', 'plugins/RatingsLight/html/images/coverplaceholder.png');
+		$request->addResultLoop('item_loop', 0, 'text', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_ALLSONGS').' ('.$trackCount.')');
 		$cnt++;
 	}
 
-	$request->addResult('offset',0);
-	$request->addResult('count',$cnt);
+	$request->addResult('offset', 0);
+	$request->addResult('count', $cnt);
 	$request->setStatusDone();
-}
-
-sub VFD_moreratedtracks {
-	my ($client, $trackID, $thisID, $queryclass) = @_;
-	my $moreratedtrackscontextmenulimit = $prefs->get('moreratedtrackscontextmenulimit');
-	$log->debug('VFD_moreratedtracks - trackID = '.$trackID);
-	$log->debug('query class = '.$queryclass);
- 	if ($queryclass eq 'album') {
- 		$log->debug('VFD_moreratedtracks - albumID = '.$thisID);
-	} else {
- 	 	$log->debug('VFD_moreratedtracks - artistID = '.$thisID);
-	}
-
-	my $moreratedtracks = getMoreRatedTracks($client, $trackID, $thisID, $queryclass, $moreratedtrackscontextmenulimit);
-	my @vfd_moreratedtracks = ();
-	my $alltrackids = '';
-
-	foreach my $ratedtrack (@{$moreratedtracks}) {
-
-		if ($alltrackids eq '') {
-			$alltrackids = $ratedtrack->id;
-		} else {
-			$alltrackids .= ','.($ratedtrack->id);
-		}
-
- 		my $track_id = $ratedtrack->id;
- 		my $tracktitle = $ratedtrack->title;
-		$tracktitle = trimStringLength($tracktitle, 70);
-
-		my $rating = getRatingFromDB($ratedtrack);
-		my $ratingtext = getRatingTextLine($rating, 'appended');
-		$tracktitle = $tracktitle.$ratingtext;
-		push (@vfd_moreratedtracks, {
-			type => 'redirect',
-			name => $tracktitle,
-			items => [
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNOW'),
-					type => 'redirect',
-					url => \&VFD_execActions,
-					passthrough => [$track_id, 'load', 'Playing track now'],
-				},
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNEXT'),
-					type => 'redirect',
-					url => \&VFD_execActions,
-					passthrough => [$track_id, 'insert', 'Track will be played next'],
-				},
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_APPEND'),
-					type => 'redirect',
-					url => \&VFD_execActions,
-					passthrough => [$track_id, 'add', 'Added track to end of queue'],
-				},
-			]
-		});
-	}
-	my $trackcount = scalar(@vfd_moreratedtracks);
-	if ($trackcount > 1) {
-		unshift @vfd_moreratedtracks, {
-			type => 'redirect',
-			name => string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_ALLSONGS'),
-			items => [
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNOW'),
-					type => 'redirect',
-					url => \&VFD_execActions,
-					passthrough => [$alltrackids, 'load', 'Playing tracks now'],
-				},
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNEXT'),
-					type => 'redirect',
-					url => \&VFD_execActions,
-					passthrough => [$alltrackids, 'insert', 'Tracks will be played next'],
-				},
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_APPEND'),
-					type => 'redirect',
-					url => \&VFD_execActions,
-					passthrough => [$alltrackids, 'add', 'Added tracks to end of queue'],
-				},
-			]
-		};
-
-	}
-	return \@vfd_moreratedtracks;
-}
-
-sub getMoreRatedTracks {
-	my $moreratedtrackscontextmenulimit = $prefs->get('moreratedtrackscontextmenulimit');
-	my ($client, $trackID, $thisID, $queryclass, $listlimit) = @_;
-	$log->debug('getting more rated tracks - sql query');
-	$log->debug('thisID = '.$thisID);
-
-	my @moreratedtracks = ();
-	my $dbh = getCurrentDBH();
-	my $currentLibrary = Slim::Music::VirtualLibraries->getLibraryIdForClient($client);
-
-	my $sqlstatement;
-	if ($queryclass eq 'album') {
-		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
-			$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where tracks.album = $thisID and tracks.id != $trackID limit $listlimit";
-		} else {
-			$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.album = $thisID and tracks.id != $trackID limit $listlimit";
-		}
-	} else {
-		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
-			$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where tracks.primary_artist = $thisID and tracks.id != $trackID limit $listlimit";
-		} else {
-			$sqlstatement = "select tracks.url from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.primary_artist = $thisID and tracks.id != $trackID limit $listlimit";
-		}
-	}
-
-	my $sth = $dbh->prepare($sqlstatement);
-	$sth->execute() or do {	$sqlstatement = undef;};
-
-	my ($trackURL, $track);
-	$sth->bind_col(1,\$trackURL);
-
-	while ($sth->fetch()) {
-		$track = Slim::Schema->resultset("Track")->objectForUrl($trackURL);
-		push @moreratedtracks,$track;
-	}
-	$sth->finish();
-	return \@moreratedtracks;
 }
 
 sub getActionsMenu {
@@ -1147,22 +831,22 @@ sub getActionsMenu {
 
 	my $actionsmenuitems = [
 		{
-			itemtext => string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNOW'),
+			itemtext => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW'),
 			itemcmd1 => 'playlistcontrol',
 			itemcmd2 => 'load'
 		},
 		{
-			itemtext => string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_PLAYNEXT'),
+			itemtext => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT'),
 			itemcmd1 => 'playlistcontrol',
 			itemcmd2 => 'insert'
 		},
 		{
-			itemtext => string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_APPEND'),
+			itemtext => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND'),
 			itemcmd1 => 'playlistcontrol',
 			itemcmd2 => 'add'
 		},
 		{
-			itemtext => string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKS_MENU_MOREINFO'),
+			itemtext => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_MOREINFO'),
 			itemcmd1 => 'trackinfo',
 			itemcmd2 => 'items',
 		}];
@@ -1225,9 +909,79 @@ sub getActionsMenu {
 	$request->setStatusDone();
 }
 
+# VF devices (only objectType trackArtist + trackAlbum)
+sub VFD_ratedtracks {
+	my ($client, $objectType, $thisID, $trackID) = @_;
+	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
+	$log->debug('objectType = '.$objectType.' ## thisID = '.$thisID.' ## trackID = '.$trackID);
+
+	my $ratedtracks = getRatedTracks(0, $client, $objectType, $thisID, $trackID, $ratedtrackscontextmenulimit);
+	my @vfd_ratedtracks = ();
+	my @alltrackids = ();
+
+	foreach my $ratedtrack (@{$ratedtracks}) {
+		my $track_id = $ratedtrack->id;
+		push @alltrackids, $track_id;
+		my $tracktitle = $ratedtrack->title;
+		$tracktitle = trimStringLength($tracktitle, 70);
+
+		my $rating = getRatingFromDB($ratedtrack);
+		my $ratingtext = getRatingTextLine($rating, 'appended');
+		$tracktitle = $tracktitle.$ratingtext;
+		push (@vfd_ratedtracks, {
+			type => 'redirect',
+			name => $tracktitle,
+			items => [
+				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW'),
+					type => 'redirect',
+					url => \&VFD_execActions,
+					passthrough => [$track_id, 'load', 'Playing track now'],
+				},
+				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT'),
+					type => 'redirect',
+					url => \&VFD_execActions,
+					passthrough => [$track_id, 'insert', 'Track will be played next'],
+				},
+				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND'),
+					type => 'redirect',
+					url => \&VFD_execActions,
+					passthrough => [$track_id, 'add', 'Added track to end of queue'],
+				},
+			]
+		});
+	}
+	my $trackCount = scalar(@vfd_ratedtracks);
+	if ($trackCount > 1) {
+		my $listalltrackids = join (',', @alltrackids);
+		unshift @vfd_ratedtracks, {
+			type => 'redirect',
+			name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_ALLSONGS'),
+			items => [
+				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW'),
+					type => 'redirect',
+					url => \&VFD_execActions,
+					passthrough => [$listalltrackids, 'load', 'Playing tracks now'],
+				},
+				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT'),
+					type => 'redirect',
+					url => \&VFD_execActions,
+					passthrough => [$listalltrackids, 'insert', 'Tracks will be played next'],
+				},
+				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND'),
+					type => 'redirect',
+					url => \&VFD_execActions,
+					passthrough => [$listalltrackids, 'add', 'Added tracks to end of queue'],
+				},
+			]
+		};
+
+	}
+	return \@vfd_ratedtracks;
+}
+
 sub VFD_execActions {
 	my ($client, $callback, $params, $trackID, $action, $cbtext) = @_;
- 	$log->debug('action = '.$action);
+	$log->debug('action = '.$action);
 
 	my @actionargs = ('playlistcontrol', 'cmd:'.$action, 'track_id:'.$trackID);
 	$client->execute(\@actionargs);
@@ -1238,6 +992,220 @@ sub VFD_execActions {
 		showBriefly => 1, popback => 2,
 		favorites => 0, refresh => 1
 	}]);
+}
+
+# common subs
+sub getRatedTracks {
+	my ($countOnly, $client, $objectType, $thisID, $trackID, $listlimit) = @_;
+	$log->debug('objectType = '.$objectType.' ## countOnly = '.$countOnly.' ## trackID = '.$trackID.' ## thisID = '.$thisID);
+
+	if (($objectType ne 'artist') && ($objectType ne 'album') && ($objectType ne 'genre') && ($objectType ne 'year') && ($objectType ne 'playlist')) {
+		$log->warn('No valid objectType');
+		return 0;
+	}
+
+	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
+	my $currentLibrary = Slim::Music::VirtualLibraries->getLibraryIdForClient($client);
+	my $sqlstatement;
+
+	if ($objectType eq 'artist'){
+		$sqlstatement = $countOnly == 1 ? "select count(*)" : "select tracks.url";
+		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
+			$sqlstatement .= " from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where tracks.primary_artist = $thisID and tracks.id != $trackID";
+		} else {
+			$sqlstatement .= " from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.primary_artist = $thisID and tracks.id != $trackID";
+		}
+		$sqlstatement .= " limit $listlimit" if ($countOnly == 0);
+	}
+
+	if ($objectType eq 'album') {
+		$sqlstatement = $countOnly == 1 ? "select count(*)" : "select tracks.url";
+		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
+			$sqlstatement .= " from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where tracks.album = $thisID and tracks.id != $trackID";
+		} else {
+			$sqlstatement .= " from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.album = $thisID and tracks.id != $trackID";
+		}
+		$sqlstatement .= " limit $listlimit" if ($countOnly == 0);
+	}
+
+	if ($objectType eq 'genre') {
+		$sqlstatement = $countOnly == 1 ? "select count(*)" : "select tracks.url";
+		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
+			$sqlstatement .= " from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join genre_track on genre_track.track = tracks.id and genre_track.genre = $thisID join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where tracks.id != $trackID";
+		} else {
+			$sqlstatement .= " from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join genre_track on genre_track.track = tracks.id and genre_track.genre = $thisID where tracks.id != $trackID";
+		}
+		$sqlstatement .= " order by random() limit $listlimit" if ($countOnly == 0);
+	}
+
+	if ($objectType eq 'year'){
+		$sqlstatement = $countOnly == 1 ? "select count(*)" : "select tracks.url";
+		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
+			$sqlstatement .= " from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where tracks.year = $thisID and tracks.id != $trackID";
+		} else {
+			$sqlstatement .= " from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.year = $thisID and tracks.id != $trackID";
+		}
+		$sqlstatement .= " order by random() limit $listlimit" if ($countOnly == 0);
+	}
+
+	if ($objectType eq 'playlist'){
+		$sqlstatement = $countOnly == 1 ? "select count(*)" : "select tracks.url";
+		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
+			$sqlstatement .= " from tracks join playlist_track on playlist_track.track = tracks.url and playlist_track.playlist = $thisID join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where tracks.id != $trackID";
+		} else {
+			$sqlstatement .= " from tracks join playlist_track on playlist_track.track = tracks.url and playlist_track.playlist = $thisID join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.id != $trackID";
+		}
+		$sqlstatement .= " limit $listlimit" if ($countOnly == 0);
+	}
+
+	my @ratedtracks = ();
+	my $trackCount = 0;
+	my $dbh = getCurrentDBH();
+	eval{
+		my $sth = $dbh->prepare($sqlstatement);
+		$sth->execute() or do {	$sqlstatement = undef;};
+
+		if ($countOnly == 1) {
+			$trackCount = $sth->fetchrow;
+		} else {
+			my ($trackURL, $track);
+			$sth->bind_col(1,\$trackURL);
+
+			while ($sth->fetch()) {
+				$track = Slim::Schema->resultset("Track")->objectForUrl($trackURL);
+				push @ratedtracks, $track;
+			}
+		}
+		$sth->finish();
+	};
+	if ($@) {$log->debug("error: $@");}
+
+	if ($countOnly == 1) {
+		$log->debug('Pre-check found '.$trackCount.($trackCount == 1 ? ' rated track' : ' rated tracks')." for $objectType with ID: $thisID");
+		return $trackCount;
+	} else {
+		$log->debug('Fetched '.scalar (@ratedtracks).(scalar (@ratedtracks) == 1 ? ' rated track' : ' rated tracks')." for $objectType with ID: $thisID");
+		return \@ratedtracks;
+	}
+}
+
+sub objectInfoHandler {
+	my ($objectType, $client, $url, $obj, $remoteMeta, $tags) = @_;
+	$tags ||= {};
+	$log->debug('objectType = '.$objectType.' ## url = '.Dumper($url));
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn('Warning: not available until library scan is completed');
+		return;
+	}
+
+	my $trackID = 0;
+	my $vfd = 0;
+	my $objectID = $obj->id unless $objectType eq 'year';
+	my $objectName;
+	if ($objectType eq 'year') {
+		$objectName = "".$obj;
+	} else {
+		$objectName = $obj->name;
+	}
+	my $curTrackRating = 0;
+
+	if (($objectType eq 'trackAlbum') || ($objectType eq 'trackArtist')) {
+		# check if remote track is part of online library
+		if ((Slim::Music::Info::isRemoteURL($url) == 1) && (!defined($obj->extid))) {
+			$log->debug('track is remote but not part of online library: '.$url);
+			return;
+		}
+
+		# check for dead/moved local tracks
+		if ((Slim::Music::Info::isRemoteURL($url) != 1) && (!defined($obj->filesize))) {
+			$log->debug('track dead or moved??? Track URL: '.$url);
+			return;
+		}
+	}
+	my $menuItemTitlePrefixString;
+
+	if ($objectType eq 'trackAlbum') {
+		$objectType = 'album';
+		$trackID = $objectID;
+		$objectID = $obj->album->id;
+		$objectName = $obj->album->name;
+		$curTrackRating = getRatingFromDB($obj);
+		$vfd = 1;
+	}
+
+	if ($objectType eq 'trackArtist') {
+		$objectType = 'artist';
+		$trackID = $objectID;
+		$objectID = $obj->artist->id;
+		$objectName = $obj->artist->name;
+		$curTrackRating = getRatingFromDB($obj);
+		$vfd = 1;
+	}
+	$objectName = trimStringLength($objectName, 70);
+
+	if ($objectType eq 'album') {
+		$menuItemTitlePrefixString = $curTrackRating > 0 ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM');
+	}
+	if ($objectType eq 'artist') {
+		$objectName = trimStringLength($objectName, 50);
+		$menuItemTitlePrefixString = $curTrackRating > 0 ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST');
+	}
+	if ($objectType eq 'genre') {
+		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINGENRE');
+	}
+	if ($objectType eq 'year') {
+		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMYEAR');
+		$objectID = $obj;
+	}
+	if ($objectType eq 'playlist') {
+		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINPLAYLIST');
+	}
+
+	my $menuItemTitle = $menuItemTitlePrefixString.' '.$objectName;
+	my $trackCount = getRatedTracks(1, $client, $objectType, $objectID, $trackID, undef);
+
+	if ($trackCount > 0) {
+		if ($tags->{menuMode}) {
+			return {
+				type => 'redirect',
+				name => $menuItemTitle,
+				jive => {
+					actions => {
+						go => {
+							player => 0,
+							cmd => ['ratingslight', 'ratedtracksmenu', $trackID, $objectID, $objectType],
+						},
+					}
+				},
+				favorites => 0,
+			};
+		} else {
+			my $item = {
+				type => 'text',
+				name => $menuItemTitlePrefixString.' '.$objectName,
+				prefix => $menuItemTitlePrefixString,
+				objectname => $objectName,
+				objecttype => $objectType,
+				objectid => $objectID,
+				trackid => $trackID,
+				titlemore => ($curTrackRating > 0 ? 'more' : undef),
+				web => {
+					'type' => 'htmltemplate',
+					'value' => 'plugins/RatingsLight/html/showratedtracks.html'
+				},
+			};
+
+			if ($vfd == 1) {
+				delete $item->{type};
+				my @items = ();
+				my $ratedsongs = VFD_ratedtracks($client, $objectType, $objectID, $trackID);
+				$item->{items} = \@{$ratedsongs};
+			}
+			return $item;
+		}
+	} else {
+		return;
+	}
 }
 
 
@@ -1259,46 +1227,56 @@ sub importRatingsFromPlaylist {
 
 	my $playlistid = $prefs->get('ratethisplaylistid');
 	my $rating = $prefs->get('ratethisplaylistrating');
-
-	my $queryresult = Slim::Control::Request::executeRequest(undef, ['playlists', 'tracks', '0', $playlistimport_maxtracks, 'playlist_id:'.$playlistid, 'tags:u']);
+	my $queryresult = Slim::Control::Request::executeRequest(undef, ['playlists', 'tracks', '0', $playlistimport_maxtracks, 'playlist_id:'.$playlistid, 'tags:Eux']);
 	my $statuscode = $queryresult->{'_status'};
-	$log->debug("status of query result = ".$statuscode);
+	$log->debug('status of query result = '.$statuscode);
 	if ($statuscode == 101) {
-		$log->warn("Warning: Can't import ratings from this playlist. Please check playlist for invalid or remote tracks.");
+		$log->warn("Warning: Can't import ratings from this playlist. Please check playlist for invalid tracks (dead, moved...) or remote tracks that are not part of this library.");
 		return;
 	}
 
 	my $playlisttrackcount = $queryresult->getResult('count');
 	if ($playlisttrackcount > 0) {
-		my $trackURL;
 		my $playlisttracksarray = $queryresult->getResult('playlisttracks_loop');
-
+		my @ratableTracks = ();
 		my $ignoredtracks = 0;
-		$log->debug("Playlist (ID: ".$playlistid.") contains ".$playlisttrackcount.($playlisttrackcount == 1 ? " rated track" : " rated tracks"));
-		for my $playlisttrack (@{$playlisttracksarray}) {
-			$trackURL = $playlisttrack->{url};
-			# check for remote or dead tracks
-			my $thistrack = Slim::Schema->resultset("Track")->objectForUrl($trackURL);
-			my $trackAliveCheck = $thistrack->filesize;
-			if ((Slim::Music::Info::isRemoteURL($trackURL) == 1)) {
-				$log->warn('Warning: ignoring this track, probably a remote track: '.$trackURL);
-				$playlisttrackcount--;
-				$ignoredtracks++;
-			} elsif (!defined $trackAliveCheck) {
-				$log->warn('Warning: ignoring this track, track dead or moved??? Track URL: '.$trackURL);
-				$playlisttrackcount--;
-				$ignoredtracks++;
+
+		foreach my $playlisttrack (@{$playlisttracksarray}) {
+			my $trackURL = $playlisttrack->{url};
+			if (defined($playlisttrack->{'remote'}) && ($playlisttrack->{'remote'} == 1)) {
+				if (!defined($playlisttrack->{'extid'})) {
+					$log->info('track is remote but not part of online library: '.$trackURL);
+					$playlisttrackcount--;
+					$ignoredtracks++;
+					next;
+				}
+				push @ratableTracks, $trackURL;
 			} else {
-				writeRatingToDB($trackURL, $rating, 0);
+				my $thistrack = Slim::Schema->resultset("Track")->objectForUrl($trackURL);
+				if (!defined($thistrack->filesize)) {
+					$log->info('ignoring this track, track dead or moved??? Track URL: '.$trackURL);
+					$playlisttrackcount--;
+					$ignoredtracks++;
+					next;
+				}
+				push @ratableTracks, $trackURL;
 			}
 		}
+
+		if (scalar (@ratableTracks) > 0) {
+			foreach my $thisTrackURL (@ratableTracks) {
+				writeRatingToDB($thisTrackURL, $rating, 0);
+			}
+			$log->info('Playlist (ID: '.$playlistid.') contained '.(scalar (@ratableTracks)).(scalar (@ratableTracks) == 1 ? ' track' : ' tracks').'that could be rated.');
+			refreshAll();
+		} else {
+			$log->info('Playlist (ID: '.$playlistid.') contained no tracks that could be rated.');
+		}
 		if ($ignoredtracks > 0) {
-			$log->warn("Warning: ".$ignoredtracks.($ignoredtracks == 1 ? " track was" : " tracks were")." ignored in total.");
+			$log->warn($ignoredtracks.($ignoredtracks == 1 ? ' track was' : ' tracks were')." ignored in total (couldn't be rated). Set log level to INFO for more details.");
 		}
 	}
 	my $ended = time() - $started;
-
-	refreshAll();
 
 	$log->debug('Rating playlist tracks completed after '.$ended.' seconds.');
 	$prefs->set('ratethisplaylistid', '');
@@ -1325,14 +1303,14 @@ sub exportRatingsToPlaylistFiles {
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
 	my ($sql, $sth) = undef;
 	my $dbh = getCurrentDBH();
-	my $rating100ScaleValueCeil = 0;
-	my $rating100ScaleValue = 10;
 	my $exporttimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
 	my $exportVL_id = $prefs->get('exportVL_id');
 	$log->debug('exportVL_id = '.$exportVL_id);
 	my $totaltrackcount = 0;
-	until ($rating100ScaleValue > 100) {
+	my $rating100ScaleValueCeil = 0;
+
+	for (my $rating100ScaleValue = 10; $rating100ScaleValue <= 100; $rating100ScaleValue = $rating100ScaleValue + 10) {
 		$rating100ScaleValueCeil = $rating100ScaleValue + 9;
 		if (defined $onlyratingnotmatchcommenttag) {
 			if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
@@ -1340,9 +1318,9 @@ sub exportRatingsToPlaylistFiles {
 				return
 			} else {
 				if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-						$sql = "select tracks.url from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))";
+						$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))";
 				} else {
-						$sql = "select tracks_persistent.url from tracks_persistent where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null)))";
+						$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null)))";
 				}
 				$sth = $dbh->prepare($sql);
 				my $ratingkeyword = "%%".$rating_keyword_prefix.($rating100ScaleValue/20).$rating_keyword_suffix."%%";
@@ -1350,27 +1328,28 @@ sub exportRatingsToPlaylistFiles {
 			}
 		} else {
 			if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-				$sql = "select tracks.url from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1";
+				$sql = "select tracks.url from tracks, tracks.remote join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1";
 			} else {
-				$sql = "select tracks_persistent.url from tracks_persistent where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil)";
+				$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil)";
 			}
 			$sth = $dbh->prepare($sql);
 		}
 		$sth->execute();
 
-		my $trackURL;
+		my ($trackURL, $trackRemote);
 		$sth->bind_col(1,\$trackURL);
+		$sth->bind_col(2,\$trackRemote);
 
-		my @trackURLs = ();
+		my @ratedTracks = ();
 		while ($sth->fetch()) {
-			push @trackURLs,$trackURL;
+			push (@ratedTracks, {'url' => $trackURL, 'remote' => $trackRemote});
 		}
 		$sth->finish();
-		my $trackcount = scalar(@trackURLs);
-		$log->debug('number of tracks rated '.$rating100ScaleValue.' to export: '.$trackcount);
+
+		my $trackcount = scalar(@ratedTracks);
 		$totaltrackcount = $totaltrackcount + $trackcount;
 
-		if (@trackURLs) {
+		if ($trackcount > 0) {
 			my $PLfilename = (($rating100ScaleValue/20) == 1 ? 'RL_Export_'.$filename_timestamp.'__Rated_'.($rating100ScaleValue/20).'_star.m3u.txt' : 'RL_Export_'.$filename_timestamp.'__Rated_'.($rating100ScaleValue/20).'_stars.m3u.txt');
 
 			my $filename = catfile($exportDir,$PLfilename);
@@ -1379,7 +1358,6 @@ sub exportRatingsToPlaylistFiles {
 				$prefs->set('status_exportingtoplaylistfiles', 0);
 				return;
 			};
-			my $trackcount = scalar(@trackURLs);
 			print $output '#EXTM3U'."\n";
 			print $output '# exported with \'Ratings Light\' LMS plugin ('.$exporttimestamp.")\n";
 			if ((defined $exportVL_id) && ($exportVL_id ne '')) {
@@ -1391,15 +1369,16 @@ sub exportRatingsToPlaylistFiles {
 				print $output "# *** This export only contains rated tracks whose ratings differ from the rating value derived from their comment tag keywords. ***\n";
 				print $output "# *** If you want to export ALL rated tracks change the preference on the Ratings Light settings page. ***\n\n";
 			}
-			for my $PLtrackURL (@trackURLs) {
-				$PLtrackURL = changeExportFilePath($PLtrackURL);
-				print $output "#EXTURL:".$PLtrackURL."\n";
-				my $unescapedURL = uri_unescape($PLtrackURL);
+			for my $ratedTrack (@ratedTracks) {
+				my $ratedTrackURL = $ratedTrack->{'url'};
+				$ratedTrackURL = changeExportFilePath($ratedTrack->{'url'}) if ($ratedTrack->{'remote'} != 1);
+
+				print $output "#EXTURL:".$ratedTrackURL."\n";
+				my $unescapedURL = uri_unescape($ratedTrackURL);
 				print $output $unescapedURL."\n";
 			}
 			close $output;
 		}
-		$rating100ScaleValue = $rating100ScaleValue + 10;
 	}
 
 	$log->debug('TOTAL number of tracks exported: '.$totaltrackcount);
@@ -1411,16 +1390,19 @@ sub exportRatingsToPlaylistFiles {
 
 sub changeExportFilePath {
 	my $trackURL = shift;
-	my $oldtrackURL = $trackURL;
 	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
-	my $exportextension = $prefs->get('exportextension');
 
 	if (scalar @{$exportbasefilepathmatrix} > 0) {
+		my $oldtrackURL = $trackURL;
+		my $exportextension = $prefs->get('exportextension');
+
 		foreach my $thispath (@{$exportbasefilepathmatrix}) {
-			if (($trackURL =~ ($thispath->{'lmsbasepath'})) && (defined ($thispath->{'substitutebasepath'})) && (($thispath->{'substitutebasepath'}) ne '')) {
-				my $lmsbasepath = $thispath->{'lmsbasepath'};
+			my $lmsbasepath = escape($thispath->{'lmsbasepath'});
+			$lmsbasepath =~ s/%2F/\//isg;
+
+			if (($trackURL =~ $lmsbasepath) && (defined ($thispath->{'substitutebasepath'})) && (($thispath->{'substitutebasepath'}) ne '')) {
 				my $substitutebasepath = $thispath->{'substitutebasepath'};
-				if (defined $exportextension) {
+				if (defined $exportextension && $exportextension ne '') {
 					$trackURL =~ s/\.[^.]*$/\.$exportextension/isg;
 				}
 				$lmsbasepath =~ s/\\/\//isg;
@@ -1428,6 +1410,8 @@ sub changeExportFilePath {
 				$substitutebasepath =~ s/\\/\//isg;
 				$substitutebasepath =~ s/(^\/*)|(\/*$)//isg;
 				$substitutebasepath = escape($substitutebasepath);
+				$substitutebasepath =~ s/%2F/\//isg;
+
 				$trackURL =~ s/$lmsbasepath/$substitutebasepath/isg;
 				$trackURL =~ s/\/{2,}/\//isg;
 				$trackURL =~ s/file:\//file:\/\/\//isg;
@@ -1478,18 +1462,18 @@ sub initExportBaseFilePathMatrix {
 }
 
 sub setRefreshCBTimer {
-	$log->debug("Killing existing timers for post-scan refresh to prevent multiple calls");
+	$log->debug('Killing existing timers for post-scan refresh to prevent multiple calls');
 	Slim::Utils::Timers::killOneTimer(undef, \&delayedPostScanRefresh);
-	$log->debug("Scheduling a delayed post-scan refresh");
+	$log->debug('Scheduling a delayed post-scan refresh');
 	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + $prefs->get('postScanScheduleDelay'), \&delayedPostScanRefresh);
 }
 
 sub delayedPostScanRefresh {
 	if (Slim::Music::Import->stillScanning) {
-		$log->debug("Scan in progress. Waiting for current scan to finish.");
+		$log->debug('Scan in progress. Waiting for current scan to finish.');
 		setRefreshCBTimer();
 	} else {
-		$log->debug("Starting post-scan refresh after ratings import from comment tags");
+		$log->debug('Starting post-scan refresh after ratings import from comment tags');
 		refreshAll();
 	}
 }
@@ -1517,24 +1501,27 @@ sub createBackup {
 
 	my ($sql, $sth) = undef;
 	my $dbh = getCurrentDBH();
-	my ($trackURL, $rating100ScaleValue, $track);
+	my ($trackURL, $trackRating, $trackRemote, $trackExtid);
 	my $started = time();
 	my $backuptimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
 
-	$sql = "select tracks_persistent.url from tracks_persistent where tracks_persistent.rating > 0";
+	$sql = "select tracks_persistent.url, tracks_persistent.rating, tracks.remote, tracks.extid from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where tracks_persistent.rating > 0";
 	$sth = $dbh->prepare($sql);
 	$sth->execute();
 
 	$sth->bind_col(1,\$trackURL);
+	$sth->bind_col(2,\$trackRating);
+	$sth->bind_col(3,\$trackRemote);
+	$sth->bind_col(4,\$trackExtid);
 
-	my @trackURLs = ();
+	my @ratedTracks = ();
 	while ($sth->fetch()) {
-		push @trackURLs,$trackURL;
+		push (@ratedTracks, {'url' => $trackURL, 'rating' => $trackRating, 'remote' => $trackRemote, 'extid' => $trackExtid});
 	}
 	$sth->finish();
 
-	if (@trackURLs) {
+	if (@ratedTracks) {
 		my $PLfilename = 'RL_Backup_'.$filename_timestamp.'.xml';
 
 		my $filename = catfile($backupDir,$PLfilename);
@@ -1543,25 +1530,33 @@ sub createBackup {
 			$prefs->set('status_creatingbackup', 0);
 			return;
 		};
-		my $trackcount = scalar(@trackURLs);
+		my $trackcount = scalar(@ratedTracks);
 		my $ignoredtracks = 0;
-		$log->debug("Found ".$trackcount.($trackcount == 1 ? " rated track" : " rated tracks")." in the LMS persistent database");
+		$log->debug('Found '.$trackcount.($trackcount == 1 ? ' rated track' : ' rated tracks').' in the LMS persistent database');
 
 		print $output "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
 		print $output "<!-- Backup of Rating Values -->\n";
 		print $output "<!-- ".$backuptimestamp." -->\n";
 		print $output "<RatingsLight>\n";
-		for my $BACKUPtrackURL (@trackURLs) {
-			$track = Slim::Schema->resultset("Track")->objectForUrl($BACKUPtrackURL);
-			if (!defined $track) {
-				$log->warn("Warning: ignoring this track, not found in LMS database:\n".$BACKUPtrackURL);
+		for my $ratedTrack (@ratedTracks) {
+			my $BACKUPtrackURL = $ratedTrack->{'url'};
+			if (($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) {
+				$log->warn('Warning: ignoring this track. Track is remote but not part of online library: '.$BACKUPtrackURL);
 				$trackcount--;
 				$ignoredtracks++;
-			} else {
-				$rating100ScaleValue = getRatingFromDB($track);
-				$BACKUPtrackURL = escape($BACKUPtrackURL);
-				print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t</track>\n";
+				next;
 			}
+			if (($ratedTrack->{'remote'} != 1) && (!defined(Slim::Schema->resultset('Track')->objectForUrl($BACKUPtrackURL)))) {
+				$log->warn('Warning: ignoring this track. Track dead or moved??? Track URL: '.$BACKUPtrackURL);
+				$trackcount--;
+				$ignoredtracks++;
+				next;
+			}
+
+			my $rating100ScaleValue = $ratedTrack->{'rating'};
+			my $remote = $ratedTrack->{'remote'};
+			$BACKUPtrackURL = escape($BACKUPtrackURL);
+			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<remote>".$remote."</remote>\n\t</track>\n";
 		}
 		print $output "</RatingsLight>\n";
 
@@ -1627,7 +1622,7 @@ sub backupScheduler {
 sub cleanupBackups {
 	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
 	my $backupDir = $rlparentfolderpath.'/RatingsLight';
- 	return unless (-d $backupDir);
+	return unless (-d $backupDir);
 	my $backupsdaystokeep = $prefs->get('backupsdaystokeep');
 	my $maxkeeptime = $backupsdaystokeep * 24 * 60 * 60; # in seconds
 	my @files;
@@ -1787,17 +1782,21 @@ sub handleCharElement {
 sub handleEndElement {
 	my ($p, $element) = @_;
 	$inValue = 0;
+	my $selectiverestore = $prefs->get('selectiverestore');
 
 	if ($inTrack && $element eq 'track') {
 		$inTrack = 0;
 
 		my $curTrack = \%restoreitem;
-		my $trackURL = $curTrack->{'url'};
-		$trackURL = unescape($trackURL);
-		my $rating = $curTrack->{'rating'};
+		my $remote = $curTrack->{'remote'};
 
-		writeRatingToDB($trackURL, $rating, 0);
+		if (($selectiverestore == 0) || ($selectiverestore == 1 && $remote == 0) || ($selectiverestore == 2 && $remote == 1)) {
+			my $trackURL = $curTrack->{'url'};
+			$trackURL = unescape($trackURL);
+			my $rating = $curTrack->{'rating'};
 
+			writeRatingToDB($trackURL, $rating, 0);
+		}
 		%restoreitem = ();
 	}
 
@@ -2161,8 +2160,8 @@ sub addToRecentlyRatedPlaylist {
 	my $existsPL = $request->getResult('count');
 	my $playlistid;
 
- 	if ($existsPL == 1) {
- 		my $playlistidhash = $request->getResult('playlists_loop');
+	if ($existsPL == 1) {
+		my $playlistidhash = $request->getResult('playlists_loop');
 		foreach my $hashref (@{$playlistidhash}) {
 			$playlistid = $hashref->{id};
 		}
@@ -2173,10 +2172,10 @@ sub addToRecentlyRatedPlaylist {
 			Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:delete', 'playlist_id:'.$playlistid, 'index:0']);
 		}
 
- 	} elsif ($existsPL == 0) {
- 		my $createplaylistrequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'new', 'name:'.$playlistname]);
- 		$playlistid = $createplaylistrequest->getResult('playlist_id');
- 	}
+	} elsif ($existsPL == 0) {
+		my $createplaylistrequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'new', 'name:'.$playlistname]);
+		$playlistid = $createplaylistrequest->getResult('playlist_id');
+	}
 
 	Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:add', 'playlist_id:'.$playlistid, 'url:'.$trackURL]);
 }
@@ -2614,15 +2613,7 @@ sub getSeedGenres {
 				push @{$genrelist},$thisgenreid;
 			}
 			my @filteredgenrelist = sort (uniq(@{$genrelist}));
-
-			my $includedgenrelist = '';
-			foreach my $thisincludedgenre (@filteredgenrelist) {
-				if ($includedgenrelist eq '') {
-					$includedgenrelist = $thisincludedgenre;
-				} else {
-					$includedgenrelist = $includedgenrelist.','.$thisincludedgenre;
-				}
-			}
+			my $includedgenrelist = join (',', @filteredgenrelist);
 			return $includedgenrelist;
 		}
 	}
@@ -2670,39 +2661,57 @@ sub writeRatingToDB {
 sub getRatingFromDB {
 	my $track = shift;
 	my $rating = 0;
-	#$log->debug('track = '.Dumper($track));
 
 	if (Slim::Music::Import->stillScanning) {
 		$log->warn('Warning: access to rating values blocked until library scan is completed');
 		return $rating;
 	}
 
-	# check for remote or dead tracks
-	if (!blessed($track)) {
-		$track = Slim::Schema->rs('Track')->find($track);
-		return $rating unless $track;
-	}
-	if (Slim::Music::Info::isRemoteURL($track->url) == 1) {
-		$log->debug('track is remote. track url = '.$track->url);
-		return $rating;
+	if ($track && !blessed($track)) {
+		$log->debug('track is not blessed');
+		$track = Slim::Schema->find('Track', $track->{id});
+		if (!blessed($track)) {
+			$log->debug('No track object found');
+			return $rating;
+		}
 	}
 
-	my $trackAliveCheck = $track->filesize;
-	if (!defined $trackAliveCheck) {
-		$log->warn('Warning: track = dead or moved??? track URL = '.$track->url);
+	# check if remote track is part of online library
+	if (Slim::Music::Info::isRemoteURL($track->url) == 1) {
+		if (!defined($track->extid)) {
+			$log->debug('track is remote but has no extid. Trying to get rating with url: '.$track->url);
+			my $url = $track->url;
+
+			my $urlmd5 = $track->urlmd5 || md5_hex($url);
+			my $dbh = getCurrentDBH();
+			my $sqlstatement = "select tracks_persistent.rating from tracks_persistent where tracks_persistent.urlmd5 = \"$urlmd5\"";
+			eval{
+				my $sth = $dbh->prepare($sqlstatement);
+				$sth->execute() or do {	$sqlstatement = undef;};
+				$rating = $sth->fetchrow || 0;
+				$sth->finish();
+			};
+			if ($@) {$log->debug("error: $@");}
+			$log->debug("Found rating $rating for url: ".$url);
+			return $rating;
+		}
+	}
+
+	# check for dead/moved local tracks
+	if ((Slim::Music::Info::isRemoteURL($track->url) != 1) && (!defined($track->filesize))) {
+		$log->debug('track dead or moved??? Track URL: '.$track->url);
 		return $rating;
 	}
 
 	my $thisrating = $track->rating;
-	if (defined $thisrating) {
-		$rating = $thisrating;
-	}
+	$rating = $thisrating if $thisrating;
 	return $rating;
 }
 
 sub getRatingTextLine {
 	my $rating = shift;
 	my $appended = shift;
+	my $nobreakspace = HTML::Entities::decode_entities('&#xa0;'); # "NO-BREAK SPACE" - HTML Entity (hex): &#xa0;
 	my $displayratingchar = $prefs->get('displayratingchar'); # 0 = common text star *, 1 = blackstar 2605
 	my $ratingchar = ' *';
 	my $fractionchar = HTML::Entities::decode_entities('&#xbd;'); # "vulgar fraction one half" - HTML Entity (hex): &#xbd;
@@ -2730,14 +2739,16 @@ sub getRatingTextLine {
 			$text = ($ratingchar x $ratingstars);
 		}
 	}
+
 	if (defined $appended) {
 		if ($displayratingchar == 1) {
 			my $sepchar = HTML::Entities::decode_entities('&#x2022;'); # "bullet" - HTML Entity (hex): &#x2022;
-			$text = ' '.$sepchar.' '.$text;
+			$text = $nobreakspace.$sepchar.$nobreakspace.$text;
 		} else {
-			$text = ' ('.$text.' )';
+			$text = $nobreakspace.'('.$text.$nobreakspace.')';
 		}
 	}
+
 	return $text;
 }
 
@@ -2763,20 +2774,31 @@ sub refreshAll {
 }
 
 
-# title format
+# title formats
 
 sub getTitleFormat_Rating {
 	my $track = shift;
 	my $appended = shift;
 	my $ratingtext = HTML::Entities::decode_entities('&#xa0;'); # "NO-BREAK SPACE" - HTML Entity (hex): &#xa0;
 
-	if (!blessed($track)) {
-		#$log->debug('track is not blessed');
-		my $trackObj = Slim::Schema->find('Track', $track->{id});
-		unless ($track) {
-			$log->debug("Track is probably remote.");
-			return $ratingtext;
-		};
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn('Warning: access to rating values blocked until library scan is completed');
+		return $ratingtext;
+	}
+
+	# get local track if unblessed
+	if ($track && !blessed($track)) {
+		$log->info('track is not blessed');
+		$track = Slim::Schema->find('Track', $track->{id});
+		if (!blessed($track)) {
+			$log->info('No track object found');
+			return '';
+		}
+	}
+
+	if ((Slim::Music::Info::isRemoteURL($track->url) == 1) && (!defined($track->extid))) {
+		$log->info('track is remote and has no extid. Skipping titleformat for url: '.$track->url);
+		return $ratingtext;
 	}
 
 	my $rating100ScaleValue = 0;
@@ -2810,73 +2832,13 @@ sub addTitleFormat {
 }
 
 sub refreshTitleFormats {
-	$log->debug("refreshing title formats");
+	$log->debug('refreshing title formats');
 	for my $client (Slim::Player::Client::clients()) {
 		next unless $client && $client->controller();
 		$client->currentPlaylistUpdateTime(Time::HiRes::time());
 	}
 }
 
-
-# Custom Skip
-
-sub getCustomSkipFilterTypes {
-	my @result = ();
-	my %rated = (
-		'id' => 'ratingslight_rated',
-		'name' => 'Rated low',
-		'description' => 'Skip tracks with ratings below specified value',
-		'mixtype' => 'track',
-		'parameters' => [
-			{
-				'id' => 'rating',
-				'type' => 'singlelist',
-				'name' => 'Skip if rated less than',
-				'data' => '20=*,40=**,60=***,80=****,100=*****',
-				'value' => 60
-			}
-		]
-	);
-	push @result, \%rated;
-
-	my %notrated = (
-		'id' => 'ratingslight_notrated',
-		'name' => 'Not rated',
-		'description' => 'Skip tracks without a rating',
-		'mixtype' => 'track'
-	);
-	push @result, \%notrated;
-
-	return \@result;
-}
-
-sub checkCustomSkipFilterType {
-	my $client = shift;
-	my $filter = shift;
-	my $track = shift;
-
-	my $parameters = $filter->{'parameter'};
-
-	if ($filter->{'id'} eq 'ratingslight_rated') {
-		my $rating100ScaleValue = getRatingFromDB($track);
-		for my $parameter (@{$parameters}) {
-			if ($parameter->{'id'} eq 'rating') {
-				my $ratings = $parameter->{'value'};
-				my $rating = $ratings->[0] if (defined($ratings) && scalar(@{$ratings})>0);
-				if ($rating100ScaleValue < $rating) {
-					return 1;
-				}
-				last;
-			}
-		}
-	}elsif ($filter->{'id'} eq 'ratingslight_notrated') {
-		my $rating100ScaleValue = getRatingFromDB($track);
-		if ($rating100ScaleValue == 0) {
-			return 1;
-		}
-	}
-	return 0;
-}
 
 
 # misc

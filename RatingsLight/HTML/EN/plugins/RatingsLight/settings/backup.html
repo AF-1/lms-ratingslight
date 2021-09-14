@@ -47,6 +47,19 @@
 [% END %]
 <br>
 
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE" desc="PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_DESC" %]
+	<select name="pref_selectiverestore" id="selectiverestore">
+		[% FOREACH option = {
+			'0' => 'PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_ALL',
+			'1' => 'PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_LOCALONLY',
+			'2' => 'PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_REMOTEONLY',
+		} %]
+			<option [% IF prefs.selectiverestore == option.key %]selected='selected' [% END %]value="[% option.key %]">[% option.value | string %]</option>
+		[%- END -%]
+	</select>
+[% END %]
+<br>
+
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE" desc="PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE_DESC" %]
 	<input name="pref_clearallbeforerestore" id="clearallbeforerestore" type="checkbox" [% IF prefs.clearallbeforerestore %] checked [% END %]>
 [% END %]
