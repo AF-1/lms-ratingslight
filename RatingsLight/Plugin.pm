@@ -331,18 +331,18 @@ sub initPrefs {
 			return 1;
 		}
 	}, 'exportextension');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 5000 }, 'playlistimport_maxtracks');
-	$prefs->setValidate({ 'validator' => \&isTimeOrEmpty }, 'backuptime');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 365 }, 'backupsdaystokeep');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 2, 'high' => 200 }, 'recentlymaxcount');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 200 }, 'ratedtracksweblimit');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 100 }, 'ratedtrackscontextmenulimit');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 1800 }, 'dstm_minTrackDuration');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 100 }, 'dstm_percentagerated');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 0, 'high' => 100 }, 'dstm_percentagetoprated');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 20 }, 'dstm_num_seedtracks');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 1, 'high' => 200 }, 'dstm_playedtrackstokeep');
-	$prefs->setValidate({ 'validator' => 'intlimit', 'low' => 5, 'high' => 50 }, 'dstm_batchsizenewtracks');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 5000}, 'playlistimport_maxtracks');
+	$prefs->setValidate({'validator' => \&isTimeOrEmpty}, 'backuptime');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 365}, 'backupsdaystokeep');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 2, 'high' => 200}, 'recentlymaxcount');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 200}, 'ratedtracksweblimit');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 100}, 'ratedtrackscontextmenulimit');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 0, 'high' => 1800}, 'dstm_minTrackDuration');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 0, 'high' => 100}, 'dstm_percentagerated');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 0, 'high' => 100}, 'dstm_percentagetoprated');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 20}, 'dstm_num_seedtracks');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 200}, 'dstm_playedtrackstokeep');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 50}, 'dstm_batchsizenewtracks');
 	$prefs->setValidate('dir', 'rlparentfolderpath');
 	$prefs->setValidate('file', 'restorefile');
 
@@ -1429,7 +1429,7 @@ sub initExportBaseFilePathMatrix {
 	my $lmsmusicdirs = [];
 	my %musicdircount;
 	my $thisdir;
-	foreach $thisdir (@{$mediadirs}, @{$ignoreInAudioScan}) { $musicdircount{$thisdir}++ }
+	foreach $thisdir (@{$mediadirs}, @{$ignoreInAudioScan}) {$musicdircount{$thisdir}++}
 	foreach $thisdir (keys %musicdircount) {
 		if ($musicdircount{$thisdir} == 1) {
 			push (@{$lmsmusicdirs}, $thisdir);
@@ -1440,7 +1440,7 @@ sub initExportBaseFilePathMatrix {
 	if (!defined $exportbasefilepathmatrix) {
 		my $n = 0;
 		foreach my $musicdir (@{$lmsmusicdirs}) {
-			push(@{$exportbasefilepathmatrix}, { lmsbasepath => $musicdir, substitutebasepath => ''});
+			push(@{$exportbasefilepathmatrix}, {lmsbasepath => $musicdir, substitutebasepath => ''});
 			$n++;
 		}
 		$prefs->set('exportbasefilepathmatrix', $exportbasefilepathmatrix);
@@ -1455,7 +1455,7 @@ sub initExportBaseFilePathMatrix {
 		@seen{@currentlmsbasefilepaths} = ();
 
 		foreach my $newdir (@{$lmsmusicdirs}) {
-			push (@{$exportbasefilepathmatrix}, { lmsbasepath => $newdir, substitutebasepath => ''}) unless exists $seen{$newdir};
+			push (@{$exportbasefilepathmatrix}, {lmsbasepath => $newdir, substitutebasepath => ''}) unless exists $seen{$newdir};
 		}
 		$prefs->set('exportbasefilepathmatrix', \@{$exportbasefilepathmatrix});
 	}
@@ -1674,7 +1674,7 @@ sub restoreFromBackup {
 
 sub initRestore {
 	if (defined($backupParserNB)) {
-		eval { $backupParserNB->parse_done };
+		eval {$backupParserNB->parse_done};
 		$backupParserNB = undef;
 	}
 	$backupParser = XML::Parser->new(
@@ -1737,10 +1737,8 @@ sub restoreScanFunction {
 }
 
 sub doneScanning {
-	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
-
 	if (defined $backupParserNB) {
-		eval { $backupParserNB->parse_done };
+		eval {$backupParserNB->parse_done};
 	}
 
 	$backupParserNB = undef;
@@ -1755,8 +1753,7 @@ sub doneScanning {
 
 	$prefs->set('status_restoringfrombackup', 0);
 	Slim::Utils::Scheduler::remove_task(\&restoreScanFunction);
-	my $RLfolderpath = $rlparentfolderpath.'/Ratingslight';
-	$prefs->set('restorefile', $RLfolderpath);
+	#$prefs->set('restorefile', '');
 }
 
 sub handleStartElement {
@@ -1888,7 +1885,7 @@ sub initVirtualLibraries {
 				my @items = ();
 
 				# Artists with rated tracks
-				$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RL_RATED') };
+				$pt = {library_id => Slim::Music::VirtualLibraries->getRealId('RL_RATED')};
 				push @items,{
 					type => 'link',
 					name => string('PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATED').$browsemenus_sourceVL_name,
@@ -1908,7 +1905,7 @@ sub initVirtualLibraries {
 				};
 
 				# Genres with rated tracks
-				$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RL_RATED') };
+				$pt = {library_id => Slim::Music::VirtualLibraries->getRealId('RL_RATED')};
 				push @items,{
 					type => 'link',
 					name => string('PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATED').$browsemenus_sourceVL_name,
@@ -1929,7 +1926,7 @@ sub initVirtualLibraries {
 
 				if ($showratedtracksmenus == 2) {
 					# Artists with top rated tracks
-					$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RL_TOPRATED') };
+					$pt = {library_id => Slim::Music::VirtualLibraries->getRealId('RL_TOPRATED')};
 					push @items,{
 						type => 'link',
 						name => string('PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_TOPRATED').$browsemenus_sourceVL_name,
@@ -1949,7 +1946,7 @@ sub initVirtualLibraries {
 					};
 
 					# Genres with top rated tracks
-					$pt = { library_id => Slim::Music::VirtualLibraries->getRealId('RL_TOPRATED') };
+					$pt = {library_id => Slim::Music::VirtualLibraries->getRealId('RL_TOPRATED')};
 					push @items,{
 						type => 'link',
 						name => string('PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_TOPRATED').$browsemenus_sourceVL_name,
@@ -2788,10 +2785,10 @@ sub getTitleFormat_Rating {
 
 	# get local track if unblessed
 	if ($track && !blessed($track)) {
-		$log->info('track is not blessed');
+		$log->debug('track is not blessed');
 		$track = Slim::Schema->find('Track', $track->{id});
 		if (!blessed($track)) {
-			$log->info('No track object found');
+			$log->debug('No track object found');
 			return '';
 		}
 	}
