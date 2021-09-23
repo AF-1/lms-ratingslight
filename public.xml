@@ -1,28 +1,35 @@
 <extensions>
-    <details>
-        <title lang="EN">AF-1 Repo</title>
-    </details>
-    <plugins>
-        <plugin name="RatingsLight" version="1.9.9" minTarget="7.9" maxTarget="*">
-            <title lang="EN">Ratings Light</title>
-            <desc lang="EN">A plugin that takes care of rating your local tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Create virtual libraries for (top) rated tracks. Browse (top) rated tracks by artist or genre (browse menus). Keep track of your recently rated songs with a dedicated playlist or log file. One click to show (more) rated tracks by an artist or in an album from the context menu/song details page. Includes "Don't Stop The Music" mixes.</desc>
-        	<url>https://github.com/AF-1/lms-ratingslight/releases/download/1.9.9/lms-ratingslight-1.9.9.zip</url>
+	<details>
+		<title lang="EN">AF-1 Repo</title>
+	</details>
+	<plugins>
+		<plugin name="RatingsLight" version="2.0.0" minTarget="7.9" maxTarget="*">
+			<title lang="EN">Ratings Light</title>
+			<desc lang="EN">A plugin that takes care of rating your tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Create virtual libraries for (top) rated tracks. Browse (top) rated tracks by artist or genre (browse menus). Keep track of your recently rated songs with a dedicated playlist or log file. Show rated songs for artist, album, genre, year or playlist (webUI and context menu). Support for online library tracks where possible. Includes "Don't Stop The Music" mixes.</desc>
+			<url>https://github.com/AF-1/lms-ratingslight/releases/download/2.0.0/lms-ratingslight-2.0.0.zip</url>
+			<creator>AF</creator>
+			<sha>d0f6cd20942b1543f9a3c48267b94402f42d090f</sha>
+		</plugin>
+		<plugin name="UseCommentTagInfo" version="1.2.9" minTarget="7.9" maxTarget="*">
+			<title lang="EN">Use Comment Tag Info</title>
+			<desc lang="EN">This plugin uses (key)words in your music files' comment tags to: add extra information to the song details page, define and display custom title formats, create virtual libraries with browse menus.</desc>
+			<url>https://github.com/AF-1/lms-usecommenttaginfo/releases/download/1.2.9/lms-usecommenttaginfo-1.2.9.zip</url>
+			<creator>AF</creator>
+			<sha>37d67cb3781bb2e32b1c2bd211884fc3a4857bf3</sha>
+		</plugin>
+		<plugin name="VisualStatistics" version="1.0.7" minTarget="7.9" maxTarget="*">
+			<title lang="EN">Visual Statistics</title>
+			<desc lang="EN">Have a look at your library statistics with charts</desc>
+			<url>https://github.com/AF-1/lms-visualstatistics/releases/download/1.0.7/lms-visualstatistics-1.0.7.zip</url>
+			<creator>AF</creator>
+			<sha>316229b8ebaf042da7aec198fac2816b91d94228</sha>
+		</plugin>
+        <plugin name="DynamicPlayList" version="3.1.7" minTarget="7.9" maxTarget="*">
+            <title lang="EN">Dynamic Playlists</title>
+            <desc lang="EN">This plugin lets you play continuous music mixes based on selection criteria defined in so-called dynamic playlists. Comes with a number of ready-to-use dynamic playlists. In addition you can now use your own custom dynamic playlist definitions directly in this plugin, you don't need other plugins for that anymore. Please uninstall v2.x before installing v3.x. More information on the github page.</desc>
+        	<url>https://github.com/AF-1/lms-dynamicplaylists/releases/download/3.1.7/lms-dynamicplaylists-3.1.7.zip</url>
             <creator>AF</creator>
-            <sha>6f32c42dc98ff4348d331783a03a9b0635ac6b2f</sha>
+            <sha>716488ca62a79f695168cabd74af7e3a891a3147</sha>
         </plugin>
-        <plugin name="UseCommentTagInfo" version="1.2.8" minTarget="7.9" maxTarget="*">
-            <title lang="EN">Use Comment Tag Info</title>
-            <desc lang="EN">This plugin uses (key)words in your music files' comment tags to: add extra information to the song details page, define and display custom title formats, create virtual libraries with browse menus.</desc>
-        	<url>https://github.com/AF-1/lms-usecommenttaginfo/releases/download/1.2.8/lms-usecommenttaginfo-1.2.8.zip</url>
-            <creator>AF</creator>
-            <sha>d7953c738bce0796d85a4970abf6edfb46e67453</sha>
-        </plugin>
-        <plugin name="VisualStatistics" version="1.0.6" minTarget="7.9" maxTarget="*">
-            <title lang="EN">Visual Statistics</title>
-            <desc lang="EN">Have a look at your library statistics with charts</desc>
-        	<url>https://github.com/AF-1/lms-visualstatistics/releases/download/1.0.6/lms-visualstatistics-1.0.6.zip</url>
-            <creator>AF</creator>
-            <sha>316229b8ebaf042da7aec198fac2816b91d94228</sha>
-        </plugin>
-    </plugins>
+	</plugins>
 </extensions>
