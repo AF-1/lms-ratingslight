@@ -12,8 +12,12 @@ A plugin that takes care of rating tracks in your [Logitech Media Server](https:
 #### Boom - ratings display, rating menu, *show more rated tracks by artist* view
 ![Boom - ratings menus](screenshots/boom.jpg)
 <br><br>
-#### *Rated Tracks** browse menu
+#### *Rated Tracks* browse menus
 ![Rated Tracks - Home Menu](screenshots/ratedtracksmenu.jpg)
+<br><br>
+#### *Rated Tracks* context menu
+![Rated Tracks - Context Menu](screenshots/contextmenu_years.jpg)<br><br>
+(available for artist, album, genre, year, and playlist)
 <br><br><br><br>
 
 ## Features:
@@ -38,7 +42,7 @@ A plugin that takes care of rating tracks in your [Logitech Media Server](https:
 * most features should work with **online library tracks** **(*)**
 
 **Some features are not enabled by default.** Please go to the plugin's settings page to enable them.<br><br>
-**(*)** You **can't rate online tracks** that have **not** been **added to your LMS library as part of an album**. Single online tracks or tracks of online playlists are not imported as library tracks (by LMS) and can therefore not be processed by Ratings Light.
+**(*)** You **can only rate online tracks** in LMS that have been **added to your LMS library as part of an album**. LMS does not import single online tracks or tracks of online playlists as library tracks and therefore they cannot be processed by Ratings Light.
 <br><br><br><br>
 
 ## Installation, bug reports
