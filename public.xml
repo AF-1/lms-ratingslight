@@ -17,12 +17,12 @@
 			<creator>AF</creator>
 			<sha>37d67cb3781bb2e32b1c2bd211884fc3a4857bf3</sha>
 		</plugin>
-		<plugin name="VisualStatistics" version="1.0.7" minTarget="7.9" maxTarget="*">
+		<plugin name="VisualStatistics" version="1.0.8" minTarget="7.9" maxTarget="*">
 			<title lang="EN">Visual Statistics</title>
 			<desc lang="EN">Have a look at your library statistics with charts</desc>
-			<url>https://github.com/AF-1/lms-visualstatistics/releases/download/1.0.7/lms-visualstatistics-1.0.7.zip</url>
+			<url>https://github.com/AF-1/lms-visualstatistics/releases/download/1.0.8/lms-visualstatistics-1.0.8.zip</url>
 			<creator>AF</creator>
-			<sha>316229b8ebaf042da7aec198fac2816b91d94228</sha>
+			<sha>4ac615fad35e701db319d73f5a50dbb7487c7593</sha>
 		</plugin>
         <plugin name="DynamicPlayList" version="3.1.7" minTarget="7.9" maxTarget="*">
             <title lang="EN">Dynamic Playlists</title>
