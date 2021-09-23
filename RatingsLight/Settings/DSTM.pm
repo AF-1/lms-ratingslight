@@ -84,7 +84,7 @@ sub handler {
 				push (@{$excludegenres_namelist}, $genre);
 			}
 		}
-		$log->debug("*** SAVED *** excludegenres_namelist = ".Dumper($excludegenres_namelist));
+		$log->debug('*** SAVED *** excludegenres_namelist = '.Dumper($excludegenres_namelist));
 		$prefs->set('excludegenres_namelist', $excludegenres_namelist);
 
 		$result = $class->SUPER::handler($client, $paramRef);
@@ -100,11 +100,11 @@ sub beforeRender {
 	my ($class, $paramRef) = @_;
 
 	my $genrelist = getGenres();
-	$log->debug("genrelist (all genres) = ".Dumper($genrelist));
+	$log->debug('genrelist (all genres) = '.Dumper($genrelist));
 	$paramRef->{'genrelist'} = $genrelist;
 
 	my $genrelistsorted = [getSortedGenres()];
-	$log->debug("genrelistsorted (just names) = ".Dumper($genrelistsorted));
+	$log->debug('genrelistsorted (just names) = '.Dumper($genrelistsorted));
 	$paramRef->{'genrelistsorted'} = $genrelistsorted;
 }
 

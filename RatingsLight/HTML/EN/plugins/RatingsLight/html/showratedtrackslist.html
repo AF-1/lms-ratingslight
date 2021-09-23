@@ -8,6 +8,8 @@
 	[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINGENRE_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
 [% ELSIF objecttype == 'year' %]
 	[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSFROMYEAR_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
+[% ELSIF objecttype == 'decade' %]
+	[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSFROMDECADE_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
 [% ELSE %]
 	[% IF titlemore %]
 		[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
@@ -121,7 +123,7 @@ a {text-decoration: none;}
 					</a>
 				</div>
 				[% END %]
-				[% IF objecttype == 'genre' || objecttype == 'year' || objecttype == 'playlist' %]
+				[% IF objecttype == 'genre' || objecttype == 'year' || objecttype == 'decade' || objecttype == 'playlist' %]
 				<div class="secondline underline-on-hover">
 					<a href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&linktitle=[% pagetitle %]&mode=artists&artist_id=[% ratedtrack.artistID %]&player=[% playerURI %]/index.html?index=0">
 						[% ratedtrack.artistname %]

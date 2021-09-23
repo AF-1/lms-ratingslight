@@ -2,7 +2,7 @@ PLUGIN_RATINGSLIGHT
 	EN	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
-	EN	A plugin that takes care of rating your tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Create virtual libraries for (top) rated tracks. Browse (top) rated tracks by artist or genre (browse menus). Keep track of your recently rated songs with a dedicated playlist or log file. Show rated songs for artist, album, genre, year or playlist (webUI and context menu). Support for online library tracks where applicable. Includes "Don't Stop The Music" mixes.
+	EN	A plugin that takes care of rating your tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Create virtual libraries for (top) rated tracks. Browse (top) rated tracks by artist or genre (browse menus). Keep track of your recently rated songs with a dedicated playlist or log file. Show rated songs for artist, album, genre, year or playlist (webUI and context menu). Support for online library tracks where possible. Includes "Don't Stop The Music" mixes.
 
 PLUGIN_RATINGSLIGHT_LOG_DESC
 	EN	Log of plugin RatingsLight
@@ -393,6 +393,12 @@ PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMYEAR
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSFROMYEAR_LISTHEADER
 	EN	Random selection of rated tracks from
+
+PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMDECADE
+	EN	Show random selection of rated tracks from the
+
+PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSFROMDECADE_LISTHEADER
+	EN	Random selection of rated tracks from the
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINPLAYLIST
 	EN	Show rated tracks in
