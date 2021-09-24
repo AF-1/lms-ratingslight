@@ -8,6 +8,7 @@
 			<desc lang="EN">A plugin that takes care of rating your tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from comment tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Create virtual libraries for (top) rated tracks. Browse (top) rated tracks by artist or genre (browse menus). Keep track of your recently rated songs with a dedicated playlist or log file. Show rated songs for artist, album, genre, year or playlist (webUI and context menu). Support for online library tracks where possible. Includes "Don't Stop The Music" mixes.</desc>
 			<url>https://github.com/AF-1/lms-ratingslight/releases/download/2.0.0/lms-ratingslight-2.0.0.zip</url>
 			<creator>AF</creator>
+			<link>https://github.com/AF-1/lms-ratingslight</link>
 			<sha>d0f6cd20942b1543f9a3c48267b94402f42d090f</sha>
 		</plugin>
 		<plugin name="UseCommentTagInfo" version="1.2.9" minTarget="7.9" maxTarget="*">
@@ -15,6 +16,7 @@
 			<desc lang="EN">This plugin uses (key)words in your music files' comment tags to: add extra information to the song details page, define and display custom title formats, create virtual libraries with browse menus.</desc>
 			<url>https://github.com/AF-1/lms-usecommenttaginfo/releases/download/1.2.9/lms-usecommenttaginfo-1.2.9.zip</url>
 			<creator>AF</creator>
+			<link>https://github.com/AF-1/lms-usecommenttaginfo</link>
 			<sha>37d67cb3781bb2e32b1c2bd211884fc3a4857bf3</sha>
 		</plugin>
 		<plugin name="VisualStatistics" version="1.0.8" minTarget="7.9" maxTarget="*">
@@ -22,6 +24,7 @@
 			<desc lang="EN">Have a look at your library statistics with charts</desc>
 			<url>https://github.com/AF-1/lms-visualstatistics/releases/download/1.0.8/lms-visualstatistics-1.0.8.zip</url>
 			<creator>AF</creator>
+			<link>https://github.com/AF-1/lms-visualstatistics</link>
 			<sha>4ac615fad35e701db319d73f5a50dbb7487c7593</sha>
 		</plugin>
         <plugin name="DynamicPlayList" version="3.1.7" minTarget="7.9" maxTarget="*">
@@ -29,6 +32,7 @@
             <desc lang="EN">This plugin lets you play continuous music mixes based on selection criteria defined in so-called dynamic playlists. Comes with a number of ready-to-use dynamic playlists. In addition you can now use your own custom dynamic playlist definitions directly in this plugin, you don't need other plugins for that anymore. Please uninstall v2.x before installing v3.x. More information on the github page.</desc>
         	<url>https://github.com/AF-1/lms-dynamicplaylists/releases/download/3.1.7/lms-dynamicplaylists-3.1.7.zip</url>
             <creator>AF</creator>
+			<link>https://github.com/AF-1/lms-dynamicplaylists</link>
             <sha>716488ca62a79f695168cabd74af7e3a891a3147</sha>
         </plugin>
 	</plugins>
