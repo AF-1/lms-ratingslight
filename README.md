@@ -67,7 +67,7 @@ BTW it usually takes a couple of hours before released versions show up on the o
 
 If you're **reporting a bug** please **include relevant server log entries and the version number of LMS, RL and your OS**. You'll find all of that on the *settings > information* page.
 
-Please post bug reports [here](https://forums.slimdevices.com/showthread.php?113344-Announce-Ratings-Light).
+Please post bug reports only [**here**](https://forums.slimdevices.com/showthread.php?113344-Announce-Ratings-Light).
 <br><br><br><br>
 
 
