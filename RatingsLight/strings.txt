@@ -72,7 +72,7 @@ PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_MAXCOUNT
 	EN	Max. number of tracks<br>in Recently Rated playlist
 
 PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_MAXCOUNT_DESC
-	EN	Limits the number of tracks in the <i>Recently Rated playlist</i><br>(min. 2, max. 200)
+	EN	Limits the number of tracks in the <i>Recently Rated playlist</i>
 
 PLUGIN_RATINGSLIGHT_VARIOUS_USELOGFILE
 	EN	Log changed ratings
@@ -246,11 +246,20 @@ PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME
 PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME_DESC
 	EN	Set the time for your daily backup. If you leave this empty no scheduled backups will occur.
 
+PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS
+	EN	Auto-delete old backups
+
+PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_DESC
+	EN	Have RL delete old backups automatically (recommended if you have <i>scheduled daily backups</i> enabled).<br>If you only do occasional manual backups you may want to disable this to prevent old backups from being auto-deleted.
+
+PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_WARNING
+	EN	recommended if scheduled backups are enabled
+
 PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP
 	EN	Delete backups older than
 
 PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP_DESC
-	EN	Set the number of days after which old backups will be deleted.<br>(min. 1, max. 365)
+	EN	Set the number of days after which old backups will be deleted.
 
 
 PLUGIN_RATINGSLIGHT_RESTORE
@@ -407,13 +416,13 @@ PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_WEB_LIMIT
 	EN	Show more rated tracks - web UI limit
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_WEB_LIMIT_DESC
-	EN	Limits the number of tracks in the <b>LMS web UI</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 200)
+	EN	Limits the number of tracks in Ratings Light <b>web UI</b> context menus. These context menus ("<i>Show rated tracks</i>") are available for artist, album, genre, year, decade, playlist, and on the song details page.
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
 	EN	Show more rated tracks - menu limit
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
-	EN	Limits the number of tracks in the <b>context</b> menu called "<i>Show (more) rated tracks by this artist</i>".<br>(min. 5, max. 100)<br><br>Applies to <b>piCorePlayer, Material skin, SB Touch, SB Radio</b>.
+	EN	Limits the number of tracks in <b>context</b> menus in <b>Material skin</b> and on <b>piCorePlayer, SB Touch, SB Radio</b>. These context menus ("<i>Show rated tracks</i>") are available for artist, album, genre, year, decade, playlist, and on the song details page.
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_ALLSONGS
 	EN	All songs
@@ -472,25 +481,25 @@ PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS
 	EN	Number of DSTM seed tracks
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS_DESC
-	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.<br>(min. 1, max. 20)
+	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PLAYEDTRACKSTOKEEP
 	EN	Number of played tracks in playlist
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PLAYEDTRACKSTOKEEP_DESC
-	EN	Sets the number of <b>played</b> tracks to keep in the DSTM playlist when new tracks are added.<br>(min. 1, max. 200)
+	EN	Sets the number of <b>played</b> tracks to keep in the DSTM playlist when new tracks are added.
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS
 	EN	New tracks added in one batch
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS_DESC
-	EN	Sets the number of new tracks DSTM adds in one batch.<br>(min. 5, max. 50)
+	EN	Sets the number of new tracks DSTM adds in one batch.
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_MINTRACKDUR
 	EN	Minimum track duration
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_MINTRACKDUR_DESC
-	EN	Set the minimum track duration for tracks in <b>Don't Stop The Music</b> mixes.
+	EN	Set the minimum track duration (in <i>seconds</i>) for tracks in <b>Don't Stop The Music</b> mixes.
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_EXCLUDEDGENRES
 	EN	Exclude genres

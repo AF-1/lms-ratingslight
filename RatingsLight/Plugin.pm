@@ -118,50 +118,49 @@ sub initPlugin {
 			return objectInfoHandler('trackArtist', @_);
 		},
 	));
-
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksinalbum => (
 		after => 'ratingslightrating',
 		func => sub {
 			return objectInfoHandler('trackAlbum', @_);
 		},
 	));
-    Slim::Menu::ArtistInfo->registerInfoProvider(ratingslightratedtracksbyartist => (
+	Slim::Menu::ArtistInfo->registerInfoProvider(ratingslightratedtracksbyartist => (
 		after => 'top',
 		func => sub {
 			return objectInfoHandler('artist', @_);
 		},
-    ));
-    Slim::Menu::AlbumInfo->registerInfoProvider(ratingslightratedtracksinalbum => (
+	));
+	Slim::Menu::AlbumInfo->registerInfoProvider(ratingslightratedtracksinalbum => (
 		after => 'top',
 		func => sub {
 			return objectInfoHandler('album', @_);
 		},
-    ));
-    Slim::Menu::GenreInfo->registerInfoProvider(ratingslightratedtracksingenre => (
+	));
+	Slim::Menu::GenreInfo->registerInfoProvider(ratingslightratedtracksingenre => (
 		after => 'top',
 		func => sub {
 			return objectInfoHandler('genre', @_);
 		},
-    ));
-    Slim::Menu::YearInfo->registerInfoProvider(ratingslightratedtracksfromyear => (
+	));
+	Slim::Menu::YearInfo->registerInfoProvider(ratingslightratedtracksfromyear => (
 		after => 'top',
 		before => 'ratingslightratedtracksfromdecade',
 		func => sub {
 			return objectInfoHandler('year', @_);
 		},
-    ));
-    Slim::Menu::YearInfo->registerInfoProvider(ratingslightratedtracksfromdecade => (
+	));
+	Slim::Menu::YearInfo->registerInfoProvider(ratingslightratedtracksfromdecade => (
 		after => 'top',
 		func => sub {
 			return objectInfoHandler('decade', @_);
 		},
-    ));
-    Slim::Menu::PlaylistInfo->registerInfoProvider(ratingslightratedtracksinplaylist => (
+	));
+	Slim::Menu::PlaylistInfo->registerInfoProvider(ratingslightratedtracksinplaylist => (
 		after => 'top',
 		func => sub {
 			return objectInfoHandler('playlist', @_);
 		},
-    ));
+	));
 
 	if (Slim::Utils::PluginManager->isEnabled('Slim::Plugin::DontStopTheMusic::Plugin')) {
 		require Slim::Plugin::DontStopTheMusic::Plugin;
@@ -305,7 +304,7 @@ sub initPrefs {
 
 	my $dstm_batchsizenewtracks = $prefs->get('dstm_batchsizenewtracks');
 	if (!defined $dstm_batchsizenewtracks) {
-		$prefs->set('dstm_batchsizenewtracks', '30');
+		$prefs->set('dstm_batchsizenewtracks', '20');
 	}
 
 	$prefs->set('status_exportingtoplaylistfiles', '0');
@@ -1643,26 +1642,29 @@ sub backupScheduler {
 }
 
 sub cleanupBackups {
-	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
-	my $backupDir = $rlparentfolderpath.'/RatingsLight';
-	return unless (-d $backupDir);
-	my $backupsdaystokeep = $prefs->get('backupsdaystokeep');
-	my $maxkeeptime = $backupsdaystokeep * 24 * 60 * 60; # in seconds
-	my @files;
-	opendir(my $DH, $backupDir) or die "Error opening $backupDir: $!";
-	@files = grep(/^RL_Backup_.*$/, readdir($DH));
-	closedir($DH);
-	my $mtime;
-	my $etime = int(time());
-	my $n = 0;
-	foreach my $file (@files) {
-		$mtime = stat($file)->mtime;
-		if (($etime - $mtime) > $maxkeeptime) {
-			unlink($file) or die "Can\'t delete $file: $!";
-			$n++;
+	my $autodeletebackups = $prefs->get('autodeletebackups');
+	if (defined $autodeletebackups) {
+		my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
+		my $backupDir = $rlparentfolderpath.'/RatingsLight';
+		return unless (-d $backupDir);
+		my $backupsdaystokeep = $prefs->get('backupsdaystokeep');
+		my $maxkeeptime = $backupsdaystokeep * 24 * 60 * 60; # in seconds
+		my @files;
+		opendir(my $DH, $backupDir) or die "Error opening $backupDir: $!";
+		@files = grep(/^RL_Backup_.*$/, readdir($DH));
+		closedir($DH);
+		my $mtime;
+		my $etime = int(time());
+		my $n = 0;
+		foreach my $file (@files) {
+			$mtime = stat($file)->mtime;
+			if (($etime - $mtime) > $maxkeeptime) {
+				unlink($file) or die "Can\'t delete $file: $!";
+				$n++;
+			}
 		}
+		$log->debug("Deleted $n backups.");
 	}
-	$log->debug("Deleted $n backups.");
 }
 
 sub restoreFromBackup {

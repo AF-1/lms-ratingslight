@@ -8,6 +8,7 @@
 @-webkit-keyframes Pulse{from{color:#630030;-webkit-text-shadow:0 0 2px transparent}50%{color:#e33100;-webkit-text-shadow:0 0 5px #e33100}to{color:#630030;-webkit-text-shadow:0 0 2px transparent}}@keyframes Pulse{from{color:#630030;text-shadow:0 0 2px transparent}50%{color:#e33100;text-shadow:0 0 5px #e33100}to{color:#630030;text-shadow:0 0 2px transparent}}.inprogress{padding-left:15px;-webkit-animation-name:Pulse;animation-name:Pulse;-webkit-animation-duration:2s;animation-duration:2s;-webkit-animation-iteration-count:infinite;animation-iteration-count:infinite}
 .status{visibility:hidden;}
 .error{color:red;}
+.recommended{padding-left:15px;color:red;}
 </style>
 
 [% page = "PLUGIN_RATINGSLIGHT" %]
@@ -32,8 +33,13 @@
 [% END %]
 <br>
 
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS" desc="PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_DESC" %]
+	<input name="pref_autodeletebackups" id="autodeletebackups" type="checkbox" [% IF prefs.autodeletebackups %] checked [% END %]>[% IF prefs.scheduledbackups && !prefs.autodeletebackups %] <span class="recommended">[% "PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_WARNING" | string %]</span>[% END %]
+[% END %]
+<br>
+
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP" desc="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP_DESC" %]
-	<input type="text" class="stdedit" name="pref_backupsdaystokeep" id="backupsdaystokeep" value="[% prefs.backupsdaystokeep %]" size="3"> day(s)
+	<input type="text" class="stdedit sliderInput_1_365_1" name="pref_backupsdaystokeep" id="backupsdaystokeep" value="[% prefs.backupsdaystokeep %]" size="2"> day(s)
 [% END %]
 [% END %]
 <hr><br>
