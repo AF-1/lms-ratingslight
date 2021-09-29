@@ -11,21 +11,21 @@
 			<link>https://github.com/AF-1/lms-ratingslight</link>
 			<sha>7ce0939fcd1206782a5e4e5cc11210d290db852d</sha>
 		</plugin>
-		<plugin name="UseCommentTagInfo" version="1.3.1" minTarget="7.9" maxTarget="*">
+		<plugin name="UseCommentTagInfo" version="1.3.2" minTarget="7.9" maxTarget="*">
 			<title lang="EN">Use Comment Tag Info</title>
 			<desc lang="EN">This plugin uses (key)words in your music files' comment tags to: add extra information to the song details page, define and display custom title formats, create virtual libraries with browse menus.</desc>
-			<url>https://github.com/AF-1/lms-usecommenttaginfo/releases/download/1.3.1/lms-usecommenttaginfo-1.3.1.zip</url>
+			<url>https://github.com/AF-1/lms-usecommenttaginfo/releases/download/1.3.2/lms-usecommenttaginfo-1.3.2.zip</url>
 			<creator>AF</creator>
 			<link>https://github.com/AF-1/lms-usecommenttaginfo</link>
-			<sha>905c12b421c99a472833ca71a26df7f859e4dbf3</sha>
+			<sha>fc0d207ce99b8c53135c3408d3249d60e77bdbf6</sha>
 		</plugin>
-		<plugin name="VisualStatistics" version="1.0.8" minTarget="7.9" maxTarget="*">
+		<plugin name="VisualStatistics" version="1.0.9" minTarget="7.9" maxTarget="*">
 			<title lang="EN">Visual Statistics</title>
 			<desc lang="EN">Have a look at your library statistics with charts</desc>
-			<url>https://github.com/AF-1/lms-visualstatistics/releases/download/1.0.8/lms-visualstatistics-1.0.8.zip</url>
+			<url>https://github.com/AF-1/lms-visualstatistics/releases/download/1.0.9/lms-visualstatistics-1.0.9.zip</url>
 			<creator>AF</creator>
 			<link>https://github.com/AF-1/lms-visualstatistics</link>
-			<sha>4ac615fad35e701db319d73f5a50dbb7487c7593</sha>
+			<sha>26d419d7bfc228be55fa9ee8d0adc15e37074f86</sha>
 		</plugin>
 		<plugin name="DynamicPlayList" version="3.1.7" minTarget="7.9" maxTarget="*">
 			<title lang="EN">Dynamic Playlists</title>
