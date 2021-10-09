@@ -113,7 +113,7 @@ sub initPlugin {
 	));
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbyartist => (
 		after => 'ratingslightrating',
-		before => 'ratingslighttrackratedtracksinalbum',
+		before => 'ratingslightmoreratedtracksinalbum',
 		func => sub {
 			return objectInfoHandler('trackArtist', @_);
 		},

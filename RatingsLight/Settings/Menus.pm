@@ -110,17 +110,16 @@ sub beforeRender {
 			push @items, {
 				name => Slim::Utils::Unicode::utf8decode($name, 'utf8')." (".$count.($count eq '1' ? " track)" : " tracks)"),
 				sortName => Slim::Utils::Unicode::utf8decode($name, 'utf8'),
-				value => $k,
-				id => $k,
+				library_id => $k,
 			};
 		}
 	}
-	push @items, {
+	@items = sort { $a->{sortName} cmp $b->{sortName} } @items;
+	unshift @items, {
 		name => "Complete Library (Default)",
-		sortName => " Complete Library",
+		sortName => "Complete Library",
 		library_id => undef,
 	};
-	@items = sort { $a->{sortName} cmp $b->{sortName} } @items;
 	$log->debug("libraries for settings page: ".Dumper(\@items));
 	$paramRef->{virtuallibraries} = \@items;
 }
