@@ -197,116 +197,32 @@ sub initPlugin {
 }
 
 sub initPrefs {
-	my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
-
-	my $topratedminrating = $prefs->get('topratedminrating');
-	if (!defined $topratedminrating) {
-		$prefs->set('topratedminrating', '60');
-	}
-
-	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
-	if (!defined $rlparentfolderpath) {
-		my $playlistdir = $serverPrefs->get('playlistdir');
-		$prefs->set('rlparentfolderpath', $playlistdir);
-	}
+	$prefs->init({
+		rlparentfolderpath => $serverPrefs->get('playlistdir'),
+		topratedminrating => 60,
+		playlistimport_maxtracks => 1000,
+		rating_keyword_prefix => '',
+		rating_keyword_suffix => '',
+		backuptime => '05:28',
+		backup_lastday => '',
+		backupsdaystokeep => 10,
+		selectiverestore => 0,
+		showratedtracksmenus => 0,
+		displayratingchar => 0,
+		recentlymaxcount => 30,
+		ratedtracksweblimit => 60,
+		ratedtrackscontextmenulimit => 60,
+		dstm_minTrackDuration => 90,
+		dstm_percentagerated => 30,
+		dstm_percentagetoprated => 30,
+		dstm_num_seedtracks => 10,
+		dstm_playedtrackstokeep => 5,
+		dstm_batchsizenewtracks => 20,
+	});
 
 	$prefs->set('ratethisplaylistid', '');
 	$prefs->set('ratethisplaylistrating', '');
-
-	my $playlistimport_maxtracks = $prefs->get('playlistimport_maxtracks');
-	if (!defined $playlistimport_maxtracks) {
-		$prefs->set('playlistimport_maxtracks', '1000');
-	}
-
-	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
-	if ((!defined $rating_keyword_prefix) || ($rating_keyword_prefix eq '')) {
-		$prefs->set('rating_keyword_prefix', '');
-	}
-
-	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
-	if ((!defined $rating_keyword_suffix) || ($rating_keyword_suffix eq '')) {
-		$prefs->set('rating_keyword_suffix', '');
-	}
-
 	$prefs->set('exportVL_id', '');
-
-	my $backuptime = $prefs->get('backuptime');
-	if (!defined $backuptime) {
-		$prefs->set('backuptime', '05:28');
-	}
-
-	my $backup_lastday = $prefs->get('backup_lastday');
-	if (!defined $backup_lastday) {
-		$prefs->set('backup_lastday', '');
-	}
-
-	my $backupsdaystokeep = $prefs->get('backupsdaystokeep');
-	if (!defined $backupsdaystokeep) {
-		$prefs->set('backupsdaystokeep', '10');
-	}
-
-	my $selectiverestore = $prefs->get('selectiverestore');
-	if (!defined $selectiverestore) {
-		$prefs->set('selectiverestore', '0');
-	}
-
-	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
-	if (!defined $showratedtracksmenus) {
-		$prefs->set('showratedtracksmenus', '0');
-	}
-
-	my $displayratingchar = $prefs->get('displayratingchar');
-	if (!defined $displayratingchar) {
-		$prefs->set('displayratingchar', '0');
-	}
-
-	my $recentlymaxcount = $prefs->get('recentlymaxcount');
-	if (!defined $recentlymaxcount) {
-		$prefs->set('recentlymaxcount', '30');
-	}
-
-	my $ratedtracksweblimit = $prefs->get('ratedtracksweblimit');
-	if (!defined $ratedtracksweblimit) {
-		$prefs->set('ratedtracksweblimit', '60');
-	}
-
-	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
-	if (!defined $ratedtrackscontextmenulimit) {
-		$prefs->set('ratedtrackscontextmenulimit', '60');
-	}
-
-	my $dstm_minTrackDuration = $prefs->get('dstm_minTrackDuration');
-	if (!defined $dstm_minTrackDuration) {
-		$prefs->set('dstm_minTrackDuration', '90');
-	}
-
-	my $dstm_percentagerated = $prefs->get('dstm_percentagerated');
-	if (!defined $dstm_percentagerated) {
-		$prefs->set('dstm_percentagerated', '30');
-	}
-
-	my $dstm_percentagetoprated = $prefs->get('dstm_percentagetoprated');
-	if (!defined $dstm_percentagetoprated) {
-		$prefs->set('dstm_percentagetoprated', '30');
-	}
-
-	my $excludegenres_namelist = $prefs->get('excludegenres_namelist');
-
-	my $dstm_num_seedtracks = $prefs->get('dstm_num_seedtracks');
-	if (!defined $dstm_num_seedtracks) {
-		$prefs->set('dstm_num_seedtracks', '10');
-	}
-
-	my $dstm_playedtrackstokeep = $prefs->get('dstm_playedtrackstokeep');
-	if (!defined $dstm_playedtrackstokeep) {
-		$prefs->set('dstm_playedtrackstokeep', '5');
-	}
-
-	my $dstm_batchsizenewtracks = $prefs->get('dstm_batchsizenewtracks');
-	if (!defined $dstm_batchsizenewtracks) {
-		$prefs->set('dstm_batchsizenewtracks', '20');
-	}
-
 	$prefs->set('status_exportingtoplaylistfiles', '0');
 	$prefs->set('status_importingfromcommenttags', '0');
 	$prefs->set('status_batchratingplaylisttracks', '0');
@@ -1080,7 +996,7 @@ sub getRatedTracks {
 	my $dbh = getCurrentDBH();
 	eval{
 		my $sth = $dbh->prepare($sqlstatement);
-		$sth->execute() or do {	$sqlstatement = undef;};
+		$sth->execute() or do {$sqlstatement = undef;};
 
 		if ($countOnly == 1) {
 			$trackCount = $sth->fetchrow;
@@ -1267,7 +1183,7 @@ sub importRatingsFromPlaylist {
 			my $trackURL = $playlisttrack->{url};
 			if (defined($playlisttrack->{'remote'}) && ($playlisttrack->{'remote'} == 1)) {
 				if (!defined($playlisttrack->{'extid'})) {
-					$log->info('track is remote but not part of online library: '.$trackURL);
+					$log->debug('track is remote but not part of online library: '.$trackURL);
 					$playlisttrackcount--;
 					$ignoredtracks++;
 					next;
@@ -1276,7 +1192,7 @@ sub importRatingsFromPlaylist {
 			} else {
 				my $thistrack = Slim::Schema->resultset('Track')->objectForUrl($trackURL);
 				if (!defined($thistrack->filesize)) {
-					$log->info('ignoring this track, track dead or moved??? Track URL: '.$trackURL);
+					$log->debug('ignoring this track, track dead or moved??? Track URL: '.$trackURL);
 					$playlisttrackcount--;
 					$ignoredtracks++;
 					next;
@@ -2136,7 +2052,7 @@ sub mapKeyHold {
 							unless (defined $logless) {
 								$log->debug("mapping $function to ${baseKeyName}.hold for $i-$key");
 							}
-							if ((defined($mHash2{$baseKeyName}) || (defined($mHash2{$baseKeyName.'.*'}))) && 								 (!defined($mHash2{$baseKeyName.'.single'}))) {
+							if ((defined($mHash2{$baseKeyName}) || (defined($mHash2{$baseKeyName.'.*'}))) && (!defined($mHash2{$baseKeyName.'.single'}))) {
 								# make baseKeyName.single = baseKeyName
 								$mHash2{$baseKeyName.'.single'} = $mHash2{$baseKeyName};
 							}
@@ -2709,7 +2625,7 @@ sub getRatingFromDB {
 			my $sqlstatement = "select tracks_persistent.rating from tracks_persistent where tracks_persistent.urlmd5 = \"$urlmd5\"";
 			eval{
 				my $sth = $dbh->prepare($sqlstatement);
-				$sth->execute() or do {	$sqlstatement = undef;};
+				$sth->execute() or do {$sqlstatement = undef;};
 				$rating = $sth->fetchrow || 0;
 				$sth->finish();
 			};
@@ -2805,25 +2721,37 @@ sub getTitleFormat_Rating {
 	# get local track if unblessed
 	if ($track && !blessed($track)) {
 		$log->debug('track is not blessed');
-		$track = Slim::Schema->find('Track', $track->{id});
-		if (!blessed($track)) {
-			$log->debug('No track object found');
-			return '';
+		my $trackObj = Slim::Schema->find('Track', $track->{id});
+		if (blessed($trackObj)) {
+			$track = $trackObj;
+		} else {
+			my $trackURL = $track->{'url'};
+			$log->debug('Slim::Schema->find found no blessed track object for id. Trying to retrieve track object with url: '.Dumper($trackURL));
+			if (defined ($trackURL)) {
+				if (Slim::Music::Info::isRemoteURL($trackURL) == 1) {
+					$track = Slim::Schema->_retrieveTrack($trackURL);
+					$log->debug('Track is remote. Retrieved trackObj = '.Dumper($track));
+				} else {
+					$track = Slim::Schema->objectForUrl({
+												'url' => $trackURL,
+											});
+					$log->debug('Track is not remote. Track objectForUrl = '.Dumper($track));
+				}
+			} else {
+				return '';
+			}
 		}
 	}
 
-	if ((Slim::Music::Info::isRemoteURL($track->url) == 1) && (!defined($track->extid))) {
-		$log->info('track is remote and has no extid. Skipping titleformat for url: '.$track->url);
-		return $ratingtext;
-	}
-
-	my $rating100ScaleValue = 0;
-	$rating100ScaleValue = getRatingFromDB($track);
-	if ($rating100ScaleValue > 0) {
-		if (defined $appended) {
-			$ratingtext = getRatingTextLine($rating100ScaleValue, 'appended');
-		} else {
-			$ratingtext = getRatingTextLine($rating100ScaleValue);
+	if ($track) {
+		my $rating100ScaleValue = 0;
+		$rating100ScaleValue = getRatingFromDB($track);
+		if ($rating100ScaleValue > 0) {
+			if (defined $appended) {
+				$ratingtext = getRatingTextLine($rating100ScaleValue, 'appended');
+			} else {
+				$ratingtext = getRatingTextLine($rating100ScaleValue);
+			}
 		}
 	}
 	return $ratingtext;
