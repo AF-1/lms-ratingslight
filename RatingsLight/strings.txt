@@ -293,7 +293,7 @@ PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE
 	EN	Choose what to restore
 
 PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_DESC
-	EN	You can limit restoring to local file tracks or online tracks.
+	EN	You can limit restoring to local file tracks or online library tracks.
 
 PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_ALL
 	EN	All tracks
@@ -302,7 +302,7 @@ PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_LOCALONLY
 	EN	Local file tracks only
 
 PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_REMOTEONLY
-	EN	Online tracks only
+	EN	Online library tracks only
 
 PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE
 	EN	Clear all ratings before restore

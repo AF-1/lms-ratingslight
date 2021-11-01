@@ -155,7 +155,7 @@ sub beforeRender {
 				name => Slim::Utils::Unicode::utf8decode($name, 'utf8')." (".$count.($count eq '1' ? " track)" : " tracks)"),
 				sortName => Slim::Utils::Unicode::utf8decode($name, 'utf8'),
 				value => $k,
-				id => $k,
+				library_id => $k,
 			};
 		}
 	}
