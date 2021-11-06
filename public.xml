@@ -27,13 +27,5 @@
 			<link>https://github.com/AF-1/lms-visualstatistics</link>
 			<sha>f1a34ef5d0122beb576f8dcc7a15624c40348912</sha>
 		</plugin>
-		<plugin name="DynamicPlayList" version="3.2.5" minTarget="7.9" maxTarget="*">
-			<title lang="EN">Dynamic Playlists</title>
-			<desc lang="EN">LAST UPDATE in LMS main repository. Very soon Dynamic Playlists version 3+ will be removed from the LMS main repository for good. If you want to get future updates please add the github repository url to LMS > Settings > Plugins. More information in Home Menu > Dynamic Playlists and on github: https://github.com/AF-1/lms-dynamicplaylists#using-repo-url</desc>
-			<url>https://github.com/AF-1/lms-dynamicplaylists/releases/download/3.2.5/lms-dynamicplaylists-3.2.5.zip</url>
-			<creator>AF</creator>
-			<link>https://github.com/AF-1/lms-dynamicplaylists</link>
-			<sha>73bfd7231200a7b6005831061b6c51f6d1841be9</sha>
-		</plugin>
 	</plugins>
 </extensions>
