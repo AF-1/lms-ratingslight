@@ -86,19 +86,7 @@ sub beforeRender {
 	my $currentLibrary = $prefs->get('browsemenus_sourceVL_id');
 	$log->debug("current browsemenus_sourceVL_id = ".Dumper($currentLibrary));
 
-	my $localonlyname = Slim::Music::VirtualLibraries->getNameForId("localTracksOnly");
-	my $preferlocalname = Slim::Music::VirtualLibraries->getNameForId("preferLocalLibraryOnly");
-
-	my %hiddenVLs;
-	if ((defined $localonlyname) && ($localonlyname ne '') && (defined $preferlocalname) && ($preferlocalname ne '')) {
-		%hiddenVLs = map {
-		$_ => 1
-		} ("Ratings Light - Rated Tracks", "Ratings Light - Top Rated Tracks", $preferlocalname, $localonlyname);
-	} else {
-		%hiddenVLs = map {
-		$_ => 1
-		} ("Ratings Light - Rated Tracks", "Ratings Light - Top Rated Tracks");
-	}
+	my %hiddenVLs = map {$_ => 1} ("Ratings Light - Rated Tracks", "Ratings Light - Top Rated Tracks");
 	$log->debug("hidden libraries: ".Dumper(\%hiddenVLs));
 
 	while (my ($k, $v) = each %{$libraries}) {

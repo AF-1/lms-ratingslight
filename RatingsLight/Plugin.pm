@@ -220,6 +220,10 @@ sub initPrefs {
 		dstm_batchsizenewtracks => 20,
 	});
 
+	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
+	my $rlfolderpath = $rlparentfolderpath.'/RatingsLight';
+	mkdir($rlfolderpath, 0755) unless (-d $rlfolderpath);
+
 	$prefs->set('ratethisplaylistid', '');
 	$prefs->set('ratethisplaylistrating', '');
 	$prefs->set('exportVL_id', '');
