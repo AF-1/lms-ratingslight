@@ -191,7 +191,6 @@ sub initPlugin {
 		});
 	}
 
-	backupScheduler();
 	initExportBaseFilePathMatrix();
 	$class->SUPER::initPlugin(@_);
 }
@@ -286,7 +285,10 @@ sub initPrefs {
 }
 
 sub postinitPlugin {
-	initVirtualLibraries();
+	unless (!Slim::Schema::hasLibrary() || Slim::Music::Import->stillScanning) {
+		initVirtualLibraries();
+		backupScheduler();
+	}
 }
 
 
