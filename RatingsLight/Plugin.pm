@@ -49,7 +49,7 @@ use Slim::Utils::Scanner::API;
 use Slim::Utils::Strings qw(string);
 use Slim::Utils::Text;
 use Time::HiRes qw(time);
-use URI::Escape;
+use URI::Escape qw(uri_escape_utf8 uri_unescape);
 use XML::Parser;
 
 use Plugins::RatingsLight::Importer;
@@ -1211,7 +1211,7 @@ sub importRatingsFromPlaylist {
 			foreach my $thisTrackURL (@ratableTracks) {
 				writeRatingToDB($thisTrackURL, $rating, 0);
 			}
-			$log->info('Playlist (ID: '.$playlistid.') contained '.(scalar (@ratableTracks)).(scalar (@ratableTracks) == 1 ? ' track' : ' tracks').'that could be rated.');
+			$log->info('Playlist (ID: '.$playlistid.') contained '.(scalar (@ratableTracks)).(scalar (@ratableTracks) == 1 ? ' track' : ' tracks').' that could be rated.');
 			refreshAll();
 		} else {
 			$log->info('Playlist (ID: '.$playlistid.') contained no tracks that could be rated.');
@@ -1229,6 +1229,7 @@ sub importRatingsFromPlaylist {
 }
 
 sub exportRatingsToPlaylistFiles {
+	my $class = shift;
 	my $status_exportingtoplaylistfiles = $prefs->get('status_exportingtoplaylistfiles');
 	if ($status_exportingtoplaylistfiles == 1) {
 		$log->warn('Export is already in progress, please wait for the previous export to finish');
@@ -1315,11 +1316,13 @@ sub exportRatingsToPlaylistFiles {
 			}
 			for my $ratedTrack (@ratedTracks) {
 				my $ratedTrackURL = $ratedTrack->{'url'};
-				$ratedTrackURL = changeExportFilePath($ratedTrack->{'url'}) if ($ratedTrack->{'remote'} != 1);
+				my $ratedTrackURL_extURL = changeExportFilePath($ratedTrackURL, 1) if ($ratedTrack->{'remote'} != 1);
 
-				print $output '#EXTURL:'.$ratedTrackURL."\n";
-				my $unescapedURL = uri_unescape($ratedTrackURL);
-				print $output $unescapedURL."\n";
+				print $output '#EXTURL:'.$ratedTrackURL_extURL."\n";
+				my $ratedTrackPath = pathForItem($ratedTrackURL);
+				$ratedTrackPath = Slim::Utils::Unicode::utf8decode_locale(pathForItem($ratedTrackURL));
+				$ratedTrackPath = changeExportFilePath($ratedTrackPath) if ($ratedTrack->{'remote'} != 1);
+				print $output $ratedTrackPath."\n";
 			}
 			close $output;
 		}
@@ -1334,31 +1337,44 @@ sub exportRatingsToPlaylistFiles {
 
 sub changeExportFilePath {
 	my $trackURL = shift;
+	my $isEXTURL = shift;
 	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
 
 	if (scalar @{$exportbasefilepathmatrix} > 0) {
 		my $oldtrackURL = $trackURL;
 		my $exportextension = $prefs->get('exportextension');
+		my $escaped_trackURL = uri_escape_utf8($trackURL);
 
 		foreach my $thispath (@{$exportbasefilepathmatrix}) {
-			my $lmsbasepath = escape($thispath->{'lmsbasepath'});
-			$lmsbasepath =~ s/%2F/\//isg;
+			my $lmsbasepath = $thispath->{'lmsbasepath'};
 
-			if (($trackURL =~ $lmsbasepath) && (defined ($thispath->{'substitutebasepath'})) && (($thispath->{'substitutebasepath'}) ne '')) {
-				my $substitutebasepath = $thispath->{'substitutebasepath'};
-				if (defined $exportextension && $exportextension ne '') {
-					$trackURL =~ s/\.[^.]*$/\.$exportextension/isg;
-				}
+			if ($isEXTURL) {
 				$lmsbasepath =~ s/\\/\//isg;
-				$lmsbasepath =~ s/(^\/*)|(\/*$)//isg;
-				$substitutebasepath =~ s/\\/\//isg;
-				$substitutebasepath =~ s/(^\/*)|(\/*$)//isg;
-				$substitutebasepath = escape($substitutebasepath);
-				$substitutebasepath =~ s/%2F/\//isg;
+			}
 
-				$trackURL =~ s/$lmsbasepath/$substitutebasepath/isg;
-				$trackURL =~ s/\/{2,}/\//isg;
-				$trackURL =~ s/file:\//file:\/\/\//isg;
+			my $escaped_lmsbasepath = uri_escape_utf8($lmsbasepath);
+
+			if (($escaped_trackURL =~ $escaped_lmsbasepath) && (defined ($thispath->{'substitutebasepath'})) && (($thispath->{'substitutebasepath'}) ne '')) {
+				my $substitutebasepath = $thispath->{'substitutebasepath'};
+				if ($isEXTURL) {
+					$substitutebasepath =~ s/\\/\//isg;
+				}
+				my $escaped_substitutebasepath = uri_escape_utf8($substitutebasepath);
+
+				if (defined $exportextension && $exportextension ne '') {
+					$escaped_trackURL =~ s/\.[^.]*$/\.$exportextension/isg;
+				}
+
+				$escaped_trackURL =~ s/$escaped_lmsbasepath/$escaped_substitutebasepath/isg;
+				$trackURL = uri_unescape($escaped_trackURL);
+
+				if ($isEXTURL) {
+					$trackURL =~ s/ /%20/isg;
+				} else {
+					$trackURL = Slim::Utils::Unicode::utf8decode_locale($trackURL);
+
+				}
+
 				$log->debug('old url: '.$oldtrackURL."\nlmsbasepath = ".$lmsbasepath."\nsubstitutebasepath = ".$substitutebasepath."\nnew url = ".$trackURL);
 			}
 		}
@@ -1499,7 +1515,7 @@ sub createBackup {
 
 			my $rating100ScaleValue = $ratedTrack->{'rating'};
 			my $remote = $ratedTrack->{'remote'};
-			$BACKUPtrackURL = escape($BACKUPtrackURL);
+			$BACKUPtrackURL = uri_escape_utf8($BACKUPtrackURL);
 			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<remote>".$remote."</remote>\n\t</track>\n";
 		}
 		print $output "</RatingsLight>\n";
@@ -1673,7 +1689,7 @@ sub restoreScanFunction {
 				last;
 			}
 		}
-		$line =~ s/&#(\d*);/escape(chr($1))/ge;
+		$line =~ s/&#(\d*);/uri_escape_utf8(chr($1))/ge;
 		$backupParserNB->parse_more($line);
 		return 1;
 	}
@@ -2860,7 +2876,13 @@ sub uniq {
 	grep !$seen{$_}++, @_;
 }
 
-*escape = \&URI::Escape::uri_escape_utf8;
+sub pathForItem {
+	my $item = shift;
+	if (Slim::Music::Info::isFileURL($item) && !Slim::Music::Info::isFragment($item)) {
+		return Slim::Utils::Misc::pathFromFileURL($item);
+	}
+	return $item;
+}
 
 sub unescape {
 	my $in = shift;
