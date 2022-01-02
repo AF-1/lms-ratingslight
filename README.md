@@ -47,25 +47,14 @@ A plugin that takes care of rating tracks in your [Logitech Media Server](https:
 
 ## Installation, bug reports
 
-You should be able to install *Ratings Light* from *LMS* > *Settings* > *Plugins*
+You should be able to install *Ratings Light* from *LMS* > *Settings* > *Plugins*.
 
-Or you could download the latest (source code) zip from this repository and drop the folder called *RatingsLight* into your local LMS plugin folder.
+If you want to test a new patch that hasn't made it into a release version yet or you need to install a previous version you'll have to [install the plugin manually](https://github.com/AF-1/sobras/wiki/Manual-installation-of-LMS-plugins).
 
-If you want to test a new patch that hasn't made it into a release version yet or you need to install a previous version:
-
-* go to *settings > plugins* and uninstall the currently installed version of Ratings Light.
-* then go to *settings > information*. Near the bottom of the page you'll find several plugin folder paths. The path you want does not include the word Cache. Examples:
-    * *piCorePlayer*: /usr/local/slimserver/Plugins
-    * *Mac*: /Users/yourusername/Library/Application Support/Squeezebox/Plugins
-* now download the version you need:
-    * the *latest* version of Ratings Light (incl. patches not yet released) is on github. Click the green Code button and download the zip archive. Move the folder called RatingsLight from that archive into the plugin folder mentioned above.
-	* *previously released* versions are available here for a *limited* time after the release of a new version. Download the source code zip archive and move the folder called RatingsLight from that archive into the plugin folder mentioned above.
-* restart LMS
-
-BTW it usually takes a couple of hours before released versions show up on the official LMS plugins page.
+*Previously released* versions are available here for a *limited* time after the release of a new version. The official LMS plugins page is updated about twice a day so it usually takes a couple of hours before new released versions are listed.
 
 
-If you're **reporting a bug** please **include relevant server log entries and the version number of LMS, RL and your OS**. You'll find all of that on the *settings > information* page.
+If you're **reporting a bug** please **include relevant server log entries and the version number of LMS, RL and your OS**. You'll find all of that on the *LMS > Settings > Information* page.
 
 Please post bug reports only [**here**](https://forums.slimdevices.com/showthread.php?113344-Announce-Ratings-Light).
 <br><br><br><br>
