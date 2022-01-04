@@ -1,7 +1,7 @@
 #
 # Ratings Light
 #
-# (c) 2020-2021 AF-1
+# (c) 2020-2022 AF-1
 #
 # Portions of code derived from the TrackStat plugin
 # (c) 2006 Erland Isaksson (erland_i@hotmail.com)
