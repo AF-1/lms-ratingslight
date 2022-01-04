@@ -1229,7 +1229,6 @@ sub importRatingsFromPlaylist {
 }
 
 sub exportRatingsToPlaylistFiles {
-	my $class = shift;
 	my $status_exportingtoplaylistfiles = $prefs->get('status_exportingtoplaylistfiles');
 	if ($status_exportingtoplaylistfiles == 1) {
 		$log->warn('Export is already in progress, please wait for the previous export to finish');
@@ -1347,11 +1346,9 @@ sub changeExportFilePath {
 
 		foreach my $thispath (@{$exportbasefilepathmatrix}) {
 			my $lmsbasepath = $thispath->{'lmsbasepath'};
-
 			if ($isEXTURL) {
 				$lmsbasepath =~ s/\\/\//isg;
 			}
-
 			my $escaped_lmsbasepath = uri_escape_utf8($lmsbasepath);
 
 			if (($escaped_trackURL =~ $escaped_lmsbasepath) && (defined ($thispath->{'substitutebasepath'})) && (($thispath->{'substitutebasepath'}) ne '')) {
