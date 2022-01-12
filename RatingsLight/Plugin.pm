@@ -864,17 +864,17 @@ sub VFD_ratedtracks {
 				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW'),
 					type => 'redirect',
 					url => \&VFD_execActions,
-					passthrough => [$track_id, 'load', 'Playing track now'],
+					passthrough => [$track_id, 'load', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW_MSG')],
 				},
 				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT'),
 					type => 'redirect',
 					url => \&VFD_execActions,
-					passthrough => [$track_id, 'insert', 'Track will be played next'],
+					passthrough => [$track_id, 'insert', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT_MSG')],
 				},
 				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND'),
 					type => 'redirect',
 					url => \&VFD_execActions,
-					passthrough => [$track_id, 'add', 'Added track to end of queue'],
+					passthrough => [$track_id, 'add', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND_MSG')],
 				},
 			]
 		});
@@ -889,17 +889,17 @@ sub VFD_ratedtracks {
 				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW'),
 					type => 'redirect',
 					url => \&VFD_execActions,
-					passthrough => [$listalltrackids, 'load', 'Playing tracks now'],
+					passthrough => [$listalltrackids, 'load', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW_MSG_ALL')],
 				},
 				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT'),
 					type => 'redirect',
 					url => \&VFD_execActions,
-					passthrough => [$listalltrackids, 'insert', 'Tracks will be played next'],
+					passthrough => [$listalltrackids, 'insert', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT_MSG_ALL')],
 				},
 				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND'),
 					type => 'redirect',
 					url => \&VFD_execActions,
-					passthrough => [$listalltrackids, 'add', 'Added tracks to end of queue'],
+					passthrough => [$listalltrackids, 'add', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND_MSG_ALL')],
 				},
 			]
 		};
@@ -1798,13 +1798,13 @@ sub initVirtualLibraries {
 		if ((!defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
 			push @libraries,{
 				id => 'RL_RATED',
-				name => 'Ratings Light - Rated Tracks',
+				name => string('PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS'),
 				sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 group by tracks.id},
 			};
 		} else {
 			push @libraries,{
 				id => 'RL_RATED',
-				name => 'Ratings Light - Rated Tracks',
+				name => string('PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS'),
 				sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id},
 			};
 		}
@@ -1813,13 +1813,13 @@ sub initVirtualLibraries {
 			if ((!defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
 				push @libraries,{
 					id => 'RL_TOPRATED',
-					name => 'Ratings Light - Top Rated Tracks',
+					name => string('PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS'),
 					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating group by tracks.id}
 				};
 			} else {
 				push @libraries,{
 					id => 'RL_TOPRATED',
-					name => 'Ratings Light - Top Rated Tracks',
+					name => string('PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS'),
 					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}
 				};
 			}
@@ -1834,7 +1834,7 @@ sub initVirtualLibraries {
 		my $browsemenus_sourceVL_name = '';
 		if ((defined $browsemenus_sourceVL_id) && ($browsemenus_sourceVL_id ne '')) {
 			$browsemenus_sourceVL_name = Slim::Music::VirtualLibraries->getNameForId($browsemenus_sourceVL_id);
-			$browsemenus_sourceVL_name = ' (Library View: '.$browsemenus_sourceVL_name.')';
+			$browsemenus_sourceVL_name = ' ('.string('PLUGIN_RATINGSLIGHT_LIBVIEW').': '.$browsemenus_sourceVL_name.')';
 		}
 		Slim::Menu::BrowseLibrary->registerNode({
 			type => 'link',
@@ -2676,7 +2676,7 @@ sub getRatingTextLine {
 	if ($displayratingchar == 1) {
 		$ratingchar = HTML::Entities::decode_entities('&#x2605;'); # "blackstar" - HTML Entity (hex): &#x2605;
 	}
-	my $text = string('PLUGIN_RATINGSLIGHT_UNRATED');
+	my $text = string('PLUGIN_RATINGSLIGHT_LANGSTRING_UNRATED');
 
 	if ($rating > 0) {
 		my $detecthalfstars = ($rating/2)%2;

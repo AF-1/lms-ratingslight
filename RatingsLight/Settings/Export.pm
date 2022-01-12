@@ -30,6 +30,7 @@ use Slim::Utils::Log;
 use Slim::Utils::Prefs;
 use Slim::Utils::Misc;
 use Slim::Utils::Strings;
+use Slim::Utils::Strings qw(string cstring);
 use Data::Dumper;
 
 my $prefs = preferences('plugin.ratingslight');
@@ -141,14 +142,14 @@ sub beforeRender {
 
 		unless ($hiddenVLs{$name}) {
 			push @items, {
-				name => Slim::Utils::Unicode::utf8decode($name, 'utf8')." (".$count.($count eq '1' ? " track)" : " tracks)"),
+				name => Slim::Utils::Unicode::utf8decode($name, 'utf8')." (".$count.($count eq '1' ? " ".string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACK").")" : " ".string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACKS").")"),
 				sortName => Slim::Utils::Unicode::utf8decode($name, 'utf8'),
 				library_id => $k,
 			};
 		}
 	}
 	push @items, {
-		name => "Complete Library (Default)",
+		name => string("PLUGIN_RATINGSLIGHT_LANGSTRING_COMPLETELIB"),
 		sortName => " Complete Library",
 		library_id => undef,
 	};

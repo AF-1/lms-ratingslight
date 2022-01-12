@@ -96,7 +96,7 @@ sub beforeRender {
 
 		unless ($hiddenVLs{$name}) {
 			push @items, {
-				name => Slim::Utils::Unicode::utf8decode($name, 'utf8')." (".$count.($count eq '1' ? " track)" : " tracks)"),
+				name => Slim::Utils::Unicode::utf8decode($name, 'utf8')." (".$count.($count eq '1' ? " ".string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACK").")" : " ".string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACKS").")"),
 				sortName => Slim::Utils::Unicode::utf8decode($name, 'utf8'),
 				library_id => $k,
 			};
@@ -104,7 +104,7 @@ sub beforeRender {
 	}
 	@items = sort { $a->{sortName} cmp $b->{sortName} } @items;
 	unshift @items, {
-		name => "Complete Library (Default)",
+		name => string("PLUGIN_RATINGSLIGHT_LANGSTRING_COMPLETELIB"),
 		sortName => "Complete Library",
 		library_id => undef,
 	};
