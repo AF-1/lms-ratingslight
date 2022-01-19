@@ -2118,9 +2118,11 @@ sub addToRecentlyRatedPlaylist {
 	my $playlistid;
 
 	if ($existsPL == 1) {
+		$log->debug("Playlist 'Recently Rated Tracks' already exists.");
 		my $playlistidhash = $request->getResult('playlists_loop');
 		foreach my $hashref (@{$playlistidhash}) {
 			$playlistid = $hashref->{id};
+			$log->debug('Playlist ID = '.$playlistid);
 		}
 
 		my $trackcountRequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'tracks', '0', '1000', 'playlist_id:'.$playlistid, 'tags:count']);
@@ -2130,8 +2132,10 @@ sub addToRecentlyRatedPlaylist {
 		}
 
 	} elsif ($existsPL == 0) {
+		$log->debug("Playlist 'Recently Rated Tracks' does not exist. Creating playlist.");
 		my $createplaylistrequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'new', 'name:'.$playlistname]);
 		$playlistid = $createplaylistrequest->getResult('playlist_id');
+		$log->debug('Playlist ID = '.$playlistid);
 	}
 
 	Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:add', 'playlist_id:'.$playlistid, 'url:'.$trackURL]);
