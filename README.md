@@ -90,9 +90,9 @@ You can also **get notified of track rating changes** by *subscribing* to
 <br><br><br><br>
 
 
-## display ratings on the Now Playing screen of piCorePlayer, Squeezebox Touch or Radio
+## Display ratings on the Now Playing screen of piCorePlayer, Squeezebox Touch or Radio
 
-If you don't mind using CLI commands and you've always wanted the Now Playing screen of your piCorePlayer, Squeezebox Touch or Radio to display track ratings, please check out [**this page**](https://github.com/AF-1/sobras/tree/main/lms-nowplaying_screen_with_ratings).<br>
+If you've always wanted the Now Playing screen of your piCorePlayer, Squeezebox Touch or Radio to display track ratings, please check out [**this page**](https://github.com/AF-1/sobras/tree/main/lms-nowplaying_screen_with_ratings).<br>
 Here's an example:
 
 ![display ratings on the now playing screen of jivelite players](screenshots/ratings_jivelite_npscreen.jpg)
