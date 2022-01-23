@@ -59,6 +59,11 @@ If you're **reporting a bug** please **include relevant server log entries and t
 Please post bug reports only [**here**](https://forums.slimdevices.com/showthread.php?113344-Announce-Ratings-Light).
 <br><br><br><br>
 
+## Translation
+The [**strings.txt**](https://github.com/AF-1/lms-ratingslight/blob/main/RatingsLight/strings.txt) file contains all localizable strings. Once you're done testing the plugin with your translated strings just create a pull request on GitHub. If that doesn't work for you post the updated file as an attachment in the [forum](https://forums.slimdevices.com/showthread.php?113344-Announce-Ratings-Light).<br><br>
+It's probably not a bad idea to keep the translated sentences roughly as long as the original ones and to avoid special characters.<br>
+Please keep in mind that some of these strings are supposed to be displayed on different UIs. My tests usually cover the LMS default skin, piCorePlayer and maybe Boom if applicable.
+<br><br><br><br>
 
 ## Note for developers
 
