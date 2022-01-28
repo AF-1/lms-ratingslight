@@ -2113,29 +2113,18 @@ sub addToRecentlyRatedPlaylist {
 	my $trackURL = shift;
 	my $playlistname = 'Recently Rated Tracks (Ratings Light)';
 	my $recentlymaxcount = $prefs->get('recentlymaxcount');
-	my $request = Slim::Control::Request::executeRequest(undef, ['playlists', 0, 1, 'search:'.$playlistname]);
-	my $existsPL = $request->getResult('count');
-	my $playlistid;
 
-	if ($existsPL == 1) {
-		$log->debug("Playlist 'Recently Rated Tracks' already exists.");
-		my $playlistidhash = $request->getResult('playlists_loop');
-		foreach my $hashref (@{$playlistidhash}) {
-			$playlistid = $hashref->{id};
-			$log->debug('Playlist ID = '.$playlistid);
-		}
-
-		my $trackcountRequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'tracks', '0', '1000', 'playlist_id:'.$playlistid, 'tags:count']);
-		my $trackcount = $trackcountRequest->getResult('count');
-		if ($trackcount > ($recentlymaxcount - 1)) {
-			Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:delete', 'playlist_id:'.$playlistid, 'index:0']);
-		}
-
-	} elsif ($existsPL == 0) {
-		$log->debug("Playlist 'Recently Rated Tracks' does not exist. Creating playlist.");
-		my $createplaylistrequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'new', 'name:'.$playlistname]);
-		$playlistid = $createplaylistrequest->getResult('playlist_id');
-		$log->debug('Playlist ID = '.$playlistid);
+	my $createplaylistrequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'new', 'name:'.$playlistname]);
+	my $playlistid = $createplaylistrequest->getResult('playlist_id') || $createplaylistrequest->getResult('overwritten_playlist_id');
+	$log->debug('playlistid = '.Dumper($playlistid));
+	if (!$playlistid) {
+		$log->info("Couldn't create or write to playlist 'Recently rated tracks'");
+		return;
+	}
+	my $trackcountRequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'tracks', '0', '1000', 'playlist_id:'.$playlistid, 'tags:count']);
+	my $trackcount = $trackcountRequest->getResult('count');
+	if ($trackcount > ($recentlymaxcount - 1)) {
+		Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:delete', 'playlist_id:'.$playlistid, 'index:0']);
 	}
 
 	Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:add', 'playlist_id:'.$playlistid, 'url:'.$trackURL]);
