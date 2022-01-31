@@ -19,6 +19,9 @@ A plugin that takes care of rating tracks in your [Logitech Media Server](https:
 ![Rated Tracks - Context Menu](screenshots/contextmenu_years.jpg)<br><br>
 (available for artist, album, genre, year, and playlist)
 <br><br><br>
+#### Ratings Light *Settings* pages
+![Rated Tracks - Home Menu](screenshots/rl_settings_preview.gif)
+<hr><br>
 
 ## Requirements
 
