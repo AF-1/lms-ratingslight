@@ -136,9 +136,6 @@ You can also **get notified of track rating changes** by *subscribing* to
 If you're **reporting a bug** please **include relevant server log entries and the version number of LMS, Perl and your OS**. You'll find all of that on the  *LMS* > *Settings* > *Information* page.
 
 Please post bug reports only [**here**](https://forums.slimdevices.com/showthread.php?113344-Announce-Ratings-Light).
-<br><br><br><br>
-
-
-[^1]: Browse menus are provided by LMS. Under certain circumstances you may see (empty) albums or artists in some menus that shouldn't be there. There's nothing I can do about it because LMS creates and provides these menus.<br>Just go down one level: click to *show all tracks* or *show all albums*.<br>In case this LMS issue ever gets resolved I'll update this page.
 <br><br>
+
 I'd like to thank *mherger* for his invaluable support and *erland* for his plugins, a great source of inspiration.
