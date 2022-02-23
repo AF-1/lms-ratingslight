@@ -52,6 +52,8 @@ A plugin that takes care of rating tracks in your [Logitech Media Server](https:
 * most features should work with **online library tracks** (see [**FAQ**](https://github.com/AF-1/lms-ratingslight#faq))
 
 **Some features are not enabled by default.** Please go to the plugin's settings page to enable them.
+
+[^1]: Browse menus are provided by LMS. Under certain circumstances you may see (empty) albums or artists in some menus that shouldn't be there. There's nothing I can do about it because LMS creates and provides these menus.<br>Just go down one level: click to *show all tracks* or *show all albums*.<br>In case this LMS issue ever gets resolved I'll update this page.
 <br><br><br><br>
 
 
