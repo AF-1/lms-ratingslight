@@ -54,7 +54,7 @@ font-family: sans-serif;
 </style>
 [% "PLUGIN_RATINGSLIGHT_RATING" | string %]
 	<span class="rating" data-default-rating="[% item.itemvalue5starexact %]"></span>
-	<span id="unrate_button" class="unrate_btn" onclick="r.setDefaultRating(0); clearlmsrating();" title="[% PLUGIN_RATINGSLIGHT_UNRATEACTION | string %]"></span>
+	<span id="unrate_button" class="unrate_btn" onclick="r.setDefaultRating(0); clearlmsrating();" title="[% "PLUGIN_RATINGSLIGHT_UNRATEACTION" | string %]"></span>
 
 <script src="[% webroot %]plugins/RatingsLight/html/js/SimpleStarRating.js"></script>
 <script type="text/javascript">

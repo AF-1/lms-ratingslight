@@ -3,9 +3,6 @@
 #
 # (c) 2020-2022 AF-1
 #
-# Portions of code derived from the TrackStat plugin
-# (c) 2006 Erland Isaksson (erland_i@hotmail.com)
-#
 # GPLv3 license
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,6 +49,7 @@ use Time::HiRes qw(time);
 use URI::Escape qw(uri_escape_utf8 uri_unescape);
 use XML::Parser;
 
+use Plugins::RatingsLight::Common ':all';
 use Plugins::RatingsLight::Importer;
 use Plugins::RatingsLight::Settings::Basic;
 use Plugins::RatingsLight::Settings::Backup;
@@ -199,12 +197,14 @@ sub initPrefs {
 	$prefs->init({
 		rlparentfolderpath => $serverPrefs->get('playlistdir'),
 		topratedminrating => 60,
+		prescanbackup => 1,
 		playlistimport_maxtracks => 1000,
 		rating_keyword_prefix => '',
 		rating_keyword_suffix => '',
 		backuptime => '05:28',
 		backup_lastday => '',
 		backupsdaystokeep => 10,
+		backupfilesmin => 5,
 		selectiverestore => 0,
 		showratedtracksmenus => 0,
 		displayratingchar => 0,
@@ -1363,7 +1363,7 @@ sub changeExportFilePath {
 				}
 
 				$escaped_trackURL =~ s/$escaped_lmsbasepath/$escaped_substitutebasepath/isg;
-				$trackURL = uri_unescape($escaped_trackURL);
+				$trackURL = Encode::decode('utf8', uri_unescape($escaped_trackURL));
 
 				if ($isEXTURL) {
 					$trackURL =~ s/ /%20/isg;
@@ -1381,17 +1381,7 @@ sub changeExportFilePath {
 
 sub initExportBaseFilePathMatrix {
 	# get LMS music dirs
-	my $mediadirs = $serverPrefs->get('mediadirs');
-	my $ignoreInAudioScan = $serverPrefs->get('ignoreInAudioScan');
-	my $lmsmusicdirs = [];
-	my %musicdircount;
-	my $thisdir;
-	foreach $thisdir (@{$mediadirs}, @{$ignoreInAudioScan}) {$musicdircount{$thisdir}++}
-	foreach $thisdir (keys %musicdircount) {
-		if ($musicdircount{$thisdir} == 1) {
-			push (@{$lmsmusicdirs}, $thisdir);
-		}
-	}
+	my $lmsmusicdirs = getMusicDirs();
 
 	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
 	if (!defined $exportbasefilepathmatrix) {
@@ -1438,100 +1428,6 @@ sub delayedPostScanRefresh {
 
 ## backup, restore
 
-sub createBackup {
-	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: access to rating values blocked until library scan is completed');
-		return;
-	}
-
-	my $status_creatingbackup = $prefs->get('status_creatingbackup');
-	if ($status_creatingbackup == 1) {
-		$log->warn('A backup is already in progress, please wait for the previous backup to finish');
-		return;
-	}
-	$prefs->set('status_creatingbackup', 1);
-
-	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
-	my $backupDir = $rlparentfolderpath.'/RatingsLight';
-	mkdir($backupDir, 0755) unless (-d $backupDir);
-	chdir($backupDir) or $backupDir = $rlparentfolderpath;
-
-	my ($sql, $sth) = undef;
-	my $dbh = getCurrentDBH();
-	my ($trackURL, $trackRating, $trackRemote, $trackExtid);
-	my $started = time();
-	my $backuptimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
-	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
-
-	$sql = "select tracks_persistent.url, tracks_persistent.rating, tracks.remote, tracks.extid from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where tracks_persistent.rating > 0";
-	$sth = $dbh->prepare($sql);
-	$sth->execute();
-
-	$sth->bind_col(1,\$trackURL);
-	$sth->bind_col(2,\$trackRating);
-	$sth->bind_col(3,\$trackRemote);
-	$sth->bind_col(4,\$trackExtid);
-
-	my @ratedTracks = ();
-	while ($sth->fetch()) {
-		push (@ratedTracks, {'url' => $trackURL, 'rating' => $trackRating, 'remote' => $trackRemote, 'extid' => $trackExtid});
-	}
-	$sth->finish();
-
-	if (@ratedTracks) {
-		my $PLfilename = 'RL_Backup_'.$filename_timestamp.'.xml';
-
-		my $filename = catfile($backupDir,$PLfilename);
-		my $output = FileHandle->new($filename, '>:utf8') or do {
-			$log->warn('could not open '.$filename.' for writing.');
-			$prefs->set('status_creatingbackup', 0);
-			return;
-		};
-		my $trackcount = scalar(@ratedTracks);
-		my $ignoredtracks = 0;
-		$log->debug('Found '.$trackcount.($trackcount == 1 ? ' rated track' : ' rated tracks').' in the LMS persistent database');
-
-		print $output "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
-		print $output "<!-- Backup of Rating Values -->\n";
-		print $output "<!-- ".$backuptimestamp." -->\n";
-		print $output "<RatingsLight>\n";
-		for my $ratedTrack (@ratedTracks) {
-			my $BACKUPtrackURL = $ratedTrack->{'url'};
-			if (($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) {
-				$log->warn('Warning: ignoring this track. Track is remote but not part of online library: '.$BACKUPtrackURL);
-				$trackcount--;
-				$ignoredtracks++;
-				next;
-			}
-			if (($ratedTrack->{'remote'} != 1) && (!defined(Slim::Schema->resultset('Track')->objectForUrl($BACKUPtrackURL)))) {
-				$log->warn('Warning: ignoring this track. Track dead or moved??? Track URL: '.$BACKUPtrackURL);
-				$trackcount--;
-				$ignoredtracks++;
-				next;
-			}
-
-			my $rating100ScaleValue = $ratedTrack->{'rating'};
-			my $remote = $ratedTrack->{'remote'};
-			$BACKUPtrackURL = uri_escape_utf8($BACKUPtrackURL);
-			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<remote>".$remote."</remote>\n\t</track>\n";
-		}
-		print $output "</RatingsLight>\n";
-
-		if ($ignoredtracks > 0) {
-			print $output "<!-- WARNING: ".$ignoredtracks.($ignoredtracks == 1 ? " track was" : " tracks were")." ignored. Check server.log for more information. -->\n";
-		}
-		print $output "<!-- This backup contains ".$trackcount.($trackcount == 1 ? " rated track" : " rated tracks")." -->\n";
-		close $output;
-		my $ended = time() - $started;
-		$log->debug('Backup completed after '.$ended.' seconds.');
-
-		cleanupBackups();
-	} else {
-		$log->debug('Info: no rated tracks in database');
-	}
-	$prefs->set('status_creatingbackup', 0);
-}
-
 sub backupScheduler {
 	my $scheduledbackups = $prefs->get('scheduledbackups');
 	if (defined $scheduledbackups) {
@@ -1573,32 +1469,6 @@ sub backupScheduler {
 			}
 		}
 		Slim::Utils::Timers::setTimer(0, Time::HiRes::time() + 3600, \&backupScheduler);
-	}
-}
-
-sub cleanupBackups {
-	my $autodeletebackups = $prefs->get('autodeletebackups');
-	if (defined $autodeletebackups) {
-		my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
-		my $backupDir = $rlparentfolderpath.'/RatingsLight';
-		return unless (-d $backupDir);
-		my $backupsdaystokeep = $prefs->get('backupsdaystokeep');
-		my $maxkeeptime = $backupsdaystokeep * 24 * 60 * 60; # in seconds
-		my @files;
-		opendir(my $DH, $backupDir) or die "Error opening $backupDir: $!";
-		@files = grep(/^RL_Backup_.*$/, readdir($DH));
-		closedir($DH);
-		my $mtime;
-		my $etime = int(time());
-		my $n = 0;
-		foreach my $file (@files) {
-			$mtime = stat($file)->mtime;
-			if (($etime - $mtime) > $maxkeeptime) {
-				unlink($file) or die "Can\'t delete $file: $!";
-				$n++;
-			}
-		}
-		$log->debug("Deleted $n backups.");
 	}
 }
 
@@ -1748,11 +1618,43 @@ sub handleEndElement {
 		my $remote = $curTrack->{'remote'};
 
 		if (($selectiverestore == 0) || ($selectiverestore == 1 && $remote == 0) || ($selectiverestore == 2 && $remote == 1)) {
-			my $trackURL = $curTrack->{'url'};
-			$trackURL = unescape($trackURL);
+			my $trackURL = undef;
+			my $fullTrackURL = $curTrack->{'url'};
+			my $relTrackURL = $curTrack->{'relurl'};
 			my $rating = $curTrack->{'rating'};
 
-			writeRatingToDB($trackURL, $rating, 0);
+			# check if FULL file url is valid
+			# Otherwise, try RELATIVE file URL with current media dirs
+			$fullTrackURL = Encode::decode('utf8', uri_unescape($fullTrackURL));
+			$relTrackURL = Encode::decode('utf8', uri_unescape($relTrackURL));
+
+			my $fullTrackPath = Slim::Utils::Misc::pathFromFileURL($fullTrackURL);
+			if (-f $fullTrackPath) {
+				#$log->debug("found file at url \"$fullTrackPath\"");
+				$trackURL = $fullTrackURL;
+			} else {
+				$log->debug("** Couldn't find file for FULL file url. Will try with RELATIVE file url and current LMS media folders.");
+				my $lmsmusicdirs = getMusicDirs();
+				$log->debug('musicdirs = '.Dumper($lmsmusicdirs));
+
+				foreach (@{$lmsmusicdirs}) {
+					my $newFullTrackPath = File::Spec->catfile($_, Encode::decode('utf8', uri_unescape($relTrackURL)));
+					$newFullTrackPath = Slim::Utils::Misc::fixPath($newFullTrackPath);
+					$newFullTrackPath = Slim::Utils::Misc::pathFromFileURL($newFullTrackPath);
+					$log->debug('trying with new full file path = '.$newFullTrackPath);
+
+					if (-f $newFullTrackPath) {
+						$trackURL = Slim::Utils::Misc::fileURLFromPath($newFullTrackPath);
+						$log->debug('New full file url = '.$trackURL);
+						last;
+					}
+				}
+			}
+			if (!$trackURL) {
+				$log->warn("Couldn't find file for url \"$fullTrackURL\".");
+			} else {
+				writeRatingToDB($trackURL, $rating, 0);
+			}
 		}
 		%restoreitem = ();
 	}
@@ -2118,7 +2020,7 @@ sub addToRecentlyRatedPlaylist {
 	my $playlistid = $createplaylistrequest->getResult('playlist_id') || $createplaylistrequest->getResult('overwritten_playlist_id');
 	$log->debug('playlistid = '.Dumper($playlistid));
 	if (!$playlistid) {
-		$log->info("Couldn't create or write to playlist 'Recently rated tracks'");
+		$log->info("No playlist id. Couldn't create or write to playlist 'Recently rated tracks'");
 		return;
 	}
 	my $trackcountRequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'tracks', '0', '1000', 'playlist_id:'.$playlistid, 'tags:count']);
@@ -2799,17 +2701,6 @@ sub refreshTitleFormats {
 
 # misc
 
-sub isTimeOrEmpty {
-	my $name = shift;
-	my $arg = shift;
-	if (!$arg || $arg eq '') {
-		return 1;
-	} elsif ($arg =~ m/^([0\s]?[0-9]|1[0-9]|2[0-4]):([0-5][0-9])\s*(P|PM|A|AM)?$/isg) {
-		return 1;
-	}
-	return 0;
-}
-
 sub ratingSanityCheck {
 	my $rating = shift;
 	if ((!defined $rating) || ($rating < 0)) {
@@ -2819,29 +2710,6 @@ sub ratingSanityCheck {
 		return 100;
 	}
 	return $rating;
-}
-
-sub getCurrentDBH {
-	return Slim::Schema->storage->dbh();
-}
-
-sub commit {
-	my $dbh = shift;
-	if (!$dbh->{'AutoCommit'}) {
-		$dbh->commit();
-	}
-}
-
-sub rollback {
-	my $dbh = shift;
-	if (!$dbh->{'AutoCommit'}) {
-		$dbh->rollback();
-	}
-}
-
-sub parse_duration {
-	use integer;
-	sprintf("%02dh:%02dm", $_[0]/3600, $_[0]/60%60);
 }
 
 sub trimStringLength {
@@ -2864,24 +2732,6 @@ sub getClientModel {
 sub uniq {
 	my %seen;
 	grep !$seen{$_}++, @_;
-}
-
-sub pathForItem {
-	my $item = shift;
-	if (Slim::Music::Info::isFileURL($item) && !Slim::Music::Info::isFragment($item)) {
-		return Slim::Utils::Misc::pathFromFileURL($item);
-	}
-	return $item;
-}
-
-sub unescape {
-	my $in = shift;
-	my $isParam = shift;
-
-	$in =~ s/\+/ /g if $isParam;
-	$in =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
-
-	return $in;
 }
 
 1;

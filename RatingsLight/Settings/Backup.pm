@@ -25,6 +25,7 @@ use warnings;
 use utf8;
 
 use base qw(Plugins::RatingsLight::Settings::BaseSettings);
+use Plugins::RatingsLight::Common ':all';
 
 use Slim::Utils::Log;
 use Slim::Utils::Prefs;
@@ -64,7 +65,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(autodeletebackups scheduledbackups backuptime backupsdaystokeep restorefile selectiverestore clearallbeforerestore));
+	return ($prefs, qw(autodeletebackups scheduledbackups backuptime prescanbackup backupsdaystokeep backupfilesmin restorefile selectiverestore clearallbeforerestore));
 }
 
 sub handler {
@@ -80,7 +81,7 @@ sub handler {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
-		Plugins::RatingsLight::Plugin::createBackup();
+		createBackup();
 	} elsif ($paramRef->{'restore'}) {
 		if ($callHandler) {
 			$paramRef->{'saveSettings'} = 1;

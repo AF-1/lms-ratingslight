@@ -25,6 +25,7 @@ use warnings;
 use utf8;
 
 use base qw(Plugins::RatingsLight::Settings::BaseSettings);
+use Plugins::RatingsLight::Common ':all';
 
 use Slim::Utils::Log;
 use Slim::Utils::Prefs;
@@ -87,7 +88,7 @@ sub handler {
 			$paramRef->{'missingkeywords'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
 		} else {
-			Plugins::RatingsLight::Importer::importRatingsFromCommentTags();
+			importRatingsFromCommentTags();
 		}
 	} elsif ($paramRef->{'rateplaylistnow'}) {
 		if ($callHandler) {

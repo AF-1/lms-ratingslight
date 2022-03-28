@@ -26,20 +26,27 @@
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS" desc="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_DESC" %]
 	<input name="pref_scheduledbackups" id="scheduledbackups" type="checkbox" [% IF prefs.scheduledbackups %] checked [% END %]>
 [% END %]
-<br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME" desc="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME_DESC" %]
 	<input type="text" class="stdedit" name="pref_backuptime" id="backuptime" value="[% prefs.backuptime %]" size="3">
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS" desc="PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_DESC" %]
-	<input name="pref_autodeletebackups" id="autodeletebackups" type="checkbox" [% IF prefs.autodeletebackups %] checked [% END %]>[% IF prefs.scheduledbackups && !prefs.autodeletebackups %] <span class="recommended">[% "PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_WARNING" | string %]</span>[% END %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_PRESCANBACKUP" desc="PLUGIN_RATINGSLIGHT_BACKUP_PRESCANBACKUP_DESC" %]
+	<input name="pref_prescanbackup" id="prescanbackup" type="checkbox" [% IF prefs.prescanbackup %] checked [% END %]>
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP" desc="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP_DESC" %]
-	<input type="text" class="stdedit sliderInput_1_365_1" name="pref_backupsdaystokeep" id="backupsdaystokeep" value="[% prefs.backupsdaystokeep %]" size="2"> [% "PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYS" | string %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS" desc="PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_DESC" %]
+	<input name="pref_autodeletebackups" id="autodeletebackups" type="checkbox" [% IF prefs.autodeletebackups %] checked [% END %]>[% IF prefs.scheduledbackups && !prefs.autodeletebackups %] <span class="recommended">[% "PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_WARNING" | string %]</span>[% END %]
+[% END %]
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_BACKUPDAYSTOKEEP" desc="PLUGIN_RATINGSLIGHT_BACKUP_BACKUPDAYSTOKEEP_DESC" %]
+	<input type="text" class="stdedit sliderInput_1_365_1" name="pref_backupsdaystokeep" id="backupsdaystokeep" value="[% prefs.backupsdaystokeep %]" size="2"> [% "PLUGIN_RATINGSLIGHT_BACKUP_BACKUPDAYSTOKEEP_BACKUPDAYS" | string %]
+[% END %]
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_BACKUPMINFILESTOKEEP" desc="PLUGIN_RATINGSLIGHT_BACKUP_BACKUPMINFILESTOKEEP_DESC" %]
+	<input type="text" class="stdedit sliderInput_1_100_1" name="pref_backupfilesmin" id="backupfilesmin" value="[% prefs.backupfilesmin %]" size="2">
 [% END %]
 [% END %]
 <hr><br>

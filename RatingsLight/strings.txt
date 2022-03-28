@@ -233,7 +233,7 @@ PLUGIN_RATINGSLIGHT_BACKUP
 	EN	Backup
 
 PLUGIN_RATINGSLIGHT_BACKUP_MANUAL_BACKUP
-	EN	Manual Backup
+	EN	Manual backup
 
 PLUGIN_RATINGSLIGHT_BACKUP_MANUAL_BACKUP_DESC
 	EN	Backup all <b>rated</b> tracks (from your entire library) and their rating values to a single backup file.
@@ -245,34 +245,46 @@ PLUGIN_RATINGSLIGHT_BACKUP_MANUAL_BACKUP_INPROGRESS
 	EN	creating backup...
 
 PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS
-	EN	Scheduled Backups
+	EN	Scheduled backups
 
 PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_DESC
 	EN	Enable scheduled daily backups
 
 PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME
-	EN	Backup Time
+	EN	Scheduled backup time
 
 PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME_DESC
 	EN	Set the time for your daily backup. If you leave this empty no scheduled backups will occur.
+
+PLUGIN_RATINGSLIGHT_BACKUP_PRESCANBACKUP
+	EN	Backup before each library rescan
+
+PLUGIN_RATINGSLIGHT_BACKUP_PRESCANBACKUP_DESC
+	EN	If you decide to rescan your library, RL will automatically create a backup of your rating values right <b>before</b> the scan process starts.<br>This setting affects only <b>pre-scan</b> backups. It's unrelated to the <i>scheduled</i> backup function.
 
 PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS
 	EN	Auto-delete old backups
 
 PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_DESC
-	EN	Have RL delete old backups automatically (recommended if you have <i>scheduled daily backups</i> enabled).<br>If you only do occasional manual backups you may want to disable this to prevent old backups from being auto-deleted.
+	EN	Have RL delete old backups automatically (esp. recommended if you have <i>scheduled daily backups</i> enabled).
 
 PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_WARNING
 	EN	recommended if scheduled backups are enabled
 
-PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP
+PLUGIN_RATINGSLIGHT_BACKUP_BACKUPDAYSTOKEEP
 	EN	Delete backups older than
 
-PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYSTOKEEP_DESC
+PLUGIN_RATINGSLIGHT_BACKUP_BACKUPDAYSTOKEEP_DESC
 	EN	Set the number of days after which old backups will be deleted.
 
-PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPDAYS
+PLUGIN_RATINGSLIGHT_BACKUP_BACKUPDAYSTOKEEP_BACKUPDAYS
 	EN	day(s)
+
+PLUGIN_RATINGSLIGHT_BACKUP_BACKUPMINFILESTOKEEP
+	EN	Minimum number of backups to keep
+
+PLUGIN_RATINGSLIGHT_BACKUP_BACKUPMINFILESTOKEEP_DESC
+	EN	No matter the backup date, keep at least this many backup files.<br>If you don't create scheduled or regular backups, this will prevent RL from accidentally deleting all of old backups.
 
 
 PLUGIN_RATINGSLIGHT_RESTORE
