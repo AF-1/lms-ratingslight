@@ -266,23 +266,29 @@ sub importRatingsFromCommentTags {
 
 
 sub getRelFilePath {
+	$log->debug('Getting relative file url/path.');
 	my $fullTrackURL = shift;
 	my $relFilePath;
-	$fullTrackURL = Encode::decode('utf8', uri_unescape($fullTrackURL));
 	my $lmsmusicdirs = getMusicDirs();
-	$log->debug('musicdirs = '.Dumper($lmsmusicdirs));
+	$log->debug('Valid LMS music dirs = '.Dumper($lmsmusicdirs));
 
 	foreach (@{$lmsmusicdirs}) {
-		my $match = checkInFolder($fullTrackURL, $_."/");
-		$log->debug("full file path \"$fullTrackURL\" is".($match == 1 ? "" : " NOT")." part of media dir \"".$_."\"");
+		my $dirSep = File::Spec->canonpath("/");
+		my $mediaDirPath = $_.$dirSep;
+		my $fullTrackPath = Slim::Utils::Misc::pathFromFileURL($fullTrackURL);
+		my $match = checkInFolder($fullTrackPath, $mediaDirPath);
+
+		$log->debug("Full file path \"$fullTrackPath\" is".($match == 1 ? "" : " NOT")." part of media dir \"".$mediaDirPath."\"");
 		if ($match == 1) {
-			my $fullPath = Slim::Utils::Misc::pathFromFileURL($fullTrackURL);
-			$log->debug('FULL file path = '.$fullPath);
-			$relFilePath = file($fullPath)->relative($_);
-			$relFilePath = URI::file->new($relFilePath);
-			$log->debug('RELATIVE file path = '.$relFilePath."\n\n");
+			$relFilePath = file($fullTrackPath)->relative($_);
+			$relFilePath = Slim::Utils::Misc::fileURLFromPath($relFilePath);
+			$relFilePath =~ s/^(file:)?\/+//isg;
+			$log->debug('Saving RELATIVE file path: '.$relFilePath);
 			last;
 		}
+	}
+	if (!$relFilePath) {
+		$log->debug("Couldn't get relative file path for \"$fullTrackURL\".");
 	}
 	return $relFilePath;
 }

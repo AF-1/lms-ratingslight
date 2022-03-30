@@ -1578,7 +1578,7 @@ sub doneScanning {
 
 	my $ended = time() - $restorestarted;
 	$log->debug('Restore completed after '.$ended.' seconds.');
-
+	sleep 0.5;
 	refreshAll();
 
 	$prefs->set('status_restoringfrombackup', 0);
@@ -1628,24 +1628,29 @@ sub handleEndElement {
 			$fullTrackURL = Encode::decode('utf8', uri_unescape($fullTrackURL));
 			$relTrackURL = Encode::decode('utf8', uri_unescape($relTrackURL));
 
-			my $fullTrackPath = Slim::Utils::Misc::pathFromFileURL($fullTrackURL);
+			my $fullTrackPath = pathForItem($fullTrackURL);
 			if (-f $fullTrackPath) {
 				#$log->debug("found file at url \"$fullTrackPath\"");
 				$trackURL = $fullTrackURL;
 			} else {
 				$log->debug("** Couldn't find file for FULL file url. Will try with RELATIVE file url and current LMS media folders.");
 				my $lmsmusicdirs = getMusicDirs();
-				$log->debug('musicdirs = '.Dumper($lmsmusicdirs));
+				$log->debug('Valid LMS music dirs = '.Dumper($lmsmusicdirs));
 
 				foreach (@{$lmsmusicdirs}) {
-					my $newFullTrackPath = File::Spec->catfile($_, Encode::decode('utf8', uri_unescape($relTrackURL)));
-					$newFullTrackPath = Slim::Utils::Misc::fixPath($newFullTrackPath);
-					$newFullTrackPath = Slim::Utils::Misc::pathFromFileURL($newFullTrackPath);
-					$log->debug('trying with new full file path = '.$newFullTrackPath);
+					my $dirSep = File::Spec->canonpath("/");
+					my $mediaDirURL = Slim::Utils::Misc::fileURLFromPath($_.$dirSep);
+					$log->debug('Trying LMS music dir url: '.$mediaDirURL);
+
+					my $newFullTrackURL = $mediaDirURL.$relTrackURL;
+					my $newFullTrackPath = pathForItem($newFullTrackURL);
+					$log->debug('Trying with new full track path: '.$newFullTrackPath);
 
 					if (-f $newFullTrackPath) {
-						$trackURL = Slim::Utils::Misc::fileURLFromPath($newFullTrackPath);
-						$log->debug('New full file url = '.$trackURL);
+						$trackURL = Slim::Utils::Misc::fileURLFromPath($newFullTrackURL);
+						$log->debug('Found file at new full file url: '.$trackURL);
+						$log->debug('OLD full file url was: '.$fullTrackURL);
+
 						last;
 					}
 				}
