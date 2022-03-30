@@ -106,6 +106,15 @@ The <b>recently rated playlist</b> keeps a record of all tracks with changed rat
 
 If you want to keep detailled track of your rating actions and don't need a playable list, I suggest you use the <b>log file</b>.</p></details><br>
 
+<details><summary>»<b>Is <i>album</i> rating supported?</b>«</summary><br><p>Short answer: no. <i>Album ratings</i> per se do not exist in LMS. So any displayed album rating would have to be calculated, i.e. the average track rating of all album tracks. Most people have only very few rated tracks in an album, and so you get 'meaningful' (average) album ratings like 0.23 or 0.35.<br>
+Setting ratings for an entire album basically tells LMS to set the rating of <b>all</b> album tracks to some value - because there is no album rating other than the calculated one. That would mean: all album tracks would be rated equally - and even the best albums have weak tracks.<br>
+So since I'm not convinced that displaying and setting <i>album ratings</i> would be of an use at all, it's not supported.<br>
+I'd recommend to add complete albums to the <i>LMS favourites</i> or some static playlist instead.</p></details><br>
+
+<details><summary>»<b>Can I use a <i>10-star</i> rating scale?</b>«</summary><br><p>If apps still support rating stars, they usually have a 5-star rating scale - also a good idea for LMS because it makes for a consistent user experience. For example, the Material web skin has a 5-star rating scale. There won't be a 10-star rating scale display option in RL. If you really need the extra rating steps, you can enable half-star ratings in the RL settings as a workaround.</p></details><br>
+
+<details><summary>»<b>Where does Ratings Light store track ratings?</b>«</summary><br><p><i>Ratings Light</i> does not use its own database. It tells LMS to store the track ratings in the <b>LMS</b> <i>persistent</i> database which is not cleared on rescans. However, if you value your ratings very much, I'd recommend to enable <i>scheduled</i> backups in RL. Or at least create occasional <i>manual</i> backups.</p></details><br>
+
 <br><br>
 ## Note for developers
 
