@@ -102,8 +102,7 @@ In general, whenever you change a track's rating <b>with Ratings Light</b> (web 
 
 The <b>recently rated playlist</b> keeps a record of all tracks with changed ratings <b>but</b>
 - it will not add a track twice. Example: new rating = 40, then rating = 0 ---> track will only show up only once in the playlist because the playlist shows all tracks whose ratings changed.
-- If you unrate a track (rating = 0) it will not delete this track from the playlist because unrating is a rating change too.<br>
-
+- If you unrate a track (rating = 0) it will not delete this track from the playlist because unrating is a rating change too.<br><br>
 If you want to keep detailled track of your rating actions and don't need a playable list, I suggest you use the <b>log file</b>.</p></details><br>
 
 <details><summary>»<b>Is <i>album</i> rating supported?</b>«</summary><br><p>Short answer: no. <i>Album ratings</i> per se do not exist in LMS. So any displayed album rating would have to be calculated, i.e. the average track rating of all album tracks. Most people have only very few rated tracks in an album, and so you get 'meaningful' (average) album ratings like 0.23 or 0.35.<br>
