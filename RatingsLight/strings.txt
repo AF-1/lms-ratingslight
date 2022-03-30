@@ -284,7 +284,7 @@ PLUGIN_RATINGSLIGHT_BACKUP_BACKUPMINFILESTOKEEP
 	EN	Minimum number of backups to keep
 
 PLUGIN_RATINGSLIGHT_BACKUP_BACKUPMINFILESTOKEEP_DESC
-	EN	No matter the backup date, keep at least this many backup files.<br>If you don't create scheduled or regular backups, this will prevent RL from accidentally deleting all of old backups.
+	EN	Keep at least this number of backup files, regardless of their creation date.<br>If you don't create scheduled or regular manual backups, this will prevent RL from accidentally deleting <b>all</b> of your old backup files.
 
 
 PLUGIN_RATINGSLIGHT_RESTORE
