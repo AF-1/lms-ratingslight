@@ -258,6 +258,7 @@ sub initPrefs {
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 5000}, 'playlistimport_maxtracks');
 	$prefs->setValidate({'validator' => \&isTimeOrEmpty}, 'backuptime');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 365}, 'backupsdaystokeep');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 100}, 'backupfilesmin');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 2, 'high' => 200}, 'recentlymaxcount');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 200}, 'ratedtracksweblimit');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 100}, 'ratedtrackscontextmenulimit');
