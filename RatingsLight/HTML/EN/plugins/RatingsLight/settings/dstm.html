@@ -1,3 +1,4 @@
+<style>details summary{cursor:pointer;outline:none;margin-bottom:10px;}details summary > *{display:inline;}.categoryheader{font-weight:600;}</style>
 [% page = "PLUGIN_RATINGSLIGHT" %]
 [% PROCESS settings/header.html %]
 
@@ -34,6 +35,7 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_EXCLUDEDGENRES" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_EXCLUDEDGENRES_DESC" %]
+<details><summary><span class="categoryheader">[% "PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_CHOOSEEXLUDEGENRES" | string %]</span>:</summary>
 	<table border="0" width="100%">[% USE table genrelistsorted, cols=3, pad=0 %]
 		[%- FOREACH genrerow = table.rows %]
 			<tr>
@@ -47,6 +49,7 @@
 			</tr>
 		[%- END %]
 	</table>
+</details>
 [% END %]
 
 [% PROCESS settings/footer.html %]

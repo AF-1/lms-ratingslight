@@ -71,7 +71,7 @@ PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING
 	EN	Minimum rating for <b>top</b> rated tracks
 
 PLUGIN_RATINGSLIGHT_VARIOUS_TOPRATED_MINRATING_DESC
-	EN	Set the <b>minimum rating</b> for tracks to be considered <b>top rated</b>.<br> This is a <b>global</b> setting for browse menus and DSTM.
+	EN	Set the <b>minimum rating</b> for tracks to be considered <b>top rated</b>.<br> This is a <b>global</b> setting for browse menus and DSTM mixes.
 
 PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST
 	EN	Recently rated playlist
@@ -124,10 +124,13 @@ PLUGIN_RATINGSLIGHT_EXPORT_INPROGRESS
 	EN	exporting...
 
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF
-	EN	Export only tracks with rating values different from comment tag ratings.
+	EN	Export only tracks with rating values different from file tag ratings
 
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF_DESC
-	EN	If set to yes, only those tracks will be exported whose LMS rating differs from the rating value derived from comment tag keywords.<br> So if you've marked a track as 2-star rated in its comment tag and its rating hasn't changed it won't be part of the exported playlists.
+	EN	This will export only those tracks whose LMS rating differs from the rating value derived from the file tag (BPM, comment tag) that you've selected in the <i>RL <b>import</b> section</i>.<br> So if you've marked a track as 2-star rated in your file tag and its rating hasn't changed, it won't be part of the exported playlists.
+
+PLUGIN_RATINGSLIGHT_EXPORT_SELFILETAG
+	EN	Currently selected file tag
 
 PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION
 	EN	Replace file path
@@ -179,11 +182,53 @@ PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLMAXTRACKS_DESC
 	EN	Set the maximum number of tracks for import playlists. The default is 1000 tracks (which is already quite high). Larger playlists are probably more likely to cause problems.
 
 
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS
-	EN	Comment Tags
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS
+	EN	File Tags
 
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_HEADER
-	EN	<b>Import ratings derived from keywords in the comment tags of your files.</b>
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT
+	EN	Manual Import
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_DESC
+	EN	For local library files only
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_HEADER
+	EN	<b>Import ratings from BPM tags or keywords in the comment tags of your files.</b>
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_DESC
+	EN	<b>Manually</b> import ratings from file tags <b>now</b>.<br>Unless you've enabled the <i>Don't unrate</i> option this will <b>reset <u>all</u> ratings to values derived from the file tags.</b>
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_BUTTON
+	EN	Import now
+
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_MISSINGKEYWORDS
+	EN	You have to set at least one keyword!
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_INPROGRESS
+	EN	importing...
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_AUTOSCAN
+	EN	Include ratings import in LMS scan
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_AUTOSCAN_DESC
+	EN	Always import ratings from file tags when LMS performs a scan.<br>This will <b>reset <u>all</u> ratings</b> in the LMS database to values based on your file tags.
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_DONTUNRATE
+	EN	Don't unrate tracks
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_DONTUNRATE_DESC
+	EN	Importing ratings from file tags was designed to have the LMS database mirror all track ratings it finds in your file tags and unrate all other tracks (resulting in <b>synced track ratings</b>).<br>If you check this setting (<b>not recommended</b>), new and changed track ratings will show in the LMS database after import but <b><i>formerly</i> rated tracks which are no longer marked as rated in your file tags will <u>not</u> be unrated</b>.
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE
+	EN	Choose file tag for import
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_DESC
+	EN	Choose the file tag you want to import rating values from.<br><br><b>Comment tags:</b> Import ratings derived from <b>keywords</b> in the <b>comment tags</b> of your files.<br><br><b>BPM:</b> Import ratings from the <b>BPM</b> tag. Values in the BPM tag have to be integer values on a <b><u>10-step</u></b> scale from 0 to 100. Anything else will be ignored.<br><br><b>If you <i>change</i> the file tag you want to import ratings from, <u>save</u> your selection first <u>before</u> you start importing.</b>
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_BPM
+	EN	BPM tag
+
+PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_COMMENT
+	EN	Comment tag
 
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_EXAMPLE
 	EN	<b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx": if a comment tag contains "favstars<b>4</b>xx" -> track rating = <b>4</b> stars
@@ -198,34 +243,7 @@ PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_SUFFIX
 	EN	<b>Rating Keyword <u>Suf</u>fix</b>
 
 PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_DESC
-	EN	At least one field must be filled.<br>Up to 30 letters, case insensitive, no numbers or special characters.<br>Please use <b>integers as rating values</b> in your keywords, no half-star rating values.
-
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN
-	EN	Include ratings import in LMS scan
-
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_AUTOSCAN_DESC
-	EN	Always import ratings from comment tags when LMS performs a scan.<br>This will <b>reset <u>all</u> ratings</b> to values based on keywords in comment tags.
-
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_DONTUNRATE
-	EN	Don't unrate tracks
-
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_DONTUNRATE_DESC
-	EN	Importing ratings from comment tags was designed to have the LMS database mirror all track ratings it finds in your comment tags and unrate all other tracks (resulting in synced track ratings).<br>If you check this setting new and changed track ratings will show in the LMS database after import but <b><i>formerly</i> rated tracks which no longer have rating keywords in their comment tags will <u>not</u> be unrated</b>.
-
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT
-	EN	Manual Import
-
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_DESC
-	EN	<b>Manually</b> import ratings based on keywords in comment tags <b>now</b>.<br>Unless you've enabled the <i>Don't unrate</i> option this will <b>reset <u>all</u> ratings to values derived from the keywords in the comment tags.</b>
-
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_BUTTON
-	EN	Import now
-
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_MISSINGKEYWORDS
-	EN	You have to set at least one keyword!
-
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_INPROGRESS
-	EN	importing...
+	EN	At least one field must be filled.<br>Up to 30 letters, case insensitive, no numbers or special characters.<br>Rating values have to <b>integers</b> on a scale from 0 to 5 in your keywords, <i>no half-star rating values</i>.
 
 
 
@@ -557,4 +575,7 @@ PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_EXCLUDEDGENRES
 	EN	Exclude genres
 
 PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_EXCLUDEDGENRES_DESC
-	EN	Choose genres to exclude from <b>Don't Stop The Music</b> mixes.
+	EN	Exclude genres from <b>Don't Stop The Music</b> mixes.
+
+PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_CHOOSEEXLUDEGENRES
+	EN	Choose genres to exclude

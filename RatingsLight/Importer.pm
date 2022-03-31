@@ -35,7 +35,6 @@ my $serverPrefs = preferences('server');
 
 sub initPlugin {
 	$log->debug('importer module init');
-	
 	my $preScanBackup = $prefs->get('prescanbackup');
 	if ($preScanBackup) {
 		$log->debug('creating pre-scan backup before scan process starts');
@@ -61,7 +60,12 @@ sub toggleUseImporter {
 
 sub startScan {
 	$log->debug('starting importer');
-	importRatingsFromCommentTags();
+	my $filetagtype = $prefs->get('filetagtype');
+	if ($filetagtype == 1) {
+		importRatingsFromCommentTags();
+	} elsif ($filetagtype == 0) {
+		importRatingsFromBPMTags();
+	}
 	Slim::Music::Import->endImporter(__PACKAGE__);
 }
 

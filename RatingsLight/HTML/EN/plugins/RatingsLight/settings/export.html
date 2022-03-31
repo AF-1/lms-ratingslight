@@ -1,3 +1,4 @@
+<style>.curselfiletag{padding-left:30px;}.rlbold{font-weight:bold;}</style>
 <script TYPE="text/javascript">
 	function inprogress(elementid) {
 		document.getElementById(elementid).className = "inprogress";
@@ -27,7 +28,7 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF_DESC" %]
-	<input name="pref_onlyratingnotmatchcommenttag" id="onlyratingnotmatchcommenttag" type="checkbox" [% IF prefs.onlyratingnotmatchcommenttag %] checked [% END %]>
+	<input name="pref_onlyratingsnotmatchtags" id="onlyratingsnotmatchtags" type="checkbox" [% IF prefs.onlyratingsnotmatchtags %] checked [% END %]><span class="curselfiletag">[% "PLUGIN_RATINGSLIGHT_EXPORT_SELFILETAG" | string %]: <span class="rlbold">[% IF curselfiletag == 0 %][% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_BPM" | string %][% ELSE %][% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_COMMENT" | string %][% END %]</span>
 [% END %]
 <br><br>
 

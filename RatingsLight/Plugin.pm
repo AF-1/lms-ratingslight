@@ -199,6 +199,7 @@ sub initPrefs {
 		topratedminrating => 60,
 		prescanbackup => 1,
 		playlistimport_maxtracks => 1000,
+		filetagtype => 1,
 		rating_keyword_prefix => '',
 		rating_keyword_suffix => '',
 		backuptime => '05:28',
@@ -228,6 +229,7 @@ sub initPrefs {
 	$prefs->set('exportVL_id', '');
 	$prefs->set('status_exportingtoplaylistfiles', '0');
 	$prefs->set('status_importingfromcommenttags', '0');
+	$prefs->set('status_importingfromBPMtags', '0');
 	$prefs->set('status_batchratingplaylisttracks', '0');
 	$prefs->set('status_creatingbackup', '0');
 	$prefs->set('status_restoringfrombackup', '0');
@@ -1243,7 +1245,8 @@ sub exportRatingsToPlaylistFiles {
 	mkdir($exportDir, 0755) unless (-d $exportDir);
 	chdir($exportDir) or $exportDir = $rlparentfolderpath;
 
-	my $onlyratingnotmatchcommenttag = $prefs->get('onlyratingnotmatchcommenttag');
+	my $filetagtype = $prefs->get('filetagtype');
+	my $onlyratingsnotmatchtags = $prefs->get('onlyratingsnotmatchtags');
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
 	my ($sql, $sth) = undef;
@@ -1257,19 +1260,30 @@ sub exportRatingsToPlaylistFiles {
 
 	for (my $rating100ScaleValue = 10; $rating100ScaleValue <= 100; $rating100ScaleValue = $rating100ScaleValue + 10) {
 		$rating100ScaleValueCeil = $rating100ScaleValue + 9;
-		if (defined $onlyratingnotmatchcommenttag) {
-			if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
-				$log->warn('Error: no rating keywords found.');
-				return
-			} else {
-				if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-						$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))";
+		if (defined $onlyratingsnotmatchtags) {
+			# comment tags
+			if ($filetagtype == 1) {
+				if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
+					$log->warn('Error: no rating keywords found.');
+					return
 				} else {
-						$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null)))";
+					if ((defined $exportVL_id) && ($exportVL_id ne '')) {
+							$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))";
+					} else {
+							$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null)))";
+					}
+					$sth = $dbh->prepare($sql);
+					my $ratingkeyword = "%%".$rating_keyword_prefix.($rating100ScaleValue/20).$rating_keyword_suffix."%%";
+					$sth->bind_param(1, $ratingkeyword);
+				}
+			# BPM tags
+			} elsif ($filetagtype == 0) {
+				if ((defined $exportVL_id) && ($exportVL_id ne '')) {
+						$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != $rating100ScaleValue or tracks.bpm is null))";
+				} else {
+						$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != $rating100ScaleValue or tracks.bpm is null)))";
 				}
 				$sth = $dbh->prepare($sql);
-				my $ratingkeyword = "%%".$rating_keyword_prefix.($rating100ScaleValue/20).$rating_keyword_suffix."%%";
-				$sth->bind_param(1, $ratingkeyword);
 			}
 		} else {
 			if ((defined $exportVL_id) && ($exportVL_id ne '')) {
@@ -1310,7 +1324,7 @@ sub exportRatingsToPlaylistFiles {
 				print $output '# tracks from library (view): '.$exportVL_name."\n";
 			}
 			print $output '# contains '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' rated '.(($rating100ScaleValue/20) == 1 ? ($rating100ScaleValue/20).' star' : ($rating100ScaleValue/20).' stars')."\n\n";
-			if (defined $onlyratingnotmatchcommenttag) {
+			if (defined $onlyratingsnotmatchtags) {
 				print $output "# *** This export only contains rated tracks whose ratings differ from the rating value derived from their comment tag keywords. ***\n";
 				print $output "# *** If you want to export ALL rated tracks change the preference on the Ratings Light settings page. ***\n\n";
 			}

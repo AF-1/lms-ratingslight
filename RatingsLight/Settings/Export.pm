@@ -66,7 +66,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(onlyratingnotmatchcommenttag exportextension exportVL_id));
+	return ($prefs, qw(onlyratingsnotmatchtags exportextension exportVL_id));
 }
 
 sub handler {
@@ -155,6 +155,7 @@ sub beforeRender {
 	};
 	@items = sort { $a->{sortName} cmp $b->{sortName} } @items;
 	$paramRef->{virtuallibraries} = \@items;
+	$paramRef->{curselfiletag} = $prefs->get('filetagtype');
 }
 
 sub trim {

@@ -66,7 +66,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(rating_keyword_prefix rating_keyword_suffix autoscan ratethisplaylistid ratethisplaylistrating playlistimport_maxtracks plimportct_dontunrate));
+	return ($prefs, qw(rating_keyword_prefix rating_keyword_suffix autoscan ratethisplaylistid ratethisplaylistrating playlistimport_maxtracks tagimport_dontunrate filetagtype));
 }
 
 sub handler {
@@ -82,13 +82,18 @@ sub handler {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
-		$log->debug("rating keyword prefix = ".$paramRef->{'pref_rating_keyword_prefix'});
-		$log->debug("rating keyword suffix = ".$paramRef->{'pref_rating_keyword_suffix'});
-		if (((!defined ($paramRef->{'pref_rating_keyword_prefix'})) || ($paramRef->{'pref_rating_keyword_prefix'} eq '')) && ((!defined ($paramRef->{'pref_rating_keyword_suffix'})) || ($paramRef->{'pref_rating_keyword_suffix'} eq ''))) {
-			$paramRef->{'missingkeywords'} = 1;
-			$result = $class->SUPER::handler($client, $paramRef);
-		} else {
-			importRatingsFromCommentTags();
+		my $filetagtype = $prefs->get('filetagtype');
+		if ($filetagtype == 1) {
+			$log->debug("rating keyword prefix = ".$paramRef->{'pref_rating_keyword_prefix'});
+			$log->debug("rating keyword suffix = ".$paramRef->{'pref_rating_keyword_suffix'});
+			if (((!defined ($paramRef->{'pref_rating_keyword_prefix'})) || ($paramRef->{'pref_rating_keyword_prefix'} eq '')) && ((!defined ($paramRef->{'pref_rating_keyword_suffix'})) || ($paramRef->{'pref_rating_keyword_suffix'} eq ''))) {
+				$paramRef->{'missingkeywords'} = 1;
+				$result = $class->SUPER::handler($client, $paramRef);
+			} else {
+				importRatingsFromCommentTags();
+			}
+		} elsif ($filetagtype == 0) {
+			importRatingsFromBPMTags();
 		}
 	} elsif ($paramRef->{'rateplaylistnow'}) {
 		if ($callHandler) {

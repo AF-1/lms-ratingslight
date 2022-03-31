@@ -43,7 +43,7 @@ use Path::Class;
 
 use base 'Exporter';
 our %EXPORT_TAGS = (
-	all => [qw( getCurrentDBH commit rollback createBackup cleanupBackups importRatingsFromCommentTags isTimeOrEmpty getMusicDirs parse_duration pathForItem)],
+	all => [qw( getCurrentDBH commit rollback createBackup cleanupBackups importRatingsFromCommentTags importRatingsFromBPMTags isTimeOrEmpty getMusicDirs parse_duration pathForItem)],
 );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
 
@@ -188,7 +188,7 @@ sub importRatingsFromCommentTags {
 
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
-	my $plimportct_dontunrate = $prefs->get('plimportct_dontunrate');
+	my $tagimport_dontunrate = $prefs->get('tagimport_dontunrate');
 
 	my $dbh = getCurrentDBH();
 	if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
@@ -215,8 +215,8 @@ sub importRatingsFromCommentTags {
 					WHERE comments.value LIKE ?
 			);";
 
-		if (!defined $plimportct_dontunrate) {
-			# unrate previously rated tracks in LMS if comment tag does no longer contain keyword(s)
+		# unrate previously rated tracks in LMS if comment tag does no longer contain keyword(s)
+		if (!defined $tagimport_dontunrate) {
 			my $ratingkeyword_unrate = "%%".$rating_keyword_prefix."_".$rating_keyword_suffix."%%";
 
 			my $sth = $dbh->prepare($sqlunrate);
@@ -264,6 +264,81 @@ sub importRatingsFromCommentTags {
 	$prefs->set('status_importingfromcommenttags', 0);
 }
 
+sub importRatingsFromBPMTags {
+	$log->debug('starting ratings import from BPM tags');
+	my $class = shift;
+	my $status_importingfromcommenttags = $prefs->get('status_importingfromBPMtags');
+	if ($status_importingfromcommenttags == 1) {
+		$log->warn('Import is already in progress, please wait for the previous import to finish');
+		return;
+	}
+	$prefs->set('status_importingfromBPMtags', 1);
+	my $started = time();
+	my $tagimport_dontunrate = $prefs->get('tagimport_dontunrate');
+
+	my $dbh = getCurrentDBH();
+	my $sqlunrate = "update tracks_persistent
+		set rating = null
+		where (tracks_persistent.rating > 0
+			and tracks_persistent.urlmd5 in (
+				select tracks.urlmd5
+				from tracks
+				where tracks.audio == 1
+				and (tracks.bpm == 0 or tracks.bpm is null))
+			);";
+
+	my $sqlrate = "update tracks_persistent
+		set rating = ?
+		where tracks_persistent.urlmd5 in (
+			select tracks.urlmd5
+				from tracks
+				where tracks.audio == 1
+				and tracks.bpm == ?
+			);";
+
+	# unrate previously rated tracks in LMS if BPM tag value is zero or null
+	if (!defined $tagimport_dontunrate) {
+		my $sth = $dbh->prepare($sqlunrate);
+		eval {
+			$sth->execute();
+			commit($dbh);
+		};
+		if ($@) {
+			$log->warn("Database error: $DBI::errstr");
+			eval {
+				rollback($dbh);
+			};
+		}
+		$sth->finish();
+	}
+
+	# rate tracks according to BPM value
+	my $rating = 1;
+
+	until ($rating > 10) {
+		my $rating100scalevalue = ($rating * 10);
+		my $sth = $dbh->prepare($sqlrate);
+		eval {
+			$sth->bind_param(1, $rating100scalevalue);
+			$sth->bind_param(2, $rating100scalevalue);
+			$sth->execute();
+			commit($dbh);
+		};
+		if ($@) {
+			$log->warn("Database error: $DBI::errstr");
+			eval {
+				rollback($dbh);
+			};
+		}
+		$rating++;
+		$sth->finish();
+	}
+
+	my $ended = time() - $started;
+
+	$log->debug('Import completed after '.$ended.' seconds.');
+	$prefs->set('status_importingfromBPMtags', 0);
+}
 
 sub getRelFilePath {
 	$log->debug('Getting relative file url/path.');
