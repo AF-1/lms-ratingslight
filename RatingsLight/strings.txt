@@ -272,19 +272,19 @@ PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME
 	EN	Scheduled backup time
 
 PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME_DESC
-	EN	Set the time for your daily backup. If you leave this empty no scheduled backups will occur.
+	EN	Set the time for your daily backup. If you leave this empty, no scheduled backups will occur.
 
 PLUGIN_RATINGSLIGHT_BACKUP_PRESCANBACKUP
 	EN	Backup before each library rescan
 
 PLUGIN_RATINGSLIGHT_BACKUP_PRESCANBACKUP_DESC
-	EN	If you decide to rescan your library, RL will automatically create a backup of your rating values right <b>before</b> the scan process starts.<br>This setting affects only <b>pre-scan</b> backups. It's unrelated to the <i>scheduled</i> backup function.
+	EN	Have RL automatically create a backup of your database values right <b>before</b> the scan process starts.<br>This setting affects only <b>pre-scan</b> backups. It's unrelated to the <i>scheduled</i> backup function.
 
 PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS
 	EN	Auto-delete old backups
 
 PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_DESC
-	EN	Have RL delete old backups automatically (esp. recommended if you have <i>scheduled daily backups</i> enabled).
+	EN	Have RL delete old backups automatically (esp. recommended if you have enabled <i>scheduled daily backups</i>).
 
 PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_WARNING
 	EN	recommended if scheduled backups are enabled
