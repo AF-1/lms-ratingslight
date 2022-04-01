@@ -181,7 +181,6 @@ PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLMAXTRACKS
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLMAXTRACKS_DESC
 	EN	Set the maximum number of tracks for import playlists. The default is 1000 tracks (which is already quite high). Larger playlists are probably more likely to cause problems.
 
-
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS
 	EN	File Tags
 
@@ -192,7 +191,7 @@ PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_DESC
 	EN	For local library files only
 
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_HEADER
-	EN	<b>Import ratings from BPM tags or keywords in the comment tags of your files.</b>
+	EN	<b>Import ratings from the BPM tags or the comment tags of your files.</b>
 
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_DESC
 	EN	<b>Manually</b> import ratings from file tags <b>now</b>.<br>Unless you've enabled the <i>Don't unrate</i> option this will <b>reset <u>all</u> ratings to values derived from the file tags.</b>
