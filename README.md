@@ -93,9 +93,27 @@ If you've always wanted the **Now Playing** screen of your piCorePlayer, SB Touc
 
 
 ## FAQ
-<details><summary>»<b>Can I use <i>Ratings Light</i> together with <i>TrackStat</i>?</b>«</summary><br><p>I think you can although I'm not sure it's a good idea, not only because of the UI clutter (you'll have 2 rating menu items in many places). Some apps or plugins that support track rating (like Material skin) will check for TrackStat first (it's been around longer) and if enabled use TrackStat for rating tracks. But then <i>Ratings Light</i> can't know about track rating changes and features like the <i>Recently Rated</i> playlist or the rating log file won't work. There may be other issues. So you can but I don't recommend it.</p></details><br>
-
 <details><summary>»<b>Does <i>Ratings Light</i> work with <i>online</i> tracks?</b>«</summary><br><p>It should work with online tracks that have been <b>added to your LMS library as part of an album</b>. LMS does not import single online tracks or tracks of online playlists as library tracks and therefore they cannot be processed by Ratings Light. That's a restriction imposed by LMS.</p></details><br>
+
+<details><summary>»<b>Is <i>album</i> rating supported?</b>«</summary><br><p>Short answer: no. <i>Album ratings</i> per se do not exist in LMS. So any displayed album rating would have to be calculated, i.e. the average track rating of all album tracks. Most people have only very few rated tracks in an album, and so you get 'meaningful' (average) album ratings like 0.23 or 0.35.<br>
+Setting ratings for an entire album basically tells LMS to set the rating of <b>all</b> album tracks to some value - because there is no album rating other than the calculated one. That would mean: all album tracks would be rated equally - and even the best albums have weak tracks.<br>
+So since I'm not convinced that displaying and setting <i>album ratings</i> would be of an use at all, it's not supported.<br>
+I'd recommend to add complete albums to the <i>LMS favourites</i> or some static playlist instead.</p></details><br>
+
+<details><summary>»<b>How does <i>importing ratings from file tags</i> work?</b>«</summary><br><p><i>Ratings Light</i> does not scan files, it has no scanner module. LMS scans your music files and stores the data found in the file tags in the LMS database.<br>
+<i>Importing rating values from file tags</i> with RL therefore means that RL reads the file tag values stored in the LMS database, converts them to rating values and saves them to the LMS persistent database.<br>
+Unfortunately, there is no universal <i>rating tag</i> that is supported by all music file formats across different music players - and scanned/imported by LMS.<br>So in order to import your ratings into LMS, you'll have to use/repurpose a file tag that you don't use otherwise and, more importantly, one that is <b>scanned and imported by LMS</b>.<br><br>
+In <i>Ratings Light</i> you can choose between the <b>BPM</b> tag and the <b>comment</b> tag to import ratings values from.<br><br>
+RL expects integer rating values on a 10-step rating scale from 0 to 100 in the <b>BPM</b> tag (corresponding to the internal LMS rating scale).<br>→ 0 or no value = unrated<br>→ 10 = 0.5 stars<br>→ 20 = 1 star<br>...<br>→ 100 = 5 stars<br><br>
+If you want to use the <b>comment</b> tag, choose at least one short keyword to prefix the rating value. You can also choose a keyword suffix. RL supports importing integer rating values (no half-star ratings) on a scale from 1 to 5.<br>
+<b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx".<br>If a comment tag contains "favstars<b>4</b>xx", RL will save the track rating value for <b>4</b> stars.
+</p></details><br>
+
+<details><summary>»<b>Where does Ratings Light store track ratings?</b>«</summary><br><p><i>Ratings Light</i> does not use its own database. It tells LMS to store the track ratings in the <b>LMS</b> <i>persistent</i> database which is not cleared on rescans. However, if you value your ratings very much, I'd recommend to enable <i>scheduled</i> backups in RL. Or at least create occasional <i>manual</i> backups.</p></details><br>
+
+<details><summary>»<b>Can Ratings Light sync track ratings to <i>music streaming providers</i> or other <i>online services</i>?</b>«</summary><br><p>Short answer: no. Many music streaming providers and online services now use a binary <i>like</i> / <i>heart</i> system to "rate" tracks, albums or artists. But even if some still supported a 5-star rating scale, I simply would not have the time to keep RL compatible with possible (API) changes of all those different services in the long run.<br>If you wanted to reduce 5-star scale track ratings to likes or hearts and sync them to a specific online service, this should be done by the LMS plugin for this specific online services.</p></details><br>
+
+<details><summary>»<b>Can I use a <i>10-star</i> rating scale?</b>«</summary><br><p>If apps still support rating stars, they usually have a 5-star rating scale - also a good idea for LMS because it makes for a consistent user experience. For example, the Material web skin has a 5-star rating scale. There won't be a 10-star rating scale display option in RL. If you really need the extra rating steps, you can enable half-star ratings in the RL settings as a workaround.</p></details><br>
 
 <details><summary>»<b>How is the <i>Recently Rated playlist</i> different from the <i>Recently Rated log</i> file?</b>«</summary><br><p>
 In general, whenever you change a track's rating <b>with Ratings Light</b> (web interface, jivelite, CLI...) the track is added to the playlist and/or the log file if you've enabled this in the settings. Both are meant to help you keep track of your rating actions, i.e. the tracks whose rating you've changed.<br>
@@ -105,14 +123,7 @@ The <b>recently rated playlist</b> keeps a record of all tracks with changed rat
 - If you unrate a track (rating = 0) it will not delete this track from the playlist because unrating is a rating change too.<br><br>
 If you want to keep detailled track of your rating actions and don't need a playable list, I suggest you use the <b>log file</b>.</p></details><br>
 
-<details><summary>»<b>Is <i>album</i> rating supported?</b>«</summary><br><p>Short answer: no. <i>Album ratings</i> per se do not exist in LMS. So any displayed album rating would have to be calculated, i.e. the average track rating of all album tracks. Most people have only very few rated tracks in an album, and so you get 'meaningful' (average) album ratings like 0.23 or 0.35.<br>
-Setting ratings for an entire album basically tells LMS to set the rating of <b>all</b> album tracks to some value - because there is no album rating other than the calculated one. That would mean: all album tracks would be rated equally - and even the best albums have weak tracks.<br>
-So since I'm not convinced that displaying and setting <i>album ratings</i> would be of an use at all, it's not supported.<br>
-I'd recommend to add complete albums to the <i>LMS favourites</i> or some static playlist instead.</p></details><br>
-
-<details><summary>»<b>Can I use a <i>10-star</i> rating scale?</b>«</summary><br><p>If apps still support rating stars, they usually have a 5-star rating scale - also a good idea for LMS because it makes for a consistent user experience. For example, the Material web skin has a 5-star rating scale. There won't be a 10-star rating scale display option in RL. If you really need the extra rating steps, you can enable half-star ratings in the RL settings as a workaround.</p></details><br>
-
-<details><summary>»<b>Where does Ratings Light store track ratings?</b>«</summary><br><p><i>Ratings Light</i> does not use its own database. It tells LMS to store the track ratings in the <b>LMS</b> <i>persistent</i> database which is not cleared on rescans. However, if you value your ratings very much, I'd recommend to enable <i>scheduled</i> backups in RL. Or at least create occasional <i>manual</i> backups.</p></details><br>
+<details><summary>»<b>Can I use <i>Ratings Light</i> together with <i>TrackStat</i>?</b>«</summary><br><p>I think you can although I'm not sure it's a good idea, not only because of the UI clutter (you'll have 2 rating menu items in many places). Some apps or plugins that support track rating (like Material skin) will check for TrackStat first (it's been around longer) and if enabled use TrackStat for rating tracks. But then <i>Ratings Light</i> can't know about track rating changes and features like the <i>Recently Rated</i> playlist or the rating log file won't work. There may be other issues. So you can but I don't recommend it.</p></details><br>
 
 <br><br>
 ## Note for developers
