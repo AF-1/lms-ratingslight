@@ -66,9 +66,9 @@
 <br><br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT" desc="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_DESC" %]
-	<input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onclick="inprogress('commenttagimportstatus');" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_BUTTON" | string %]">
-	<span class='status' id='commenttagimportstatus'>[% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_INPROGRESS" | string %]</span>
-	<span class='[% IF missingkeywords %]error[% ELSE %]status[% END %]'>[% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_MISSINGKEYWORDS" | string %]</span>
+	<input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onclick="inprogress('filetagimportstatus');" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_BUTTON" | string %]">
+	<span class='status' id='filetagimportstatus'>[% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_INPROGRESS" | string %]</span>
+	<span class='[% IF missingkeywords %]error[% ELSE %]status[% END %]'>[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_MISSINGKEYWORDS" | string %]</span>
 [% END %]
 <br>
 

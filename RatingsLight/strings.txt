@@ -188,13 +188,10 @@ PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT
 	EN	Manual Import
 
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_DESC
-	EN	For local library files only
+	EN	<b>Manually</b> import ratings from file tags <b>now</b>.<br>Unless you've enabled the <i>Don't unrate</i> option this will <b>reset <u>all</u> ratings to values derived from the file tags.</b>
 
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_HEADER
 	EN	<b>Import ratings from the BPM tags or the comment tags of your files.</b>
-
-PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_DESC
-	EN	<b>Manually</b> import ratings from file tags <b>now</b>.<br>Unless you've enabled the <i>Don't unrate</i> option this will <b>reset <u>all</u> ratings to values derived from the file tags.</b>
 
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_BUTTON
 	EN	Import now
