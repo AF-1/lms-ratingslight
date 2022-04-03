@@ -137,7 +137,7 @@ sub createBackup {
 
 		cleanupBackups();
 	} else {
-		$log->debug('Info: no rated tracks in database');
+		$log->info('Found no rated tracks in the LMS database.');
 	}
 	$prefs->set('status_creatingbackup', 0);
 }

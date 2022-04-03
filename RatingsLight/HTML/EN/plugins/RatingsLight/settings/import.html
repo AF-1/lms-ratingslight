@@ -1,4 +1,4 @@
-<style>.commenttagsection{display:[% IF prefs.filetagtype == 0 %]none[% END %]};</style>
+<style>.commenttagsection{[% IF prefs.filetagtype == 0 %]display:none;[% END %]}</style>
 <script TYPE="text/javascript">
 	function inprogress(elementid) {
 		document.getElementById(elementid).className = "inprogress";
