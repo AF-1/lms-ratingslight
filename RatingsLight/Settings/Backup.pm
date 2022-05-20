@@ -109,7 +109,7 @@ sub handler {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}
 
-	my $RLfolderpath = ($prefs->get('rlparentfolderpath')).'/Ratingslight';
+	my $RLfolderpath = $prefs->get('rlfolderpath');
 	$prefs->set('restorefile', $RLfolderpath);
 	$result = $class->SUPER::handler($client, $paramRef);
 	return $result;

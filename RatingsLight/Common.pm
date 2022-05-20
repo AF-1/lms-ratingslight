@@ -59,11 +59,7 @@ sub createBackup {
 	}
 	$prefs->set('status_creatingbackup', 1);
 
-	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
-	my $backupDir = $rlparentfolderpath.'/RatingsLight';
-	mkdir($backupDir, 0755) unless (-d $backupDir);
-	chdir($backupDir) or $backupDir = $rlparentfolderpath;
-
+	my $backupDir = $prefs->get('rlfolderpath');
 	my ($sql, $sth) = undef;
 	my $dbh = getCurrentDBH();
 	my ($trackURL, $trackRating, $trackRemote, $trackExtid);
@@ -146,8 +142,7 @@ sub cleanupBackups {
 	my $autodeletebackups = $prefs->get('autodeletebackups');
 	my $backupFilesMin = $prefs->get('backupfilesmin');
 	if (defined $autodeletebackups) {
-		my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
-		my $backupDir = $rlparentfolderpath.'/RatingsLight';
+		my $backupDir = $prefs->get('rlfolderpath');
 		return unless (-d $backupDir);
 		my $backupsdaystokeep = $prefs->get('backupsdaystokeep');
 		my $maxkeeptime = $backupsdaystokeep * 24 * 60 * 60; # in seconds

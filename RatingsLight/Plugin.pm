@@ -218,11 +218,33 @@ sub initPrefs {
 		dstm_num_seedtracks => 10,
 		dstm_playedtrackstokeep => 5,
 		dstm_batchsizenewtracks => 20,
+		rlfolderpath => sub {
+			my $rlParentFolderPath = $prefs->get('rlparentfolderpath') || $serverPrefs->get('playlistdir');
+			my $rlFolderPath = $rlParentFolderPath.'/RatingsLight';
+			eval {
+				mkdir($rlFolderPath, 0755) unless (-d $rlFolderPath);
+				chdir($rlFolderPath);
+				return $rlFolderPath;
+			} or do {
+				$log->error("Could not create RatingsLight folder in parent folder '$rlParentFolderPath'!");
+				return undef;
+			};
+		}
 	});
 
-	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
-	my $rlfolderpath = $rlparentfolderpath.'/RatingsLight';
-	mkdir($rlfolderpath, 0755) unless (-d $rlfolderpath);
+	$prefs->setValidate(sub {
+		return if (!$_[1] || !(-d $_[1]) || (main::ISWINDOWS && !(-d Win32::GetANSIPathName($_[1]))) || !(-d Slim::Utils::Unicode::encode_locale($_[1])));
+		my $rlFolderPath = $_[1].'/RatingsLight';
+		eval {
+			mkdir($rlFolderPath, 0755) unless (-d $rlFolderPath);
+			chdir($rlFolderPath);
+		} or do {
+			$log->warn("Could not create or access RatingsLight folder in parent folder '$_[1]'!");
+			return;
+		};
+		$prefs->set('rlfolderpath', $rlFolderPath);
+		return 1;
+	}, 'rlparentfolderpath');
 
 	$prefs->set('ratethisplaylistid', '');
 	$prefs->set('ratethisplaylistrating', '');
@@ -270,7 +292,6 @@ sub initPrefs {
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 20}, 'dstm_num_seedtracks');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 200}, 'dstm_playedtrackstokeep');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 50}, 'dstm_batchsizenewtracks');
-	$prefs->setValidate('dir', 'rlparentfolderpath');
 	$prefs->setValidate('file', 'restorefile');
 
 	$prefs->setChange(\&Plugins::RatingsLight::Importer::toggleUseImporter, 'autoscan');
@@ -280,11 +301,6 @@ sub initPrefs {
 			Slim::Music::Info::clearFormatDisplayCache();
 			refreshTitleFormats();
 		}, 'displayratingchar');
-	$prefs->setChange(sub {
-		my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
-		my $rlfolderpath = $rlparentfolderpath.'/RatingsLight';
-		mkdir($rlfolderpath, 0755) unless (-d $rlfolderpath);
-		}, 'rlparentfolderpath');
 }
 
 sub postinitPlugin {
@@ -1239,11 +1255,8 @@ sub exportRatingsToPlaylistFiles {
 	}
 	$prefs->set('status_exportingtoplaylistfiles', 1);
 
-	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
-	my $exportDir = $rlparentfolderpath.'/RatingsLight';
+	my $exportDir = $prefs->get('rlfolderpath');
 	my $started = time();
-	mkdir($exportDir, 0755) unless (-d $exportDir);
-	chdir($exportDir) or $exportDir = $rlparentfolderpath;
 
 	my $filetagtype = $prefs->get('filetagtype');
 	my $onlyratingsnotmatchtags = $prefs->get('onlyratingsnotmatchtags');
@@ -2059,10 +2072,7 @@ sub logRatedTrack {
 	my $ratingtimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 
 	my $logFileName = 'RL_Rating-Log.txt';
-	my $rlparentfolderpath = $prefs->get('rlparentfolderpath');
-	my $logDir = $rlparentfolderpath.'/RatingsLight';
-	mkdir($logDir, 0755) unless (-d $logDir);
-	chdir($logDir) or $logDir = $rlparentfolderpath;
+	my $logDir = $prefs->get('rlfolderpath');
 
 	# log rotation
 	my $fullfilepath = $logDir.'/'.$logFileName;
