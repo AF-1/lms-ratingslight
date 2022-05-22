@@ -2077,8 +2077,7 @@ sub logRatedTrack {
 	# log rotation
 	my $fullfilepath = $logDir.'/'.$logFileName;
 	if (-f $fullfilepath) {
-		chdir($logDir);
-		my $logfilesize = stat($logFileName)->size;
+		my $logfilesize = stat($fullfilepath)->size;
 		if ($logfilesize > 102400) {
 			my $filename_oldlogfile = 'RL_Rating-Log.1.txt';
 			my $fullpath_oldlogfile = $logDir.'/'.$filename_oldlogfile;
