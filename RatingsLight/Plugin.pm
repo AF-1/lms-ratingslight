@@ -33,7 +33,7 @@ use File::Copy qw(move);
 use File::Spec::Functions qw(:ALL);
 use File::stat;
 use FindBin qw($Bin);
-use POSIX qw(strftime floor);
+use POSIX qw(strftime floor round);
 use Scalar::Util qw(blessed);
 use Slim::Control::Request;
 use Slim::Player::Client;
@@ -76,13 +76,13 @@ sub initPlugin {
 	initPrefs();
 	initIR();
 
-	Slim::Control::Request::addDispatch(['ratingslight','setrating','_trackid','_rating','_incremental'], [1, 0, 1, \&setRating]);
-	Slim::Control::Request::addDispatch(['ratingslight','setratingpercent', '_trackid', '_rating','_incremental'], [1, 0, 1, \&setRating]);
-	Slim::Control::Request::addDispatch(['ratingslight','ratingmenu','_trackid'], [0, 1, 1, \&getRatingMenu]);
-	Slim::Control::Request::addDispatch(['ratingslight','ratedtracksmenu','_trackid', '_thisid', '_objecttype'], [0, 1, 1, \&getRatedTracksMenu]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'setrating', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'setratingpercent', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'ratingmenu', '_trackid'], [0, 1, 1, \&getRatingMenu]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'ratedtracksmenu', '_trackid', '_thisid', '_objecttype'], [0, 1, 1, \&getRatedTracksMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'actionsmenu'], [0, 1, 1, \&getActionsMenu]);
-	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
-	Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'],[0, 1, 0, undef]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'], [0, 0, 0, undef]);
+	Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'], [0, 1, 0, undef]);
 
 	Slim::Control::Request::subscribe(\&setRefreshCBTimer,[['rescan'],['done']]);
 
@@ -315,7 +315,7 @@ sub postinitPlugin {
 
 sub setRating {
 	my $request = shift;
-
+	$log->debug('request params = '.Dumper($request->getParamsCopy()));
 	if (Slim::Music::Import->stillScanning) {
 		$log->warn('Warning: access to rating values blocked until library scan is completed');
 		return;
@@ -331,19 +331,31 @@ sub setRating {
 		return;
 	}
 
+	my $ratingScale = "notpercent";
+	if ($request->isCommand([['ratingslight'],['setratingpercent']])) {
+		$ratingScale = "percent";
+	}
+
 	my $trackId = $request->getParam('_trackid');
 	if (defined($trackId) && $trackId =~ /^track_id:(.*)$/) {
 		$trackId = $1;
 	} elsif (defined($request->getParam('_trackid'))) {
 		$trackId = $request->getParam('_trackid');
+	} else {
+		$log->error("Can't set rating. No (valid) track ID found. Provided track ID was ".Dumper($trackId));
+		return;
 	}
 
 	my $rating = $request->getParam('_rating');
 	if (defined($rating) && $rating =~ /^rating:(.*)$/) {
-		$rating = $1;
+		$rating = ratingValidator($1, $ratingScale);
 	} elsif (defined($request->getParam('_rating'))) {
-		$rating = $request->getParam('_rating');
+		$rating = ratingValidator($request->getParam('_rating'), $ratingScale);
+	} else {
+		$log->error("Can't set rating. No (valid) rating value found.");
+		return;
 	}
+	return if !defined($rating);
 
 	my $incremental = $request->getParam('_incremental');
 	if (defined($incremental) && $incremental =~ /^incremental:(.*)$/) {
@@ -555,20 +567,6 @@ sub getRatingMenu {
 		return;
 	}
 	my $track_id = $request->getParam('_trackid');
-
-	my $baseMenu = {
-		'actions' => {
-			'do' => {
-				'cmd' => ['ratingslight', 'setratingpercent', $track_id],
-				'itemsParams' => 'params',
-			},
-			'play' => {
-				'cmd' => ['ratingslight', 'setratingpercent', $track_id],
-				'itemsParams' => 'params',
-			},
-		}
-	};
-	$request->addResult('base', $baseMenu);
 	my $cnt = 0;
 
 	my @ratingValues = ();
@@ -579,19 +577,24 @@ sub getRatingMenu {
 	}
 
 	foreach my $rating (@ratingValues) {
-		my %itemParams = (
-			'rating' => $rating,
-		);
-		$request->addResultLoop('item_loop',$cnt,'params',\%itemParams);
-		my $text = getRatingTextLine($rating);
+		my $actions = {
+			'do' => {
+				'cmd' => ['ratingslight', 'setratingpercent', $track_id, $rating]
+			},
+			'play' => {
+				'cmd' => ['ratingslight', 'setratingpercent', $track_id, $rating]
+			},
+		};
 
-		$request->addResultLoop('item_loop',$cnt,'text',$text);
-		$request->addResultLoop('item_loop',$cnt,'nextWindow','parent');
+		my $text = getRatingTextLine($rating);
+		$request->addResultLoop('item_loop', $cnt, 'text', $text);
+		$request->addResultLoop('item_loop', $cnt, 'actions', $actions);
+		$request->addResultLoop('item_loop', $cnt, 'nextWindow', 'parent');
 		$cnt++;
 	}
 
-	$request->addResult('offset',0);
-	$request->addResult('count',$cnt);
+	$request->addResult('offset', 0);
+	$request->addResult('count', $cnt);
 	$request->setStatusDone();
 }
 
@@ -736,9 +739,9 @@ sub getRatedTracksMenu {
 			},
 		};
 
-		$request->addResultLoop('item_loop',$cnt,'type','redirect');
-		$request->addResultLoop('item_loop',$cnt,'actions',$actions);
-		$request->addResultLoop('item_loop',$cnt,'text',$returntext);
+		$request->addResultLoop('item_loop', $cnt, 'type', 'redirect');
+		$request->addResultLoop('item_loop', $cnt, 'actions', $actions);
+		$request->addResultLoop('item_loop', $cnt, 'text', $returntext);
 		$cnt++;
 	}
 
@@ -751,7 +754,7 @@ sub getRatedTracksMenu {
 			},
 		};
 		$request->addResultLoop('item_loop', 0, 'type', 'redirect');
-		$request->addResultLoop('item_loop' ,0, 'actions', $actions);
+		$request->addResultLoop('item_loop', 0, 'actions', $actions);
 		$request->addResultLoop('item_loop', 0, 'icon', 'plugins/RatingsLight/html/images/coverplaceholder.png');
 		$request->addResultLoop('item_loop', 0, 'text', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_ALLSONGS').' ('.$trackCount.')');
 		$cnt++;
@@ -2573,9 +2576,9 @@ sub getRatingFromDB {
 				$rating = $sth->fetchrow || 0;
 				$sth->finish();
 			};
-			if ($@) {$log->debug("error: $@");}
+			if ($@) { $log->debug("error: $@"); }
 			$log->debug("Found rating $rating for url: ".$url);
-			return $rating;
+			return adjustDisplayedRating($rating);
 		}
 	}
 
@@ -2587,7 +2590,7 @@ sub getRatingFromDB {
 
 	my $thisrating = $track->rating;
 	$rating = $thisrating if $thisrating;
-	return $rating;
+	return adjustDisplayedRating($rating);
 }
 
 sub getRatingTextLine {
@@ -2730,6 +2733,28 @@ sub refreshTitleFormats {
 
 
 # misc
+
+sub adjustDisplayedRating {
+	my $rating = shift;
+	$rating = round($rating/10)*10;
+	return $rating;
+}
+
+sub ratingValidator {
+	my ($rating, $ratingScale) = @_;
+	$rating =~ s/\s+//g; # remove all whitespace characters
+
+	if ($ratingScale eq 'percent' && (($rating !~ /^\d+\z/) || ($rating < 0 || $rating > 100))) {
+		$log->error("Can't set rating. Invalid rating value! Rating values for 'setratingpercent' have to be on a scale from 0 to 100. The provided rating value was ".Dumper($rating));
+		return undef;
+	}
+
+	if ($ratingScale eq 'notpercent' && (($rating !~ /^\d+(\.5)?\z/) || ($rating < 0 || $rating > 5))) {
+		$log->error("Can't set rating. Invalid rating value! Rating values for 'setrating' have to be on a scale from 0 to 5. The provided rating value was ".Dumper($rating));
+		return undef;
+	}
+	return $rating;
+}
 
 sub ratingSanityCheck {
 	my $rating = shift;

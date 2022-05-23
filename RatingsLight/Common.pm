@@ -156,9 +156,10 @@ sub cleanupBackups {
 		my $n = 0;
 		if (scalar(@files) > $backupFilesMin) {
 			foreach my $file (@files) {
-				$mtime = stat($file)->mtime;
+				my $filepath = catfile($backupDir,$file);
+				$mtime = stat($filepath)->mtime;
 				if (($etime - $mtime) > $maxkeeptime) {
-					unlink($file) or die "Can\'t delete $file: $!";
+					unlink($filepath) or die "Can't delete $file: $!";
 					$n++;
 					last if ((scalar(@files) - $n) <= $backupFilesMin);
 				}
