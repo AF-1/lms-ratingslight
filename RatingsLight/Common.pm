@@ -83,9 +83,7 @@ sub createBackup {
 	$sth->finish();
 
 	if (@ratedTracks) {
-		my $PLfilename = 'RL_Backup_'.$filename_timestamp.'.xml';
-
-		my $filename = catfile($backupDir,$PLfilename);
+		my $filename = catfile($backupDir, 'RL_Backup_'.$filename_timestamp.'.xml');
 		my $output = FileHandle->new($filename, '>:utf8') or do {
 			$log->warn('could not open '.$filename.' for writing.');
 			$prefs->set('status_creatingbackup', 0);
@@ -156,7 +154,7 @@ sub cleanupBackups {
 		my $n = 0;
 		if (scalar(@files) > $backupFilesMin) {
 			foreach my $file (@files) {
-				my $filepath = catfile($backupDir,$file);
+				my $filepath = catfile($backupDir, $file);
 				$mtime = stat($filepath)->mtime;
 				if (($etime - $mtime) > $maxkeeptime) {
 					unlink($filepath) or die "Can't delete $file: $!";

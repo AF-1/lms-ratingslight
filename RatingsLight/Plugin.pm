@@ -220,7 +220,7 @@ sub initPrefs {
 		dstm_batchsizenewtracks => 20,
 		rlfolderpath => sub {
 			my $rlParentFolderPath = $prefs->get('rlparentfolderpath') || $serverPrefs->get('playlistdir');
-			my $rlFolderPath = $rlParentFolderPath.'/RatingsLight';
+			my $rlFolderPath = catdir($rlParentFolderPath, 'RatingsLight');
 			eval {
 				mkdir($rlFolderPath, 0755) unless (-d $rlFolderPath);
 				chdir($rlFolderPath);
@@ -234,7 +234,7 @@ sub initPrefs {
 
 	$prefs->setValidate(sub {
 		return if (!$_[1] || !(-d $_[1]) || (main::ISWINDOWS && !(-d Win32::GetANSIPathName($_[1]))) || !(-d Slim::Utils::Unicode::encode_locale($_[1])));
-		my $rlFolderPath = $_[1].'/RatingsLight';
+		my $rlFolderPath = catdir($_[1], 'RatingsLight');
 		eval {
 			mkdir($rlFolderPath, 0755) unless (-d $rlFolderPath);
 			chdir($rlFolderPath);
@@ -1327,7 +1327,7 @@ sub exportRatingsToPlaylistFiles {
 		if ($trackcount > 0) {
 			my $PLfilename = (($rating100ScaleValue/20) == 1 ? 'RL_Export_'.$filename_timestamp.'__Rated_'.($rating100ScaleValue/20).'_star.m3u.txt' : 'RL_Export_'.$filename_timestamp.'__Rated_'.($rating100ScaleValue/20).'_stars.m3u.txt');
 
-			my $filename = catfile($exportDir,$PLfilename);
+			my $filename = catfile($exportDir, $PLfilename);
 			my $output = FileHandle->new($filename, '>:utf8') or do {
 				$log->warn('could not open '.$filename.' for writing.');
 				$prefs->set('status_exportingtoplaylistfiles', 0);
@@ -2078,12 +2078,12 @@ sub logRatedTrack {
 	my $logDir = $prefs->get('rlfolderpath');
 
 	# log rotation
-	my $fullfilepath = $logDir.'/'.$logFileName;
+	my $fullfilepath = catfile($logDir, $logFileName);
 	if (-f $fullfilepath) {
 		my $logfilesize = stat($fullfilepath)->size;
 		if ($logfilesize > 102400) {
 			my $filename_oldlogfile = 'RL_Rating-Log.1.txt';
-			my $fullpath_oldlogfile = $logDir.'/'.$filename_oldlogfile;
+			my $fullpath_oldlogfile = catfile($logDir, $filename_oldlogfile);
 				if (-f $fullpath_oldlogfile) {
 					unlink $fullpath_oldlogfile;
 				}
@@ -2117,7 +2117,7 @@ sub logRatedTrack {
 	}
 	my $newRating = $rating100ScaleValue/20;
 
-	my $filename = catfile($logDir,$logFileName);
+	my $filename = catfile($logDir, $logFileName);
 	my $output = FileHandle->new($filename, '>>:utf8') or do {
 		$log->warn('Could not open '.$filename.' for writing.');
 		return;
