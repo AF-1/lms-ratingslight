@@ -217,20 +217,10 @@ sub initPrefs {
 		dstm_percentagetoprated => 30,
 		dstm_num_seedtracks => 10,
 		dstm_playedtrackstokeep => 5,
-		dstm_batchsizenewtracks => 20,
-		rlfolderpath => sub {
-			my $rlParentFolderPath = $prefs->get('rlparentfolderpath') || $serverPrefs->get('playlistdir');
-			my $rlFolderPath = catdir($rlParentFolderPath, 'RatingsLight');
-			eval {
-				mkdir($rlFolderPath, 0755) unless (-d $rlFolderPath);
-				chdir($rlFolderPath);
-				return $rlFolderPath;
-			} or do {
-				$log->error("Could not create RatingsLight folder in parent folder '$rlParentFolderPath'!");
-				return undef;
-			};
-		}
+		dstm_batchsizenewtracks => 20
 	});
+
+	createRLfolder();
 
 	$prefs->setValidate(sub {
 		return if (!$_[1] || !(-d $_[1]) || (main::ISWINDOWS && !(-d Win32::GetANSIPathName($_[1]))) || !(-d Slim::Utils::Unicode::encode_locale($_[1])));
@@ -2765,6 +2755,19 @@ sub ratingSanityCheck {
 		return 100;
 	}
 	return $rating;
+}
+
+sub createRLfolder {
+	my $rlParentFolderPath = $prefs->get('rlparentfolderpath') || $serverPrefs->get('playlistdir');
+	my $rlFolderPath = catdir($rlParentFolderPath, 'RatingsLight');
+	eval {
+		mkdir($rlFolderPath, 0755) unless (-d $rlFolderPath);
+		chdir($rlFolderPath);
+	} or do {
+		$log->error("Could not create or access RatingsLight folder in parent folder '$rlParentFolderPath'!");
+		return;
+	};
+	$prefs->set('rlfolderpath', $rlFolderPath);
 }
 
 sub trimStringLength {
