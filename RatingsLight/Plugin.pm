@@ -33,7 +33,7 @@ use File::Copy qw(move);
 use File::Spec::Functions qw(:ALL);
 use File::stat;
 use FindBin qw($Bin);
-use POSIX qw(strftime floor round);
+use POSIX qw(strftime floor);
 use Scalar::Util qw(blessed);
 use Slim::Control::Request;
 use Slim::Player::Client;
@@ -2726,7 +2726,7 @@ sub refreshTitleFormats {
 
 sub adjustDisplayedRating {
 	my $rating = shift;
-	$rating = round($rating/10)*10;
+	$rating = int(($rating + 5)/10)*10;
 	return $rating;
 }
 
