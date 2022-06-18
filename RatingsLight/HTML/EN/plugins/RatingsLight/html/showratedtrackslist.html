@@ -111,24 +111,24 @@ a {text-decoration: none;}
 				</div>
 				[% IF objecttype == 'album' %]
 				<div class="artistname underline-on-hover">
-					<a href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&linktitle=[% pagetitle %]&mode=artists&artist_id=[% ratedtrack.artistID %]&player=[% playerURI %]/index.html?index=0">
+					<a href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=artists&artist_id=[% ratedtrack.artistID %]&linktitle=[% pagetitle %]&player=[% playerURI %]/index.html?index=0">
 						[% ratedtrack.artistname %]
 					</a>
 				</div>
 				[% END %]
 				[% IF objecttype == 'artist' %]
 				<div class="albumtitle underline-on-hover">
-					<a href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&linktitle=[% pagetitle %]&mode=albums&album_id=[% ratedtrack.albumID %]&player=[% playerURI %]/index.html?index=0">
+					<a href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=albums&album_id=[% ratedtrack.albumID %]&linktitle=[% pagetitle %]&player=[% playerURI %]/index.html?index=0">
 						[% ratedtrack.albumname %]
 					</a>
 				</div>
 				[% END %]
 				[% IF objecttype == 'genre' || objecttype == 'year' || objecttype == 'decade' || objecttype == 'playlist' %]
 				<div class="secondline underline-on-hover">
-					<a href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&linktitle=[% pagetitle %]&mode=artists&artist_id=[% ratedtrack.artistID %]&player=[% playerURI %]/index.html?index=0">
+					<a href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=albums&artist_id=[% ratedtrack.artistID %]&linktitle=[% pagetitle %]&player=[% playerURI %]">
 						[% ratedtrack.artistname %]
 					</a> &#x2022;
-					<a href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&linktitle=[% pagetitle %]&mode=albums&album_id=[% ratedtrack.albumID %]&player=[% playerURI %]/index.html?index=0">
+					<a href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=tracks&album_id=[% ratedtrack.albumID %]&linktitle=[% pagetitle %]&player=[% playerURI %]">
 						[% ratedtrack.albumname %]
 					</a>
 				</div>

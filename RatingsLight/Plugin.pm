@@ -123,38 +123,38 @@ sub initPlugin {
 		},
 	));
 	Slim::Menu::ArtistInfo->registerInfoProvider(ratingslightratedtracksbyartist => (
-		after => 'top',
+		after => 'addartist',
 		func => sub {
 			return objectInfoHandler('artist', @_);
 		},
 	));
 	Slim::Menu::AlbumInfo->registerInfoProvider(ratingslightratedtracksinalbum => (
-		after => 'top',
+		after => 'addalbum',
 		func => sub {
 			return objectInfoHandler('album', @_);
 		},
 	));
 	Slim::Menu::GenreInfo->registerInfoProvider(ratingslightratedtracksingenre => (
-		after => 'top',
+		after => 'addgenre',
 		func => sub {
 			return objectInfoHandler('genre', @_);
 		},
 	));
 	Slim::Menu::YearInfo->registerInfoProvider(ratingslightratedtracksfromyear => (
-		after => 'top',
+		after => 'addyear',
 		before => 'ratingslightratedtracksfromdecade',
 		func => sub {
 			return objectInfoHandler('year', @_);
 		},
 	));
 	Slim::Menu::YearInfo->registerInfoProvider(ratingslightratedtracksfromdecade => (
-		after => 'top',
+		after => 'addyear',
 		func => sub {
 			return objectInfoHandler('decade', @_);
 		},
 	));
 	Slim::Menu::PlaylistInfo->registerInfoProvider(ratingslightratedtracksinplaylist => (
-		after => 'top',
+		after => 'addplaylist',
 		func => sub {
 			return objectInfoHandler('playlist', @_);
 		},
