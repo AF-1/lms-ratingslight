@@ -240,13 +240,13 @@ sub initPrefs {
 	$prefs->set('ratethisplaylistrating', '');
 	$prefs->set('exportVL_id', '');
 	$prefs->set('status_exportingtoplaylistfiles', '0');
-	$prefs->set('status_importingfromcommenttags', '0');
+	$prefs->set('status_importingfromcommentstags', '0');
 	$prefs->set('status_importingfromBPMtags', '0');
 	$prefs->set('status_batchratingplaylisttracks', '0');
 	$prefs->set('status_creatingbackup', '0');
 	$prefs->set('status_restoringfrombackup', '0');
 	$prefs->set('status_clearingallratings', '0');
-	$prefs->set('postScanScheduleDelay', '10');
+	$prefs->set('postScanScheduleDelay', '5');
 
 	$prefs->setValidate({
 		validator => sub {
@@ -1267,7 +1267,7 @@ sub exportRatingsToPlaylistFiles {
 	for (my $rating100ScaleValue = 10; $rating100ScaleValue <= 100; $rating100ScaleValue = $rating100ScaleValue + 10) {
 		$rating100ScaleValueCeil = $rating100ScaleValue + 9;
 		if (defined $onlyratingsnotmatchtags) {
-			# comment tags
+			# comments tags
 			if ($filetagtype == 1) {
 				if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 					$log->warn('Error: no rating keywords found.');
@@ -1331,7 +1331,7 @@ sub exportRatingsToPlaylistFiles {
 			}
 			print $output '# contains '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' rated '.(($rating100ScaleValue/20) == 1 ? ($rating100ScaleValue/20).' star' : ($rating100ScaleValue/20).' stars')."\n\n";
 			if (defined $onlyratingsnotmatchtags) {
-				print $output "# *** This export only contains rated tracks whose ratings differ from the rating value derived from their comment tag keywords. ***\n";
+				print $output "# *** This export only contains rated tracks whose ratings differ from the rating value derived from their comments tag keywords. ***\n";
 				print $output "# *** If you want to export ALL rated tracks change the preference on the Ratings Light settings page. ***\n\n";
 			}
 			for my $ratedTrack (@ratedTracks) {
@@ -1441,7 +1441,7 @@ sub delayedPostScanRefresh {
 		$log->debug('Scan in progress. Waiting for current scan to finish.');
 		setRefreshCBTimer();
 	} else {
-		$log->debug('Starting post-scan refresh after ratings import from comment tags');
+		$log->debug('Starting post-scan refresh after ratings import from comments tags');
 		refreshAll();
 	}
 }
@@ -2179,9 +2179,9 @@ sub dontStopTheMusic {
 	my $sqlstatement;
 
 	### shared sql
-	# exclude comment, track min duration, library view
+	# track min duration, library view
 	my $shared_curlib_sql = " join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where audio=1 and tracks.secs >= $dstm_minTrackDuration";
-	# exclude comment, track min duration
+	# track min duration
 	my $shared_completelib_sql = " where audio=1 and tracks.secs >= $dstm_minTrackDuration";
 	# excluded genres
 	my $excludegenre_sql = " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";

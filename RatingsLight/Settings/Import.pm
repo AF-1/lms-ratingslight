@@ -90,10 +90,12 @@ sub handler {
 				$paramRef->{'missingkeywords'} = 1;
 				$result = $class->SUPER::handler($client, $paramRef);
 			} else {
-				importRatingsFromCommentTags();
+				importRatingsFromCommentsTags();
+				Plugins::RatingsLight::Plugin::setRefreshCBTimer();
 			}
 		} elsif ($filetagtype == 0) {
 			importRatingsFromBPMTags();
+			Plugins::RatingsLight::Plugin::setRefreshCBTimer();
 		}
 	} elsif ($paramRef->{'rateplaylistnow'}) {
 		if ($callHandler) {
@@ -101,6 +103,7 @@ sub handler {
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
 		Plugins::RatingsLight::Plugin::importRatingsFromPlaylist();
+		Plugins::RatingsLight::Plugin::setRefreshCBTimer();
 	} elsif ($callHandler) {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}

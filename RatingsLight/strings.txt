@@ -2,7 +2,7 @@ PLUGIN_RATINGSLIGHT
 	EN	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
-	EN	A plugin that takes care of rating your tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from file tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Create virtual libraries for (top) rated tracks. Browse (top) rated tracks by artist or genre (browse menus). Keep track of your recently rated songs with a dedicated playlist or log file. Show rated songs for artist, album, genre, year or playlist (context menu). Support for online library tracks where possible. Includes "Don't Stop The Music" mixes.
+	EN	A plugin that takes care of rating your tracks. Set track ratings (also with plugins/apps and IR remote). Import track ratings from file tags or playlists. Export track ratings to playlist files. Create (scheduled) backups, restore from backups. Create virtual libraries for (top) rated tracks. Browse (top) rated tracks by artist or genre (browse menus). Keep track of your recently rated songs with a dedicated playlist or log file. Show rated songs for artist, album, genre, year or playlist (context menu). Support for online library tracks where possible. Includes "Don't Stop The Music" mixes. More information on the GitHub page.
 
 PLUGIN_RATINGSLIGHT_LOG_DESC
 	EN	Log of plugin RatingsLight
@@ -127,7 +127,7 @@ PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF
 	EN	Export only tracks with rating values different from file tag ratings
 
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF_DESC
-	EN	This will export only those tracks whose LMS rating differs from the rating value derived from the file tag (BPM, comment tag) that you've selected in the <i>RL <b>import</b> section</i>.<br> So if you've marked a track as 2-star rated in your file tag and its rating hasn't changed, it won't be part of the exported playlists.
+	EN	This will export only those tracks whose LMS rating differs from the rating value derived from the file tag (BPM, comments tag) that you've selected in the <i>RL <b>import</b> section</i>.<br> So if you've marked a track as 2-star rated in your file tag and its rating hasn't changed, it won't be part of the exported playlists.
 
 PLUGIN_RATINGSLIGHT_EXPORT_SELFILETAG
 	EN	Currently selected file tag
@@ -191,12 +191,12 @@ PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_DESC
 	EN	<b>Manually</b> import ratings from file tags <b>now</b>.<br>Unless you've enabled the <i>Don't unrate</i> option this will <b>reset <u>all</u> ratings to values derived from the file tags.</b>
 
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_HEADER
-	EN	<b>Import ratings from the BPM tags or the comment tags of your files.</b>
+	EN	<b>Import ratings from the BPM tags or the comments tags of your files.</b>
 
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_BUTTON
 	EN	Import now
 
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_MANUAL_IMPORT_MISSINGKEYWORDS
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_MANUAL_IMPORT_MISSINGKEYWORDS
 	EN	You have to set at least one keyword!
 
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_INPROGRESS
@@ -218,27 +218,27 @@ PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE
 	EN	Choose file tag for import
 
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_DESC
-	EN	Choose the file tag you want to import rating values from.<br><br><b>Comment tags:</b> Import ratings derived from <b>keywords</b> in the <b>comment tags</b> of your files.<br><br><b>BPM:</b> Import ratings from the <b>BPM</b> tag. Values in the BPM tag have to be integer values on a <b><u>10-step</u></b> scale from 0 to 100. Anything else will be ignored.<br><br><b>If you <i>change</i> the file tag you want to import ratings from, <u>save</u> your selection first <u>before</u> you start importing.</b>
+	EN	Choose the file tag you want to import rating values from.<br><br><b>Comments tags:</b> Import ratings derived from <b>keywords</b> in the <b>comments tags</b> of your files.<br><br><b>BPM:</b> Import ratings from the <b>BPM</b> tag. Values in the BPM tag have to be integer values on a <b><u>10-step</u></b> scale from 0 to 100. Anything else will be ignored.<br><br><b>If you <i>change</i> the file tag you want to import ratings from, <u>save</u> your selection first <u>before</u> you start importing.</b>
 
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_BPM
 	EN	BPM tag
 
 PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_COMMENT
-	EN	Comment tag
+	EN	Comments tag
 
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_EXAMPLE
-	EN	<b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx": if a comment tag contains "favstars<b>4</b>xx" -> track rating = <b>4</b> stars
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_EXAMPLE
+	EN	<b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx": if a comments tag contains "favstars<b>4</b>xx" -> track rating = <b>4</b> stars
 
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_RATING_KEYWORD
 	EN	Set your rating keywords
 
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_PREFIX
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_RATING_KEYWORD_PREFIX
 	EN	<b>Rating Keyword <u>Pre</u>fix</b>
 
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_SUFFIX
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_RATING_KEYWORD_SUFFIX
 	EN	<b>Rating Keyword <u>Suf</u>fix</b>
 
-PLUGIN_RATINGSLIGHT_IMPORT_COMMENTTAGS_RATING_KEYWORD_DESC
+PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_RATING_KEYWORD_DESC
 	EN	At least one field must be filled.<br>Up to 30 letters, case insensitive, no numbers or special characters.<br>Rating values have to <b>integers</b> on a scale from 0 to 5 in your keywords, <i>no half-star rating values</i>.
 
 

@@ -62,7 +62,7 @@ sub startScan {
 	$log->debug('starting importer');
 	my $filetagtype = $prefs->get('filetagtype');
 	if ($filetagtype == 1) {
-		importRatingsFromCommentTags();
+		importRatingsFromCommentsTags();
 	} elsif ($filetagtype == 0) {
 		importRatingsFromBPMTags();
 	}
