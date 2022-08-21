@@ -66,7 +66,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(displayratingchar ratingcontextmenusethalfstars showratedtracksmenus browsemenus_sourceVL_id ratedtracksweblimit ratedtrackscontextmenulimit));
+	return ($prefs, qw(displayratingchar ratingcontextmenusethalfstars showratedtracksmenus browsemenus_sourceVL_id enableipengtslegacyrating ratedtracksweblimit ratedtrackscontextmenulimit));
 }
 
 sub handler {

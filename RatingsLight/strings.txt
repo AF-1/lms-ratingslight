@@ -53,6 +53,12 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM
 	EN	Don't Stop the Music
 
+PLUGIN_RATINGSLIGHT_SETTINGS_FAQ_LINK_TEXT
+	EN	Click here to read the FAQ.
+
+PLUGIN_RATINGSLIGHT_SETTINGS_FAQ_LINK
+	EN	https://github.com/AF-1/lms-ratingslight#faq
+
 
 
 PLUGIN_RATINGSLIGHT_VARIOUS_REMOTEBUTTONS
@@ -404,6 +410,12 @@ PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_SETHALFSTARS
 
 PLUGIN_RATINGSLIGHT_MENUS_RATINGCONTEXTMENU_SETHALFSTARS_DESC
 	EN	Show/hide half-star ratings in the <b>context rating menu</b>. This affects only the context rating menu where you rate tracks.<br>The <b>current track rating</b> in the track context menu will <i>always</i> show the <b>exact</b> track rating incl. half-stars, no matter what.
+
+PLUGIN_RATINGSLIGHT_MENUS_ENABLEIPENG_TSLEGACYRATING
+	EN	Enable iPeng rating workaround
+
+PLUGIN_RATINGSLIGHT_MENUS_ENABLEIPENG_TSLEGACYRATING_DESC
+	EN	Displaying and changing track ratings in iPeng is already possible via the <b>context menu</b>.<br>iPeng <b>additionally</b> offers the possibility to display and change track ratings directly in the <b>top left menu bar</b>. Unfortunately iPeng supports this officially only for the now discontinued TrackStat plugin.<br>If you check this box, you can also use <i>Ratings Light</i> to display and change track ratings directly in iPeng's top left menu bar (with the help of a workaround).<br><br>If you have changed this setting, please <b>restart the server for the change to take effect</b>.
 
 PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS
 	EN	Ratings Light - Rated Tracks

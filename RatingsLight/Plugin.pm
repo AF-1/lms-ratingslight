@@ -298,6 +298,14 @@ sub postinitPlugin {
 		initVirtualLibraries();
 		backupScheduler();
 	}
+
+	# temp. workaround to allow legacy TS rating in iPeng until iPeng supports RL or is discontinued
+	if ($prefs->get('enableipengtslegacyrating') && !Slim::Utils::PluginManager->isEnabled('Plugins::TrackStat::Plugin')) {
+		Slim::Control::Request::addDispatch(['trackstat', 'getrating', '_trackid'], [0, 1, 0, \&getRatingTSLegacy]);
+		Slim::Control::Request::addDispatch(['trackstat', 'setrating', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
+		Slim::Control::Request::addDispatch(['trackstat', 'setratingpercent', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
+		Slim::Control::Request::addDispatch(['trackstat', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
+	}
 }
 
 
@@ -311,18 +319,26 @@ sub setRating {
 		return;
 	}
 
-	if (($request->isNotCommand([['ratingslight'],['setrating']])) && ($request->isNotCommand([['ratingslight'],['setratingpercent']]))) {
+	if ($request->isNotCommand([['ratingslight'],['setrating']]) && $request->isNotCommand([['ratingslight'],['setratingpercent']]) && $request->isNotCommand([['trackstat'],['setrating']]) && $request->isNotCommand([['trackstat'],['setratingpercent']])) {
 		$request->setStatusBadDispatch();
+		$log->warn('incorrect command');
 		return;
 	}
+
+	if (($request->isCommand([['trackstat'],['setrating']]) || $request->isCommand([['trackstat'],['setratingpercent']])) && $request->source !~ /iPeng/) {
+		$request->setStatusBadDispatch();
+		$log->warn('TS legacy rating is only available for iPeng clients as a temp. workaround. Please use the correct ratingslight dispatch instead.');
+		return;
+	}
+
 	my $client = $request->client();
 	if (!defined $client) {
 		$request->setStatusNeedsClient();
 		return;
 	}
 
-	my $ratingScale = "notpercent";
-	if ($request->isCommand([['ratingslight'],['setratingpercent']])) {
+	my $ratingScale;
+	if ($request->isCommand([['ratingslight'],['setratingpercent']]) || $request->isCommand([['trackstat'],['setratingpercent']])) {
 		$ratingScale = "percent";
 	}
 
@@ -382,20 +398,20 @@ sub setRating {
 			$currentrating = 0;
 		}
 		if ($incremental eq '+') {
-			if ($request->isNotCommand([['ratingslight'],['setratingpercent']])) {
+			if (!defined($ratingScale)) {
 				$rating100ScaleValue = $currentrating + int($rating * 20);
 			} else {
 				$rating100ScaleValue = $currentrating + int($rating);
 			}
 		} elsif ($incremental eq '-') {
-			if ($request->isNotCommand([['ratingslight'],['setratingpercent']])) {
+			if (!defined($ratingScale)) {
 				$rating100ScaleValue = $currentrating - int($rating * 20);
 			} else {
 				$rating100ScaleValue = $currentrating - int($rating);
 			}
 		}
 	} else {
-		if ($request->isNotCommand([['ratingslight'],['setratingpercent']])) {
+		if (!defined($ratingScale)) {
 			$rating100ScaleValue = int($rating * 20);
 		} else {
 			$rating100ScaleValue = $rating;
@@ -409,7 +425,7 @@ sub setRating {
 	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackId, $rating100ScaleValue/20, $rating100ScaleValue]);
 
 	$request->addResult('rating', $rating100ScaleValue/20);
-	$request->addResult('ratingpercentage', $rating100ScaleValue/20);
+	$request->addResult('ratingpercentage', $rating100ScaleValue);
 	$request->setStatusDone();
 	refreshAll();
 }
@@ -2724,6 +2740,45 @@ sub refreshTitleFormats {
 
 # misc
 
+sub getRatingTSLegacy {
+	my $request = shift;
+	$log->debug('Used TS Legacy dispatch to get rating.');
+	$log->debug('request params = '.Dumper($request->getParamsCopy()));
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn('Warning: access to rating values blocked until library scan is completed');
+		return;
+	}
+
+	if ($request->isNotQuery([['trackstat'],['getrating']])) {
+		$log->error('incorrect command');
+		$request->setStatusBadDispatch();
+		return;
+	}
+
+	if ($request->isQuery([['trackstat'],['getrating']]) && $request->source !~ /iPeng/) {
+		$request->setStatusBadDispatch();
+		$log->warn('TS legacy rating is only available for iPeng clients as a temp. workaround. Please use the correct ratingslight dispatch instead.');
+		return;
+	}
+
+	my $trackId = $request->getParam('_trackid');
+	if (defined($trackId) && $trackId =~ /^track_id:(.*)$/) {
+		$trackId = $1;
+	} elsif (defined($request->getParam('_trackid'))) {
+		$trackId = $request->getParam('_trackid');
+	} else {
+		$log->error("Can't set rating. No (valid) track ID found. Provided track ID was ".Dumper($trackId));
+		return;
+	}
+
+	my $track = Slim::Schema->find('Track', $trackId);
+	my $rating100ScaleValue = getRatingFromDB($track);
+
+	$request->addResult('rating', $rating100ScaleValue/20);
+	$request->addResult('ratingpercentage', $rating100ScaleValue);
+	$request->setStatusDone();
+}
+
 sub adjustDisplayedRating {
 	my $rating = shift;
 	$rating = int(($rating + 5)/10)*10;
@@ -2732,14 +2787,15 @@ sub adjustDisplayedRating {
 
 sub ratingValidator {
 	my ($rating, $ratingScale) = @_;
+	$log->debug('rating = '.$rating.' -- ratingScale = '.Dumper($ratingScale));
 	$rating =~ s/\s+//g; # remove all whitespace characters
 
-	if ($ratingScale eq 'percent' && (($rating !~ /^\d+\z/) || ($rating < 0 || $rating > 100))) {
+	if ($ratingScale && $ratingScale eq 'percent' && (($rating !~ /^\d+\z/) || ($rating < 0 || $rating > 100))) {
 		$log->error("Can't set rating. Invalid rating value! Rating values for 'setratingpercent' have to be on a scale from 0 to 100. The provided rating value was ".Dumper($rating));
 		return undef;
 	}
 
-	if ($ratingScale eq 'notpercent' && (($rating !~ /^\d+(\.5)?\z/) || ($rating < 0 || $rating > 5))) {
+	if (!defined($ratingScale) && (($rating !~ /^\d+(\.5)?\z/) || ($rating < 0 || $rating > 5))) {
 		$log->error("Can't set rating. Invalid rating value! Rating values for 'setrating' have to be on a scale from 0 to 5. The provided rating value was ".Dumper($rating));
 		return undef;
 	}

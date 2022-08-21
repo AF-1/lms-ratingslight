@@ -27,6 +27,10 @@ A plugin that takes care of rating tracks in your [Logitech Media Server](https:
 
 - LMS version >= 7.**9**
 - LMS database = **SQLite**
+
+<br>
+<a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
+
 <br><br><br>
 
 
