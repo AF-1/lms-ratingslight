@@ -63,4 +63,8 @@
 	<input type="text" class="stdedit" name="pref_exportextension" id="exportextension" value="[% prefs.exportextension %]" size="4">
 [% END %]
 
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONEXCEPTIONS" desc="PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONEXCEPTIONS_DESC" %]
+	<input type="text" class="stdedit" name="pref_exportextensionexceptions" id="exportextensionexceptions" value="[% prefs.exportextensionexceptions %]" size="30">
+[% END %]
+
 [% PROCESS settings/footer.html %]

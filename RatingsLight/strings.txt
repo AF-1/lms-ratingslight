@@ -156,6 +156,12 @@ PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION
 PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION_DESC
 	EN	Replace the file extension of your <b>exported</b> file urls. Helpful if you want to use the exported playlist with a lossy version of your lossless LMS library.
 
+PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONEXCEPTIONS
+	EN	Replace file extensions:<br>ignore list
+
+PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONEXCEPTIONS_DESC
+	EN	If you replace file extensions when exporting your playlist, you can specify here which extensions should be ignored, i.e. they won't be replaced. For example, if they already belong to a lossy format.<br><b>Multiple</b> extensions have to be separated with a <b>comma</b>.
+
 
 PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS
 	EN	Playlists

@@ -269,6 +269,13 @@ sub initPrefs {
 			return 1;
 		}
 	}, 'exportextension');
+	$prefs->setValidate({
+		validator => sub {
+			return if $_[1] =~ m|[^a-zA-Z0-9,]|;
+			return 1;
+		}
+	}, 'exportextensionexceptions');
+
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 5000}, 'playlistimport_maxtracks');
 	$prefs->setValidate({'validator' => \&isTimeOrEmpty}, 'backuptime');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 365}, 'backupsdaystokeep');
@@ -1354,9 +1361,8 @@ sub exportRatingsToPlaylistFiles {
 				my $ratedTrackURL = $ratedTrack->{'url'};
 				my $ratedTrackURL_extURL = changeExportFilePath($ratedTrackURL, 1) if ($ratedTrack->{'remote'} != 1);
 
-				print $output '#EXTURL:'.$ratedTrackURL_extURL."\n";
-				my $ratedTrackPath = pathForItem($ratedTrackURL);
-				$ratedTrackPath = Slim::Utils::Unicode::utf8decode_locale(pathForItem($ratedTrackURL));
+				print $output '#EXTURL:'.$ratedTrackURL_extURL."\n" if $ratedTrackURL_extURL && $ratedTrackURL_extURL ne '';
+				my $ratedTrackPath = Slim::Utils::Unicode::utf8decode_locale(pathForItem($ratedTrackURL));
 				$ratedTrackPath = changeExportFilePath($ratedTrackPath) if ($ratedTrack->{'remote'} != 1);
 				print $output $ratedTrackPath."\n";
 			}
@@ -1378,8 +1384,9 @@ sub changeExportFilePath {
 
 	if (scalar @{$exportbasefilepathmatrix} > 0) {
 		my $oldtrackURL = $trackURL;
-		my $exportextension = $prefs->get('exportextension');
 		my $escaped_trackURL = uri_escape_utf8($trackURL);
+		my $exportextension = $prefs->get('exportextension');
+		my $exportExtensionExceptionsString = $prefs->get('exportextensionexceptions');
 
 		foreach my $thispath (@{$exportbasefilepathmatrix}) {
 			my $lmsbasepath = $thispath->{'lmsbasepath'};
@@ -1396,9 +1403,24 @@ sub changeExportFilePath {
 				my $escaped_substitutebasepath = uri_escape_utf8($substitutebasepath);
 
 				if (defined $exportextension && $exportextension ne '') {
-					$escaped_trackURL =~ s/\.[^.]*$/\.$exportextension/isg;
-				}
+					my ($LMSfileExtension) = $escaped_trackURL =~ /(\.[^.]*)$/;
+					$LMSfileExtension =~ s/\.//s;
+					$log->debug("LMS file extension is '$LMSfileExtension'");
 
+					# file extension replacement - exceptions
+					my %extensionExceptionsHash;
+					if (defined $exportExtensionExceptionsString && $exportExtensionExceptionsString ne '') {
+						$exportExtensionExceptionsString =~ s/ //g;
+						%extensionExceptionsHash = map {$_ => 1} (split /,/, lc($exportExtensionExceptionsString));
+						$log->debug('extensionExceptionsHash = '.Dumper(\%extensionExceptionsHash));
+					}
+
+					if ((scalar keys %extensionExceptionsHash > 0) && $extensionExceptionsHash{lc($LMSfileExtension)}) {
+						$log->debug("The file extension '$LMSfileExtension' is not replaced because it is included in the list of exceptions.");
+					} else {
+						$escaped_trackURL =~ s/\.[^.]*$/\.$exportextension/isg;
+					}
+				}
 				$escaped_trackURL =~ s/$escaped_lmsbasepath/$escaped_substitutebasepath/isg;
 				$trackURL = Encode::decode('utf8', uri_unescape($escaped_trackURL));
 
@@ -1406,9 +1428,7 @@ sub changeExportFilePath {
 					$trackURL =~ s/ /%20/isg;
 				} else {
 					$trackURL = Slim::Utils::Unicode::utf8decode_locale($trackURL);
-
 				}
-
 				$log->debug('old url: '.$oldtrackURL."\nlmsbasepath = ".$lmsbasepath."\nsubstitutebasepath = ".$substitutebasepath."\nnew url = ".$trackURL);
 			}
 		}
@@ -1419,7 +1439,6 @@ sub changeExportFilePath {
 sub initExportBaseFilePathMatrix {
 	# get LMS music dirs
 	my $lmsmusicdirs = getMusicDirs();
-
 	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
 	if (!defined $exportbasefilepathmatrix) {
 		my $n = 0;

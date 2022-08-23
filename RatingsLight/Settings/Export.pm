@@ -66,7 +66,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(onlyratingsnotmatchtags exportextension exportVL_id));
+	return ($prefs, qw(onlyratingsnotmatchtags exportextension exportextensionexceptions exportVL_id));
 }
 
 sub handler {
