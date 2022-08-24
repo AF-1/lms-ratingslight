@@ -1359,11 +1359,14 @@ sub exportRatingsToPlaylistFiles {
 			}
 			for my $ratedTrack (@ratedTracks) {
 				my $ratedTrackURL = $ratedTrack->{'url'};
-				my $ratedTrackURL_extURL = changeExportFilePath($ratedTrackURL, 1) if ($ratedTrack->{'remote'} != 1);
 
+				my $ratedTrackURL_extURL = changeExportFilePath($ratedTrackURL, 1) if ($ratedTrack->{'remote'} != 1);
 				print $output '#EXTURL:'.$ratedTrackURL_extURL."\n" if $ratedTrackURL_extURL && $ratedTrackURL_extURL ne '';
-				my $ratedTrackPath = Slim::Utils::Unicode::utf8decode_locale(pathForItem($ratedTrackURL));
+
+				my $ratedTrackPath = pathForItem($ratedTrackURL);
+				$ratedTrackPath = Slim::Utils::Unicode::utf8decode_locale(pathForItem($ratedTrackURL)); # diff
 				$ratedTrackPath = changeExportFilePath($ratedTrackPath) if ($ratedTrack->{'remote'} != 1);
+
 				print $output $ratedTrackPath."\n";
 			}
 			close $output;
@@ -1390,22 +1393,31 @@ sub changeExportFilePath {
 
 		foreach my $thispath (@{$exportbasefilepathmatrix}) {
 			my $lmsbasepath = $thispath->{'lmsbasepath'};
+			$log->info("\n\n\nisEXTURL = ".Dumper($isEXTURL));
+			$log->info('trackURL = '.Dumper($oldtrackURL));
+			$log->info('escaped_trackURL = '.$escaped_trackURL);
 			if ($isEXTURL) {
 				$lmsbasepath =~ s/\\/\//isg;
+				$escaped_trackURL =~ s/%2520/%20/isg;
 			}
+			$log->info('escaped_trackURL after EXTURL regex = '.$escaped_trackURL);
+
 			my $escaped_lmsbasepath = uri_escape_utf8($lmsbasepath);
+			$log->info('escaped_lmsbasepath = '.$escaped_lmsbasepath);
 
 			if (($escaped_trackURL =~ $escaped_lmsbasepath) && (defined ($thispath->{'substitutebasepath'})) && (($thispath->{'substitutebasepath'}) ne '')) {
 				my $substitutebasepath = $thispath->{'substitutebasepath'};
+				$log->info('substitutebasepath = '.$substitutebasepath);
 				if ($isEXTURL) {
 					$substitutebasepath =~ s/\\/\//isg;
 				}
 				my $escaped_substitutebasepath = uri_escape_utf8($substitutebasepath);
+				$log->info('escaped_substitutebasepath = '.$escaped_substitutebasepath);
 
 				if (defined $exportextension && $exportextension ne '') {
 					my ($LMSfileExtension) = $escaped_trackURL =~ /(\.[^.]*)$/;
 					$LMSfileExtension =~ s/\.//s;
-					$log->debug("LMS file extension is '$LMSfileExtension'");
+					$log->info("LMS file extension is '$LMSfileExtension'");
 
 					# file extension replacement - exceptions
 					my %extensionExceptionsHash;
@@ -1416,20 +1428,24 @@ sub changeExportFilePath {
 					}
 
 					if ((scalar keys %extensionExceptionsHash > 0) && $extensionExceptionsHash{lc($LMSfileExtension)}) {
-						$log->debug("The file extension '$LMSfileExtension' is not replaced because it is included in the list of exceptions.");
+						$log->info("The file extension '$LMSfileExtension' is not replaced because it is included in the list of exceptions.");
 					} else {
 						$escaped_trackURL =~ s/\.[^.]*$/\.$exportextension/isg;
 					}
 				}
+
 				$escaped_trackURL =~ s/$escaped_lmsbasepath/$escaped_substitutebasepath/isg;
+				$log->info('escaped_trackURL AFTER regex replacing = '.$escaped_trackURL);
+
 				$trackURL = Encode::decode('utf8', uri_unescape($escaped_trackURL));
+				$log->info('UNescaped trackURL = '.$trackURL);
 
 				if ($isEXTURL) {
 					$trackURL =~ s/ /%20/isg;
 				} else {
 					$trackURL = Slim::Utils::Unicode::utf8decode_locale($trackURL);
 				}
-				$log->debug('old url: '.$oldtrackURL."\nlmsbasepath = ".$lmsbasepath."\nsubstitutebasepath = ".$substitutebasepath."\nnew url = ".$trackURL);
+				$log->info('old url: '.$oldtrackURL."\nlmsbasepath = ".$lmsbasepath."\nsubstitutebasepath = ".$substitutebasepath."\nnew url = ".$trackURL);
 			}
 		}
 	}
