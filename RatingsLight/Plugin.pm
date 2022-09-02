@@ -60,7 +60,7 @@ use Plugins::RatingsLight::Settings::DSTM;
 
 my $log = Slim::Utils::Log->addLogCategory({
 	'category' => 'plugin.ratingslight',
-	'defaultLevel' => 'WARN',
+	'defaultLevel' => 'ERROR',
 	'description' => 'PLUGIN_RATINGSLIGHT',
 });
 
