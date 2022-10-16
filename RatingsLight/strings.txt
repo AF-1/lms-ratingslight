@@ -115,6 +115,12 @@ PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_NOW_BUTTON
 PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_INPROGRESS
 	EN	clearing...
 
+PLUGIN_RATINGSLIGHT_VARIOUS_POSTSCANSCHEDULEDELAY
+	EN	Post-Scan Delay
+
+PLUGIN_RATINGSLIGHT_VARIOUS_POSTSCANSCHEDULEDELAY_DESC
+	EN	Time to wait after a rescan before refreshing VLs and browse menus
+
 
 
 PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES
@@ -372,26 +378,50 @@ PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_TOPRATED
 PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_TOPRATED
 	EN	Top Rated - Genres
 
+PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_TOPRATED
+	EN	Top Rated - Tracks
+
 PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATED
 	EN	Rated - Artists
 
 PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATED
 	EN	Rated - Genres
 
+PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_RATED
+	EN	Rated - Tracks
+
+PLUGIN_RATINGSLIGHT_STAR
+	EN	star
+
+PLUGIN_RATINGSLIGHT_STARS
+	EN	stars
+
+PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_SUFFIX
+	EN	- Artists
+
+PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_SUFFIX
+	EN	- Genres
+
+PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_SUFFIX
+	EN	- Tracks
+
 PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS
 	EN	Show browse menus for rated tracks
 
 PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_DESC
-	EN	Browse your rated tracks by artist or genre.<br>Enable <b>Rated + Top Rated</b> to get extra menus for top rated tracks.
+	EN	Browse your rated tracks by artist, genre or tracks.<br><br><b>Rated:</b> All rated tracks.<br><br><b>Rated + Top rated:</b> Adds artist, genre and tracks menus for <i>top</i> rated tracks. <i>Top</i> rated tracks have the minimum rating that you defined in the <i>Various Settings</i> section of this plugin's preferences.<br><br><b>Exact ratings:</b> Artist, genre and tracks menus for each (full-star) rating value (1 to 5). Half-star ratings are rounded up (to avoid creating 10 virtual libraries just for half-stars).
 
-PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_TOPRATED
-	EN	Rated + Top Rated
+PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_DISABLE
+	EN	Disable menus
 
 PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_RATED_ONLY
 	EN	Rated
 
-PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_DISABLE
-	EN	Disable menus
+PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_TOPRATED
+	EN	Rated + Top Rated
+
+PLUGIN_RATINGSLIGHT_MENUS_SHOW_RATED_TRACKS_MENUS_EXACTRATING
+	EN	Exact ratings
 
 PLUGIN_RATINGSLIGHT_MENUS_SOURCE_VL
 	EN	Select virtual library<br>for browse menus
@@ -428,6 +458,9 @@ PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS
 
 PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS
 	EN	Ratings Light - Top Rated Tracks
+
+PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED
+	EN	Ratings Light - Tracks rated
 
 PLUGIN_RATINGSLIGHT_LIBVIEW
 	EN	Library View

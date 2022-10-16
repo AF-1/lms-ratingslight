@@ -52,5 +52,13 @@
 	<input style="margin-top:-1px;" name="clearallratingsnow" type="submit" class="stdclick" onClick="inprogressclearratings();" value="[% "PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_NOW_BUTTON" | string %]">
 	<span class='status' id='clearratingsstatus'>[% "PLUGIN_RATINGSLIGHT_VARIOUS_CLEARALLRATINGS_INPROGRESS" | string %]</span>
 [% END %]
+<br>
+
+[% IF advmode %]
+	[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_VARIOUS_POSTSCANSCHEDULEDELAY" desc="PLUGIN_RATINGSLIGHT_VARIOUS_POSTSCANSCHEDULEDELAY_DESC" %]
+		<input type="text" class="stdedit sliderInput_5_180_5" name="pref_postscanscheduledelay" id="postscanscheduledelay" value="[% prefs.postscanscheduledelay %]" size="2"> seconds
+	[% END %]
+<br>
+[% END %]
 
 [% PROCESS settings/footer.html %]

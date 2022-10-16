@@ -86,15 +86,12 @@ sub beforeRender {
 	my $currentLibrary = $prefs->get('browsemenus_sourceVL_id');
 	$log->debug("current browsemenus_sourceVL_id = ".Dumper($currentLibrary));
 
-	my %hiddenVLs = map {$_ => 1} ("Ratings Light - Rated Tracks", "Ratings Light - Top Rated Tracks");
-	$log->debug("hidden libraries: ".Dumper(\%hiddenVLs));
-
 	while (my ($k, $v) = each %{$libraries}) {
 		my $count = Slim::Utils::Misc::delimitThousands(Slim::Music::VirtualLibraries->getTrackCount($k));
-		my $name = Slim::Music::VirtualLibraries->getNameForId($k);
-		$log->debug("VL: ".$name." (".$count.")");
-
-		unless ($hiddenVLs{$name}) {
+		my $name = $libraries->{$k}->{'name'};
+		my $VLID = $libraries->{$k}->{'id'};
+		$log->debug("VL: ".$name." (".$count.") - VLID:".$VLID);
+		unless (starts_with($VLID, "RATINGSLIGHT_") == 0) {
 			push @items, {
 				name => Slim::Utils::Unicode::utf8decode($name, 'utf8')." (".$count.($count eq '1' ? " ".string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACK").")" : " ".string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACKS").")"),
 				sortName => Slim::Utils::Unicode::utf8decode($name, 'utf8'),
@@ -110,6 +107,12 @@ sub beforeRender {
 	};
 	$log->debug("libraries for settings page: ".Dumper(\@items));
 	$paramRef->{virtuallibraries} = \@items;
+}
+
+sub starts_with {
+	# complete_string, start_string, position
+	return rindex($_[0], $_[1], 0);
+	# 0 for yes, -1 for no
 }
 
 1;

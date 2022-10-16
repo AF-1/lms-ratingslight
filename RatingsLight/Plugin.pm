@@ -217,7 +217,8 @@ sub initPrefs {
 		dstm_percentagetoprated => 30,
 		dstm_num_seedtracks => 10,
 		dstm_playedtrackstokeep => 5,
-		dstm_batchsizenewtracks => 20
+		dstm_batchsizenewtracks => 20,
+		postscanscheduledelay => 10
 	});
 
 	createRLfolder();
@@ -246,7 +247,6 @@ sub initPrefs {
 	$prefs->set('status_creatingbackup', '0');
 	$prefs->set('status_restoringfrombackup', '0');
 	$prefs->set('status_clearingallratings', '0');
-	$prefs->set('postScanScheduleDelay', '5');
 
 	$prefs->setValidate({
 		validator => sub {
@@ -289,6 +289,7 @@ sub initPrefs {
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 20}, 'dstm_num_seedtracks');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 200}, 'dstm_playedtrackstokeep');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 50}, 'dstm_batchsizenewtracks');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 600}, 'postscanscheduledelay');
 	$prefs->setValidate('file', 'restorefile');
 
 	$prefs->setChange(\&Plugins::RatingsLight::Importer::toggleUseImporter, 'autoscan');
@@ -1484,7 +1485,7 @@ sub setRefreshCBTimer {
 	$log->debug('Killing existing timers for post-scan refresh to prevent multiple calls');
 	Slim::Utils::Timers::killOneTimer(undef, \&delayedPostScanRefresh);
 	$log->debug('Scheduling a delayed post-scan refresh');
-	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + $prefs->get('postScanScheduleDelay'), \&delayedPostScanRefresh);
+	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + $prefs->get('postscanscheduledelay'), \&delayedPostScanRefresh);
 }
 
 sub delayedPostScanRefresh {
@@ -1492,7 +1493,7 @@ sub delayedPostScanRefresh {
 		$log->debug('Scan in progress. Waiting for current scan to finish.');
 		setRefreshCBTimer();
 	} else {
-		$log->debug('Starting post-scan refresh after ratings import from comments tags');
+		$log->debug('Starting post-scan refresh after ratings import');
 		refreshAll();
 	}
 }
@@ -1746,12 +1747,16 @@ sub handleEndElement {
 ## virtual libraries
 
 sub initVirtualLibraries {
-	Slim::Music::VirtualLibraries->unregisterLibrary('RL_RATED');
-	Slim::Music::VirtualLibraries->unregisterLibrary('RL_TOPRATED');
+	Slim::Music::VirtualLibraries->unregisterLibrary('RATINGSLIGHT_RATED');
+	Slim::Music::VirtualLibraries->unregisterLibrary('RATINGSLIGHT_TOPRATED');
+	for my $i (1..5) {
+		Slim::Music::VirtualLibraries->unregisterLibrary('RATINGSLIGHT_EXACTRATING'.$i);
+	}
 	Slim::Menu::BrowseLibrary->deregisterNode('RatingsLightRatedTracksMenuFolder');
 
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 	if ($showratedtracksmenus > 0) {
+		my $started = time();
 		my $browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
 		$log->debug('browsemenus_sourceVL_id = '.Dumper($browsemenus_sourceVL_id));
 		my $topratedminrating = $prefs->get('topratedminrating');
@@ -1773,48 +1778,80 @@ sub initVirtualLibraries {
 		}
 
 		$browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
-		my @libraries = ();
-		if ((!defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
-			push @libraries,{
-				id => 'RL_RATED',
-				name => string('PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS'),
-				sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 group by tracks.id},
-			};
-		} else {
-			push @libraries,{
-				id => 'RL_RATED',
-				name => string('PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS'),
-				sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id},
-			};
-		}
-
-		if ($showratedtracksmenus == 2) {
-			if ((!defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
-				push @libraries,{
-					id => 'RL_TOPRATED',
-					name => string('PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS'),
-					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating group by tracks.id}
-				};
-			} else {
-				push @libraries,{
-					id => 'RL_TOPRATED',
-					name => string('PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS'),
-					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}
-				};
-			}
-		}
-		foreach my $library (@libraries) {
-			Slim::Music::VirtualLibraries->unregisterLibrary($library);
-			Slim::Music::VirtualLibraries->registerLibrary($library);
-			Slim::Music::VirtualLibraries->rebuild($library->{id});
-		}
-
-		Slim::Menu::BrowseLibrary->deregisterNode('RatingsLightRatedTracksMenuFolder');
 		my $browsemenus_sourceVL_name = '';
 		if ((defined $browsemenus_sourceVL_id) && ($browsemenus_sourceVL_id ne '')) {
 			$browsemenus_sourceVL_name = Slim::Music::VirtualLibraries->getNameForId($browsemenus_sourceVL_id);
 			$browsemenus_sourceVL_name = ' ('.string('PLUGIN_RATINGSLIGHT_LIBVIEW').': '.$browsemenus_sourceVL_name.')';
 		}
+		my @libraries = ();
+		if ($showratedtracksmenus < 3) {
+			if ((!defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
+				push @libraries,{
+					id => 'RATINGSLIGHT_RATED',
+					name => string('PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS'),
+					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 group by tracks.id},
+				};
+			} else {
+				push @libraries,{
+					id => 'RATINGSLIGHT_RATED',
+					name => string('PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS').$browsemenus_sourceVL_name,
+					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id},
+				};
+			}
+
+			if ($showratedtracksmenus == 2) {
+				if ((!defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
+					push @libraries,{
+						id => 'RATINGSLIGHT_TOPRATED',
+						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS'),
+						sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating group by tracks.id}
+					};
+				} else {
+					push @libraries,{
+						id => 'RATINGSLIGHT_TOPRATED',
+						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS').$browsemenus_sourceVL_name,
+						sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}
+					};
+				}
+			}
+		}
+		# create VLs for exact rating values. Round half-stars: 60 includes >= 50 and < 70
+		if ($showratedtracksmenus == 3) {
+			for my $i (1..5) {
+				my $ratingTresholdLow = $i * 20 - 10;
+				my $ratingTresholdHigh = $i * 20 + 10;
+				if ((!defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
+					push @libraries,{
+						id => 'RATINGSLIGHT_EXACTRATING'.$i,
+						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.$i.' '.($i > 1 ? string('PLUGIN_RATINGSLIGHT_STARS') : string('PLUGIN_RATINGSLIGHT_STAR')),
+						sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingTresholdLow and tracks_persistent.rating < $ratingTresholdHigh group by tracks.id}
+					};
+				} else {
+					push @libraries,{
+						id => 'RATINGSLIGHT_EXACTRATING'.$i,
+						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.$i.' '.($i > 1 ? string('PLUGIN_RATINGSLIGHT_STARS') : string('PLUGIN_RATINGSLIGHT_STAR')).$browsemenus_sourceVL_name,
+						sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingTresholdLow and tracks_persistent.rating < $ratingTresholdHigh join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}
+					};
+				}
+			}
+		}
+		foreach my $library (@libraries) {
+			Slim::Music::VirtualLibraries->unregisterLibrary($library->{id});
+			Slim::Music::VirtualLibraries->registerLibrary($library);
+			Slim::Music::VirtualLibraries->rebuild($library->{id});
+
+			# unregister empty VLs
+			my $trackCount = Slim::Music::VirtualLibraries->getTrackCount($library->{id}) || 0;
+			$log->debug("Track count for library '".$library->{name}."' = ".$trackCount);
+			if ($trackCount == 0) {
+				Slim::Music::VirtualLibraries->unregisterLibrary($library->{id});
+				$log->debug("Unregistering vlib '".$library->{name}."' because it has 0 tracks.");
+			}
+		}
+
+		### menus ###
+
+		Slim::Menu::BrowseLibrary->deregisterNode('RatingsLightRatedTracksMenuFolder');
 		Slim::Menu::BrowseLibrary->registerNode({
 			type => 'link',
 			name => 'PLUGIN_RATINGSLIGHT_MENUS_RATED_TRACKS_MENU_FOLDER',
@@ -1823,86 +1860,203 @@ sub initVirtualLibraries {
 				my ($client, $cb, $args, $pt) = @_;
 				my @items = ();
 
-				# Artists with rated tracks
-				$pt = {library_id => Slim::Music::VirtualLibraries->getRealId('RL_RATED')};
-				push @items,{
-					type => 'link',
-					name => string('PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATED').$browsemenus_sourceVL_name,
-					url => \&Slim::Menu::BrowseLibrary::_artists,
-					icon => 'html/images/artists.png',
-					jiveIcon => 'html/images/artists.png',
-					id => string('myMusicArtists_RATED_TracksByArtist'),
-					condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-					weight => 209,
-					cache => 1,
-					passthrough => [{
-						library_id => $pt->{'library_id'},
-						searchTags => [
-							'library_id:'.$pt->{'library_id'}
-						],
-					}],
-				};
+				if ($showratedtracksmenus < 3) {
+					my $library_id_rated = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_RATED');
+					if ($library_id_rated) {
+						# Artists with rated tracks
+						$pt = {library_id => $library_id_rated};
+						push @items,{
+							type => 'link',
+							name => string('PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATED').$browsemenus_sourceVL_name,
+							url => \&Slim::Menu::BrowseLibrary::_artists,
+							icon => 'html/images/artists.png',
+							jiveIcon => 'html/images/artists.png',
+							id => 'RL_RATED_BROWSEMENU_ARTISTS',
+							condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+							weight => 209,
+							cache => 1,
+							passthrough => [{
+								library_id => $pt->{'library_id'},
+								searchTags => [
+									'library_id:'.$pt->{'library_id'}
+								],
+							}],
+						};
 
-				# Genres with rated tracks
-				$pt = {library_id => Slim::Music::VirtualLibraries->getRealId('RL_RATED')};
-				push @items,{
-					type => 'link',
-					name => string('PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATED').$browsemenus_sourceVL_name,
-					url => \&Slim::Menu::BrowseLibrary::_genres,
-					icon => 'html/images/genres.png',
-					jiveIcon => 'html/images/genres.png',
-					id => string('myMusicGenres_RATED_TracksByGenres'),
-					condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-					weight => 211,
-					cache => 1,
-					passthrough => [{
-						library_id => $pt->{'library_id'},
-						searchTags => [
-							'library_id:'.$pt->{'library_id'}
-						],
-					}],
-				};
+						# Genres with rated tracks
+						push @items,{
+							type => 'link',
+							name => string('PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATED').$browsemenus_sourceVL_name,
+							url => \&Slim::Menu::BrowseLibrary::_genres,
+							icon => 'html/images/genres.png',
+							jiveIcon => 'html/images/genres.png',
+							id => 'RL_RATED_BROWSEMENU_GENRES',
+							condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+							weight => 213,
+							cache => 1,
+							passthrough => [{
+								library_id => $pt->{'library_id'},
+								searchTags => [
+									'library_id:'.$pt->{'library_id'}
+								],
+							}],
+						};
 
-				if ($showratedtracksmenus == 2) {
-					# Artists with top rated tracks
-					$pt = {library_id => Slim::Music::VirtualLibraries->getRealId('RL_TOPRATED')};
-					push @items,{
-						type => 'link',
-						name => string('PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_TOPRATED').$browsemenus_sourceVL_name,
-						url => \&Slim::Menu::BrowseLibrary::_artists,
-						icon => 'html/images/artists.png',
-						jiveIcon => 'html/images/artists.png',
-						id => string('myMusicArtists_RATED_TOPRATED_TracksByArtist'),
-						condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-						weight => 210,
-						cache => 1,
-						passthrough => [{
-							library_id => $pt->{'library_id'},
-							searchTags => [
-								'library_id:'.$pt->{'library_id'}
-							],
-						}],
-					};
+						# Rated tracks
+						$pt = {library_id => $library_id_rated,
+								sort => 'track',
+								menuStyle => 'menuStyle:album'};
+						push @items,{
+							type => 'link',
+							name => string('PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_RATED').$browsemenus_sourceVL_name,
+							icon => 'html/images/playlists.png',
+							jiveIcon => 'html/images/playlists.png',
+							id => 'RL_RATED_BROWSEMENU_TRACKS',
+							condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+							weight => 220,
+							cache => 1,
+							url => \&Slim::Menu::BrowseLibrary::_tracks,
+							passthrough => [{
+								library_id => $pt->{'library_id'},
+								searchTags => [
+									'library_id:'.$pt->{'library_id'}
+								],
+							}],
+						};
+					}
 
-					# Genres with top rated tracks
-					$pt = {library_id => Slim::Music::VirtualLibraries->getRealId('RL_TOPRATED')};
-					push @items,{
-						type => 'link',
-						name => string('PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_TOPRATED').$browsemenus_sourceVL_name,
-						url => \&Slim::Menu::BrowseLibrary::_genres,
-						icon => 'html/images/genres.png',
-						jiveIcon => 'html/images/genres.png',
-						id => string('myMusicGenres_RATED_TOPRATED_TracksByGenres'),
-						condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-						weight => 212,
-						cache => 1,
-						passthrough => [{
-							library_id => $pt->{'library_id'},
-							searchTags => [
-								'library_id:'.$pt->{'library_id'}
-							],
-						}],
-					};
+					if ($showratedtracksmenus == 2) {
+						my $library_id_toprated = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_TOPRATED');
+						if ($library_id_toprated) {
+							# Artists with top rated tracks
+							$pt = {library_id => $library_id_toprated};
+							push @items,{
+								type => 'link',
+								name => string('PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_TOPRATED').$browsemenus_sourceVL_name,
+								url => \&Slim::Menu::BrowseLibrary::_artists,
+								icon => 'html/images/artists.png',
+								jiveIcon => 'html/images/artists.png',
+								id => 'RL_TOPRATED_BROWSEMENU_ARTISTS',
+								condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+								weight => 210,
+								cache => 1,
+								passthrough => [{
+									library_id => $pt->{'library_id'},
+									searchTags => [
+										'library_id:'.$pt->{'library_id'}
+									],
+								}],
+							};
+
+							# Genres with top rated tracks
+							push @items,{
+								type => 'link',
+								name => string('PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_TOPRATED').$browsemenus_sourceVL_name,
+								url => \&Slim::Menu::BrowseLibrary::_genres,
+								icon => 'html/images/genres.png',
+								jiveIcon => 'html/images/genres.png',
+								id => 'RL_TOPRATED_BROWSEMENU_GENRES',
+								condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+								weight => 212,
+								cache => 1,
+								passthrough => [{
+									library_id => $pt->{'library_id'},
+									searchTags => [
+										'library_id:'.$pt->{'library_id'}
+									],
+								}],
+							};
+
+							# Rated tracks
+							$pt = {library_id => $library_id_toprated,
+									sort => 'track',
+									menuStyle => 'menuStyle:album'};
+							push @items,{
+								type => 'link',
+								name => string('PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_TOPRATED').$browsemenus_sourceVL_name,
+								icon => 'html/images/playlists.png',
+								jiveIcon => 'html/images/playlists.png',
+								id => 'RL_TOPRATED_BROWSEMENU_TRACKS',
+								condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+								weight => 220,
+								cache => 1,
+								url => \&Slim::Menu::BrowseLibrary::_tracks,
+								passthrough => [{
+									library_id => $pt->{'library_id'},
+									searchTags => [
+										'library_id:'.$pt->{'library_id'}
+									],
+								}],
+							};
+						}
+					}
+				}
+				if ($showratedtracksmenus == 3) {
+					for my $i (1..5) {
+						my $library_id_exactratingID = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_EXACTRATING'.$i);
+						if ($library_id_exactratingID) {
+							# Artists with tracks rated $i
+							$pt = {library_id => $library_id_exactratingID};
+							push @items,{
+								type => 'link',
+								name => $i.' '.($i > 1 ? string('PLUGIN_RATINGSLIGHT_STARS') : string('PLUGIN_RATINGSLIGHT_STAR')).' '.string('PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_SUFFIX').$browsemenus_sourceVL_name,
+								url => \&Slim::Menu::BrowseLibrary::_artists,
+								icon => 'html/images/artists.png',
+								jiveIcon => 'html/images/artists.png',
+								id => 'RL_EXACTRATING_BROWSEMENU_ARTISTS'.$i,
+								condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+								weight => 211 + $i,
+								cache => 1,
+								passthrough => [{
+									library_id => $pt->{'library_id'},
+									searchTags => [
+										'library_id:'.$pt->{'library_id'}
+									],
+								}],
+							};
+
+							# Genres with tracks rated $i
+							push @items,{
+								type => 'link',
+								name => $i.' '.($i > 1 ? string('PLUGIN_RATINGSLIGHT_STARS') : string('PLUGIN_RATINGSLIGHT_STAR')).' '.string('PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_SUFFIX').$browsemenus_sourceVL_name,
+								url => \&Slim::Menu::BrowseLibrary::_genres,
+								icon => 'html/images/genres.png',
+								jiveIcon => 'html/images/genres.png',
+								id => 'RL_EXACTRATING_BROWSEMENU_GENRES'.$i,
+								condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+								weight => 212 + $i,
+								cache => 1,
+								passthrough => [{
+									library_id => $pt->{'library_id'},
+									searchTags => [
+										'library_id:'.$pt->{'library_id'}
+									],
+								}],
+							};
+
+							# Tracks rated $i
+							$pt = {library_id => $library_id_exactratingID,
+									sort => 'track',
+									menuStyle => 'menuStyle:album'};
+							push @items,{
+								type => 'link',
+								name => $i.' '.($i > 1 ? string('PLUGIN_RATINGSLIGHT_STARS') : string('PLUGIN_RATINGSLIGHT_STAR')).' '.string('PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_SUFFIX').$browsemenus_sourceVL_name,
+								icon => 'html/images/playlists.png',
+								jiveIcon => 'html/images/playlists.png',
+								id => 'RL_EXACTRATING_BROWSEMENU_TRACKS'.$i,
+								condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+								weight => 220 + $i,
+								cache => 1,
+								url => \&Slim::Menu::BrowseLibrary::_tracks,
+								passthrough => [{
+									library_id => $pt->{'library_id'},
+									searchTags => [
+										'library_id:'.$pt->{'library_id'}
+									],
+								}],
+							};
+						}
+					}
 				}
 				$cb->({
 					items => \@items,
@@ -1913,6 +2067,8 @@ sub initVirtualLibraries {
 			icon => 'plugins/RatingsLight/html/images/ratedtracksmenuicon_svg.png',
 			jiveIcon => 'plugins/RatingsLight/html/images/ratedtracksmenuicon_svg.png',
 		});
+	my $ended = time() - $started;
+	$log->info('Init of virtual libraries and browse menus completed after '.$ended.' seconds.');
 	}
 }
 
@@ -1920,15 +2076,28 @@ sub refreshVirtualLibraries {
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 	if ($showratedtracksmenus > 0) {
 		my $started = time();
-		my $library_RealID_rated_all = Slim::Music::VirtualLibraries->getRealId('RL_RATED');
-		Slim::Music::VirtualLibraries->rebuild($library_RealID_rated_all);
-
+		if ($showratedtracksmenus < 3) {
+			my $library_id = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_RATED');
+			if ($library_id) {
+				Slim::Music::VirtualLibraries->rebuild($library_id);
+			}
+		}
 		if ($showratedtracksmenus == 2) {
-			my $library_RealID_toprated = Slim::Music::VirtualLibraries->getRealId('RL_TOPRATED');
-			Slim::Music::VirtualLibraries->rebuild($library_RealID_toprated);
+			my $library_id = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_TOPRATED');
+			if ($library_id) {
+				Slim::Music::VirtualLibraries->rebuild($library_id);
+			}
+		}
+		if ($showratedtracksmenus == 3) {
+			for my $i (1..5) {
+				my $library_id = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_EXACTRATING'.$i);
+				if ($library_id) {
+					Slim::Music::VirtualLibraries->rebuild('RATINGSLIGHT_EXACTRATING'.$i);
+				}
+			}
 		}
 		my $ended = time() - $started;
-		$log->debug('Refreshing virtual libraries completed after '.$ended.' seconds.');
+		$log->info('Refreshing virtual libraries completed after '.$ended.' seconds.');
 	}
 }
 
