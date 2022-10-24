@@ -388,13 +388,13 @@ sub setRating {
 
 	# check if remote track is part of online library
 	if ((Slim::Music::Info::isRemoteURL($trackURL) == 1) && (!defined($track->extid))) {
-		$log->debug('track is remote but not part of online library');
+		$log->warn("Can't set rating. Track is remote but not part of library. Track URL: ".$trackURL);
 		return;
 	}
 
 	# check for dead/moved local tracks
 	if ((Slim::Music::Info::isRemoteURL($trackURL) != 1) && (!defined($track->filesize))) {
-		$log->debug('track dead or moved??? Track URL: '.$trackURL);
+		$log->error("Can't set rating. Track dead or moved? Track URL: ".$trackURL);
 		return;
 	}
 
