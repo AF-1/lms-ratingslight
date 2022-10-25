@@ -5,8 +5,7 @@
 </script>
 
 <style>
-@-webkit-keyframes Pulse{from{color:#630030;-webkit-text-shadow:0 0 2px transparent}50%{color:#e33100;-webkit-text-shadow:0 0 5px #e33100}to{color:#630030;-webkit-text-shadow:0 0 2px transparent}}@keyframes Pulse{from{color:#630030;text-shadow:0 0 2px transparent}50%{color:#e33100;text-shadow:0 0 5px #e33100}to{color:#630030;text-shadow:0 0 2px transparent}}.inprogress{padding-left:15px;-webkit-animation-name:Pulse;animation-name:Pulse;-webkit-animation-duration:2s;animation-duration:2s;-webkit-animation-iteration-count:infinite;animation-iteration-count:infinite}
-.status{visibility:hidden;}
+@-webkit-keyframes Pulse{from{color:#630030;-webkit-text-shadow:0 0 2px transparent}50%{color:#e33100;-webkit-text-shadow:0 0 5px #e33100}to{color:#630030;-webkit-text-shadow:0 0 2px transparent}}@keyframes Pulse{from{color:#630030;text-shadow:0 0 2px transparent}50%{color:#e33100;text-shadow:0 0 5px #e33100}to{color:#630030;text-shadow:0 0 2px transparent}}.inprogress{padding-left:15px;-webkit-animation-name:Pulse;animation-name:Pulse;-webkit-animation-duration:2s;animation-duration:2s;-webkit-animation-iteration-count:infinite;animation-iteration-count:infinite}.status{visibility:hidden;}.advmode{visibility:[% IF advmode %]visible[% ELSE %]hidden[% END %];}
 </style>
 
 [% page = "PLUGIN_RATINGSLIGHT" %]
@@ -28,12 +27,12 @@
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST" desc="PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_DESC" %]
-	<input name="pref_userecentlyaddedplaylist" id="userecentlyaddedplaylist" type="checkbox" [% IF prefs.userecentlyaddedplaylist %] checked [% END %]>
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYRATEDPLAYLIST" desc="PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYRATEDPLAYLIST_DESC" %]
+	<input name="pref_userecentlyratedplaylist" id="userecentlyratedplaylist" type="checkbox" [% IF prefs.userecentlyratedplaylist %] checked [% END %]>
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_MAXCOUNT" desc="PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYADDEDPLAYLIST_MAXCOUNT_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYRATEDPLAYLIST_MAXCOUNT" desc="PLUGIN_RATINGSLIGHT_VARIOUS_USERECENTLYRATEDPLAYLIST_MAXCOUNT_DESC" %]
 	<input type="text" class="stdedit sliderInput_2_200_1" name="pref_recentlymaxcount" id="recentlymaxcount" value="[% prefs.recentlymaxcount %]" size="3">
 [% END %]
 <br>
@@ -54,11 +53,10 @@
 [% END %]
 <br>
 
-[% IF advmode %]
-	[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_VARIOUS_POSTSCANSCHEDULEDELAY" desc="PLUGIN_RATINGSLIGHT_VARIOUS_POSTSCANSCHEDULEDELAY_DESC" %]
-		<input type="text" class="stdedit sliderInput_5_180_5" name="pref_postscanscheduledelay" id="postscanscheduledelay" value="[% prefs.postscanscheduledelay %]" size="2"> seconds
-	[% END %]
-<br>
+<span class="advmode">
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_VARIOUS_POSTSCANSCHEDULEDELAY" desc="PLUGIN_RATINGSLIGHT_VARIOUS_POSTSCANSCHEDULEDELAY_DESC" %]
+	<input type="text" class="stdedit sliderInput_5_180_5" name="pref_postscanscheduledelay" id="postscanscheduledelay" value="[% prefs.postscanscheduledelay %]" size="2"> seconds
 [% END %]
+</span>
 
 [% PROCESS settings/footer.html %]

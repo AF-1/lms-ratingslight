@@ -64,7 +64,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(enableIRremotebuttons topratedminrating rlparentfolderpath uselogfile userecentlyaddedplaylist recentlymaxcount postscanscheduledelay));
+	return ($prefs, qw(enableIRremotebuttons topratedminrating rlparentfolderpath uselogfile userecentlyratedplaylist recentlymaxcount postscanscheduledelay));
 }
 
 sub handler {
