@@ -103,7 +103,6 @@ sub handler {
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
 		Plugins::RatingsLight::Plugin::importRatingsFromPlaylist();
-		Plugins::RatingsLight::Plugin::setRefreshCBTimer();
 	} elsif ($callHandler) {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}

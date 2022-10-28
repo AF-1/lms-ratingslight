@@ -62,23 +62,24 @@ sub createBackup {
 	my $backupDir = $prefs->get('rlfolderpath');
 	my ($sql, $sth) = undef;
 	my $dbh = getCurrentDBH();
-	my ($trackURL, $trackRating, $trackRemote, $trackExtid);
+	my ($trackURL, $trackURLmd5, $trackRating, $trackRemote, $trackExtid);
 	my $started = time();
 	my $backuptimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
 
-	$sql = "select tracks_persistent.url, tracks_persistent.rating, tracks.remote, tracks.extid from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where tracks_persistent.rating > 0";
+	$sql = "select tracks.url, tracks.urlmd5, tracks_persistent.rating, tracks.remote, tracks.extid from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where tracks_persistent.rating > 0";
 	$sth = $dbh->prepare($sql);
 	$sth->execute();
 
 	$sth->bind_col(1,\$trackURL);
-	$sth->bind_col(2,\$trackRating);
-	$sth->bind_col(3,\$trackRemote);
-	$sth->bind_col(4,\$trackExtid);
+	$sth->bind_col(2,\$trackURLmd5);
+	$sth->bind_col(3,\$trackRating);
+	$sth->bind_col(4,\$trackRemote);
+	$sth->bind_col(5,\$trackExtid);
 
 	my @ratedTracks = ();
 	while ($sth->fetch()) {
-		push (@ratedTracks, {'url' => $trackURL, 'rating' => $trackRating, 'remote' => $trackRemote, 'extid' => $trackExtid});
+		push (@ratedTracks, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'remote' => $trackRemote, 'extid' => $trackExtid});
 	}
 	$sth->finish();
 
@@ -99,25 +100,19 @@ sub createBackup {
 		print $output "<RatingsLight>\n";
 		for my $ratedTrack (@ratedTracks) {
 			my $BACKUPtrackURL = $ratedTrack->{'url'};
+			my $urlmd5 = $ratedTrack->{'urlmd5'};
 			if (($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) {
-				$log->warn('Warning: ignoring this track. Track is remote but not part of online library: '.$BACKUPtrackURL);
+				$log->warn('Warning: ignoring this track. Track is remote but not part of LMS library: '.$BACKUPtrackURL);
 				$trackcount--;
 				$ignoredtracks++;
 				next;
 			}
-			if (($ratedTrack->{'remote'} != 1) && (!defined(Slim::Schema->resultset('Track')->objectForUrl($BACKUPtrackURL)))) {
-				$log->warn('Warning: ignoring this track. Track dead or moved??? Track URL: '.$BACKUPtrackURL);
-				$trackcount--;
-				$ignoredtracks++;
-				next;
-			}
-
 			my $rating100ScaleValue = $ratedTrack->{'rating'};
 			my $remote = $ratedTrack->{'remote'};
 			my $BACKUPrelFilePath = getRelFilePath($BACKUPtrackURL);
 			$BACKUPtrackURL = uri_escape_utf8($BACKUPtrackURL);
 			$BACKUPrelFilePath = uri_escape_utf8($BACKUPrelFilePath);
-			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<relurl>".$BACKUPrelFilePath."</relurl>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<remote>".$remote."</remote>\n\t</track>\n";
+			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<urlmd5>".$urlmd5."</urlmd5>\n\t\t<relurl>".$BACKUPrelFilePath."</relurl>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<remote>".$remote."</remote>\n\t</track>\n";
 		}
 		print $output "</RatingsLight>\n";
 

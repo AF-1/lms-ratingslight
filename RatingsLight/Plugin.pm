@@ -427,7 +427,7 @@ sub setRating {
 	}
 	$rating100ScaleValue = ratingSanityCheck($rating100ScaleValue);
 
-	writeRatingToDB($trackID, undef, $track, $rating100ScaleValue);
+	writeRatingToDB($trackID, undef, undef, $track, $rating100ScaleValue);
 
 	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackID, $rating100ScaleValue/20, $rating100ScaleValue]);
 	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackID, $rating100ScaleValue/20, $rating100ScaleValue]);
@@ -457,7 +457,7 @@ sub VFD_deviceRating {
 		$log->debug('Track dead or moved??? Track URL: '.$trackURL);
 		return;
 	}
-	writeRatingToDB($trackID, $trackURL, $track, $rating100ScaleValue);
+	writeRatingToDB($trackID, $trackURL, undef, $track, $rating100ScaleValue);
 
 	my $cbtext = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating100ScaleValue));
 	$callback->([{
@@ -477,11 +477,10 @@ sub VFD_deviceRating {
 
 ## rating menu
 sub trackInfoHandlerRating {
+	my ($client, $url, $track, $remoteMeta, $tags) = @_;
 	my $rating100ScaleValue = 0;
 	my $ratingcontextmenusethalfstars = $prefs->get('ratingcontextmenusethalfstars');
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING');
-
-	my ($client, $url, $track, $remoteMeta, $tags) = @_;
 	$tags ||= {};
 
 	if (Slim::Music::Import->stillScanning) {
@@ -897,17 +896,20 @@ sub VFD_ratedtracks {
 			type => 'redirect',
 			name => $tracktitle,
 			items => [
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW'),
+				{
+					name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW'),
 					type => 'redirect',
 					url => \&VFD_execActions,
 					passthrough => [$track_id, 'load', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW_MSG')],
 				},
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT'),
+				{
+					name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT'),
 					type => 'redirect',
 					url => \&VFD_execActions,
 					passthrough => [$track_id, 'insert', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT_MSG')],
 				},
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND'),
+				{
+					name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND'),
 					type => 'redirect',
 					url => \&VFD_execActions,
 					passthrough => [$track_id, 'add', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND_MSG')],
@@ -922,24 +924,26 @@ sub VFD_ratedtracks {
 			type => 'redirect',
 			name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_ALLSONGS'),
 			items => [
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW'),
+				{
+					name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW'),
 					type => 'redirect',
 					url => \&VFD_execActions,
 					passthrough => [$listalltrackids, 'load', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW_MSG_ALL')],
 				},
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT'),
+				{
+					name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT'),
 					type => 'redirect',
 					url => \&VFD_execActions,
 					passthrough => [$listalltrackids, 'insert', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT_MSG_ALL')],
 				},
-				{	name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND'),
+				{
+					name => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND'),
 					type => 'redirect',
 					url => \&VFD_execActions,
 					passthrough => [$listalltrackids, 'add', string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND_MSG_ALL')],
 				},
 			]
 		};
-
 	}
 	return \@vfd_ratedtracks;
 }
@@ -1246,7 +1250,7 @@ sub importRatingsFromPlaylist {
 
 		if (scalar (@ratableTracks) > 0) {
 			foreach my $thisTrack (@ratableTracks) {
-				writeRatingToDB($thisTrack->{'id'}, $thisTrack->{'url'}, undef, $rating100ScaleValue, 1);
+				writeRatingToDB($thisTrack->{'id'}, $thisTrack->{'url'}, undef, undef, $rating100ScaleValue, 1);
 			}
 			$log->info('Playlist (ID: '.$playlistid.') contained '.(scalar (@ratableTracks)).(scalar (@ratableTracks) == 1 ? ' track' : ' tracks').' that could be rated.');
 			refreshAll();
@@ -1494,8 +1498,8 @@ sub delayedPostScanRefresh {
 		$log->debug('Scan in progress. Waiting for current scan to finish.');
 		setRefreshCBTimer();
 	} else {
-		$log->debug('Starting post-scan refresh after ratings import');
-		refreshAll();
+		$log->debug('Starting post-scan refresh');
+		refreshAll(1);
 	}
 }
 
@@ -1566,7 +1570,7 @@ sub restoreFromBackup {
 
 	if ($restorefile) {
 		if (defined $clearallbeforerestore) {
-			clearAllRatings();
+			clearAllRatings(1);
 		}
 		initRestore();
 		Slim::Utils::Scheduler::add_task(\&restoreScanFunction);
@@ -1694,6 +1698,7 @@ sub handleEndElement {
 		if (($selectiverestore == 0) || ($selectiverestore == 1 && $remote == 0) || ($selectiverestore == 2 && $remote == 1)) {
 			my $trackURL = undef;
 			my $fullTrackURL = $curTrack->{'url'};
+			my $trackURLmd5 = $curTrack->{'urlmd5'};
 			my $relTrackURL = $curTrack->{'relurl'};
 			my $rating100ScaleValue = $curTrack->{'rating'};
 
@@ -1724,15 +1729,14 @@ sub handleEndElement {
 						$trackURL = Slim::Utils::Misc::fileURLFromPath($newFullTrackURL);
 						$log->debug('Found file at new full file url: '.$trackURL);
 						$log->debug('OLD full file url was: '.$fullTrackURL);
-
 						last;
 					}
 				}
 			}
-			if (!$trackURL) {
-				$log->warn("Couldn't find file for url \"$fullTrackURL\".");
+			if (!$trackURL && !$trackURLmd5) {
+				$log->warn("Couldn't find file for url \"$fullTrackURL\"");
 			} else {
-				writeRatingToDB(undef, $trackURL, undef, $rating100ScaleValue, 1);
+				writeRatingToDB(undef, $trackURL, $trackURLmd5, undef, $rating100ScaleValue, 1);
 			}
 		}
 		%restoreitem = ();
@@ -2104,9 +2108,7 @@ sub refreshVirtualLibraries {
 
 sub getVirtualLibraries {
 	my $libraries = Slim::Music::VirtualLibraries->getLibraries();
-	my %libraries;
-
-	%libraries = map {
+	my %libraries = map {
 		$_ => $libraries->{$_}->{name}
 	} keys %{$libraries} if keys %{$libraries};
 
@@ -2145,7 +2147,7 @@ sub getFunctions {
 				return;
 			}
 
-			return unless $digit>='0' && $digit<='9';
+			return unless $digit >= '0' && $digit <= '9';
 
 			my $song = Slim::Player::Playlist::song($client);
 			my $curtrackinfo = $song->{_column_data};
@@ -2274,17 +2276,16 @@ sub addToRecentlyRatedPlaylist {
 	my $trackcount = $trackcountRequest->getResult('count');
 	if ($trackcount > ($recentlymaxcount - 1)) {
 		Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:delete', 'playlist_id:'.$playlistid, 'index:0']);
+		$log->debug('Playlist > max. allowed size. Remove 1 track from the start of the playlist');
 	}
 
 	Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:add', 'playlist_id:'.$playlistid, 'url:'.$trackURL]);
 }
 
 sub logRatedTrack {
-	my ($trackURL, $rating100ScaleValue) = @_;
-
+	my ($track, $rating100ScaleValue) = @_;
 	my ($previousRating, $newRatring) = 0;
 	my $ratingtimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
-
 	my $logFileName = 'RL_Rating-Log.txt';
 	my $logDir = $prefs->get('rlfolderpath');
 
@@ -2302,46 +2303,30 @@ sub logRatedTrack {
 		}
 	}
 
-	my ($title, $artist, $album, $previousRating100ScaleValue);
-	my $query = Slim::Control::Request::executeRequest(undef, ['songinfo', '0', '100', 'url:'.$trackURL, 'tags:alR']);
-	my $songinfohash = $query->getResult('songinfo_loop');
-
-	foreach my $item (@{$songinfohash}) {
-		foreach my $key (keys %{$item}) {
-			if ($key eq 'title') {
-				$title = $item->{$key};
-			}
-			if ($key eq 'artist') {
-				$artist = $item->{$key};
-			}
-			if ($key eq 'album') {
-				$album = $item->{$key};
-			}
-			if ($key eq 'rating') {
-				$previousRating100ScaleValue = $item->{$key};
-			}
-		}
-	}
+	my $title = $track->title;
+	my $artist = $track->artist->name;
+	my $album = $track->album->title;
+	my $previousRating100ScaleValue = $track->rating;
 
 	if (defined $previousRating100ScaleValue) {
 		$previousRating = $previousRating100ScaleValue/20;
 	}
 	my $newRating = $rating100ScaleValue/20;
 
+	# write log info to file
 	my $filename = catfile($logDir, $logFileName);
 	my $output = FileHandle->new($filename, '>>:utf8') or do {
 		$log->warn('Could not open '.$filename.' for writing.');
 		return;
 	};
-
 	print $output $ratingtimestamp."\n";
 	print $output 'Artist: '.$artist.' ## Title: '.$title.' ## Album: '.$album."\n";
 	print $output 'Previous Rating: '.$previousRating.' --> New Rating: '.$newRating."\n\n";
-
 	close $output;
 }
 
 sub clearAllRatings {
+	my $dontRefresh = shift;
 	if (Slim::Music::Import->stillScanning) {
 		$log->warn('Warning: access to rating values blocked until library scan is completed');
 		return;
@@ -2375,7 +2360,7 @@ sub clearAllRatings {
 	$log->debug('Clearing all ratings completed after '.$ended.' seconds.');
 	$prefs->set('status_clearingallratings', 0);
 
-	refreshAll();
+	refreshAll() if !$dontRefresh;
 }
 
 
@@ -2716,89 +2701,55 @@ sub getSeedGenres {
 }
 
 
-###### helpers ######
+###### set/get rating ######
 
 sub writeRatingToDB {
-	my ($trackID, $trackURL, $track, $rating100ScaleValue, $dontlogthis) = @_;
-	my $ratingSuccess;
+	my ($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, $dontlogthis) = @_;
+	$log->debug("trackID = ".Dumper($trackID)."\ntrackURL = ".Dumper($trackURL)."\ntrackURLmd5 = ".Dumper($trackURLmd5)."\ntrack obj = ".($track ? 1 : 0)."\nrating = ".Dumper($rating100ScaleValue)."\ndontlogthis = ".Dumper($dontlogthis));
 
 	if (($rating100ScaleValue < 0) || ($rating100ScaleValue > 100)) {
 		$rating100ScaleValue = ratingSanityCheck($rating100ScaleValue);
 	}
 
-	# use track obj - or trackID to find track obj
-	if ($track || $trackID) {
-		if (!$track && defined($trackID)) {
-			$track = Slim::Schema->resultset('Track')->find($trackID);
-		}
-
-		if ($track && blessed $track && (UNIVERSAL::isa($track, 'Slim::Schema::Track') || UNIVERSAL::isa($track, 'Slim::Schema::RemoteTrack'))) {
-			$track->rating($rating100ScaleValue);
-
-			# confirm new rating value
-			my $newTrackRating = $track->rating;
-			if ($newTrackRating == $rating100ScaleValue) {
-				$ratingSuccess = 1;
-				$log->debug('Rating successful using track obj. Track title: '.$track->title.' ## New rating = '.$rating100ScaleValue/20);
-			}
-		}
+	# use trackID, trackURLmd5 or trackURL to find track obj
+	if (!$track && defined($trackID)) {
+		$track = Slim::Schema->resultset('Track')->find($trackID);
+		$log->debug('Found track obj using trackID');
+	}
+	if (!$track && defined($trackURLmd5)) {
+		$track = Slim::Schema->rs('Track')->single({'urlmd5' => $trackURLmd5});
+		$log->debug('Found track obj using trackURLmd5');
+	}
+	if (!$track && defined($trackURL)) {
+		$track = Slim::Schema->resultset('Track')->objectForUrl($trackURL);
+		$log->debug('Found track obj using trackURL');
 	}
 
-	# alternative: use trackURL
-	if (!$ratingSuccess && $trackURL) {
-		my $urlmd5 = md5_hex($trackURL);
-		my $dbh = getCurrentDBH();
+	if ($track && blessed $track && (UNIVERSAL::isa($track, 'Slim::Schema::Track') || UNIVERSAL::isa($track, 'Slim::Schema::RemoteTrack'))) {
+		$track->rating($rating100ScaleValue);
 
-		# rate track using trackURL
-		my $sql = "update tracks_persistent set rating=$rating100ScaleValue where urlmd5 = ?";
-		my $sth = $dbh->prepare($sql);
-		eval {
-			$sth->bind_param(1, $urlmd5);
-			$sth->execute();
-			commit($dbh);
-		};
-		if ($@) {
-			$log->warn("Database error: $DBI::errstr");
-			eval {
-				rollback($dbh);
-			};
-		}
-		$sth->finish();
-
-		# confirm new rating value
-		my $confirmRatingSql = "select tracks_persistent.rating from tracks_persistent where urlmd5 = '$urlmd5'";
-		$sth = $dbh->prepare($confirmRatingSql);
-		my $newTrackRating;
-		eval{
-			my $sth = $dbh->prepare($confirmRatingSql);
-			$sth->execute() or do {$confirmRatingSql = undef;};
-			$newTrackRating = $sth->fetchrow || 0;
-			$sth->finish();
-		};
-		if ($@) { $log->debug("error: $@"); }
-
+		# confirm and log new rating value
+		my $newTrackRating = $track->rating;
 		if ($newTrackRating == $rating100ScaleValue) {
-			$ratingSuccess = 1;
-			$log->debug('Rating successful using track url. New rating = '.($rating100ScaleValue/20).' ## Track url: '.$trackURL);
-		}
-	}
-
-	if ($ratingSuccess == 1) {
-		unless (defined($dontlogthis)) {
-			if (!$trackURL && $track) {
-				$trackURL = $track->url;
+			$log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.$rating100ScaleValue/20);
+			unless (defined($dontlogthis)) {
+				if (!$trackURL && $track) {
+					$trackURL = $track->url;
+				}
+				my $userecentlyratedplaylist = $prefs->get('userecentlyratedplaylist');
+				my $uselogfile = $prefs->get('uselogfile');
+				if (defined $uselogfile) {
+					logRatedTrack($track, $rating100ScaleValue);
+				}
+				if (defined $userecentlyratedplaylist) {
+					addToRecentlyRatedPlaylist($trackURL);
+				}
 			}
-			my $userecentlyratedplaylist = $prefs->get('userecentlyratedplaylist');
-			my $uselogfile = $prefs->get('uselogfile');
-			if (defined $userecentlyratedplaylist) {
-				addToRecentlyRatedPlaylist($trackURL);
-			}
-			if (defined $uselogfile) {
-				logRatedTrack($trackURL, $rating100ScaleValue);
-			}
+		} else {
+			$log->debug("Couldn't confirm that the track was successfully rated. Won't add track to rating log file or recently rated playlist. Please check manually if the new track rating has been set.");
 		}
 	} else {
-		$log->debug("Couldn't confirm that the track was successfully rated. Won't add track to rating log file or recently rated playlist. Please check manually if the new track rating has been set. Track url: ".$trackURL);
+		$log->error("Couldn't find blessed track (local or remote). Rating failed.");
 	}
 }
 
@@ -2815,41 +2766,79 @@ sub getRatingFromDB {
 		$log->debug('Track is not blessed');
 		$track = Slim::Schema->find('Track', $track->{id});
 		if (!blessed($track)) {
-			$log->debug('No track object found');
+			$log->debug('No blessed track object found');
 			return $rating100ScaleValue;
 		}
 	}
 
-	# check if remote track is part of online library
-	if (Slim::Music::Info::isRemoteURL($track->url) == 1) {
-		if (!defined($track->extid)) {
-			$log->debug('Track is remote but has no extid. Trying to get rating with url: '.$track->url);
-			my $url = $track->url;
+	# check if remote track is part of LMS library
+	if ((Slim::Music::Info::isRemoteURL($track->url) == 1) && (!defined($track->extid))) {
+		$log->debug('Track is remote but has no extid, probably not part of LMS library. Trying to get rating with url: '.$track->url);
+		my $url = $track->url;
+		my $urlmd5 = $track->urlmd5 || md5_hex($url);
 
-			my $urlmd5 = $track->urlmd5 || md5_hex($url);
-			my $dbh = getCurrentDBH();
-			my $sqlstatement = "select tracks_persistent.rating from tracks_persistent where tracks_persistent.urlmd5 = \"$urlmd5\"";
-			eval{
-				my $sth = $dbh->prepare($sqlstatement);
-				$sth->execute() or do {$sqlstatement = undef;};
-				$rating100ScaleValue = $sth->fetchrow || 0;
-				$sth->finish();
-			};
-			if ($@) { $log->debug("error: $@"); }
-			$log->debug("Found rating $rating100ScaleValue for url: ".$url);
-			return adjustDisplayedRating($rating100ScaleValue);
-		}
+		my $dbh = getCurrentDBH();
+		my $sqlstatement = "select tracks_persistent.rating from tracks_persistent where tracks_persistent.urlmd5 = \"$urlmd5\"";
+		eval{
+			my $sth = $dbh->prepare($sqlstatement);
+			$sth->execute() or do {$sqlstatement = undef;};
+			$rating100ScaleValue = $sth->fetchrow || 0;
+			$sth->finish();
+		};
+		if ($@) { $log->debug("error: $@"); }
+		$log->debug("Found rating $rating100ScaleValue for url: ".$url);
+		return adjustDisplayedRating($rating100ScaleValue);
 	}
 
 	# check for dead/moved local tracks
 	if ((Slim::Music::Info::isRemoteURL($track->url) != 1) && (!defined($track->filesize))) {
-		$log->debug('Track dead or moved??? Track URL: '.$track->url);
+		$log->debug('Local track with zero filesize in db - track dead or moved??? Track URL: '.$track->url);
 		return $rating100ScaleValue;
 	}
 
 	my $thisrating = $track->rating;
 	$rating100ScaleValue = $thisrating if $thisrating;
 	return adjustDisplayedRating($rating100ScaleValue);
+}
+
+sub getRatingTSLegacy {
+	my $request = shift;
+	$log->debug('Used TS Legacy dispatch to get rating.');
+	$log->debug('request params = '.Dumper($request->getParamsCopy()));
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn('Warning: access to rating values blocked until library scan is completed');
+		return;
+	}
+
+	if ($request->isNotQuery([['trackstat'],['getrating']])) {
+		$log->error('incorrect command');
+		$request->setStatusBadDispatch();
+		return;
+	}
+
+	if ($request->isQuery([['trackstat'],['getrating']]) && $request->source !~ /iPeng/) {
+		$request->setStatusBadDispatch();
+		$log->warn('TS legacy rating is only available for iPeng clients as a temp. workaround. Please use the correct ratingslight dispatch instead.');
+		return;
+	}
+
+	my $trackID = $request->getParam('_trackid');
+	if (defined($trackID) && $trackID =~ /^track_id:(.*)$/) {
+		$trackID = $1;
+	} elsif (defined($request->getParam('_trackid'))) {
+		$trackID = $request->getParam('_trackid');
+	} else {
+		$request->setStatusBadDispatch();
+		$log->error("Can't set rating. No (valid) track ID found. Provided track ID was ".Dumper($trackID));
+		return;
+	}
+
+	my $track = Slim::Schema->find('Track', $trackID);
+	my $rating100ScaleValue = getRatingFromDB($track);
+
+	$request->addResult('rating', $rating100ScaleValue/20);
+	$request->addResult('ratingpercentage', $rating100ScaleValue);
+	$request->setStatusDone();
 }
 
 sub getRatingTextLine {
@@ -2896,20 +2885,40 @@ sub getRatingTextLine {
 	return $text;
 }
 
-sub getExcludedGenreList {
-	my $excludegenres_namelist = $prefs->get('excludegenres_namelist');
-	my $excludedgenreString = '';
-	if ((defined $excludegenres_namelist) && (scalar @{$excludegenres_namelist} > 0)) {
-		$excludedgenreString = join ',', map qq/'$_'/, @{$excludegenres_namelist};
-	}
-	return $excludedgenreString;
+sub adjustDisplayedRating {
+	my $rating100ScaleValue = shift;
+	$rating100ScaleValue = int(($rating100ScaleValue + 5)/10) * 10;
+	return $rating100ScaleValue;
 }
 
-sub refreshAll {
-	Slim::Music::Info::clearFormatDisplayCache();
-	refreshTitleFormats();
-	Slim::Utils::Timers::setTimer(0, Time::HiRes::time() + 2, \&refreshVirtualLibraries);
+sub ratingValidator {
+	my ($rating, $ratingScale) = @_;
+	$log->debug('rating = '.$rating.' -- ratingScale = '.Dumper($ratingScale));
+	$rating =~ s/\s+//g; # remove all whitespace characters
+
+	if ($ratingScale && $ratingScale eq 'percent' && (($rating !~ /^\d+\z/) || ($rating < 0 || $rating > 100))) {
+		$log->error("Can't set rating. Invalid rating value! Rating values for 'setratingpercent' have to be on a scale from 0 to 100. The provided rating value was ".Dumper($rating));
+		return undef;
+	}
+
+	if (!defined($ratingScale) && (($rating !~ /^\d+(\.5)?\z/) || ($rating < 0 || $rating > 5))) {
+		$log->error("Can't set rating. Invalid rating value! Rating values for 'setrating' have to be on a scale from 0 to 5. The provided rating value was ".Dumper($rating));
+		return undef;
+	}
+	return $rating;
 }
+
+sub ratingSanityCheck {
+	my $rating100ScaleValue = shift;
+	if ((!defined $rating100ScaleValue) || ($rating100ScaleValue < 0)) {
+		return 0;
+	}
+	if ($rating100ScaleValue > 100) {
+		return 100;
+	}
+	return $rating100ScaleValue;
+}
+
 
 
 # title formats
@@ -2938,10 +2947,8 @@ sub getTitleFormat_Rating {
 					$track = Slim::Schema->_retrieveTrack($trackURL);
 					$log->debug('Track is remote. Retrieved trackObj = '.Dumper($track));
 				} else {
-					$track = Slim::Schema->objectForUrl({
-												'url' => $trackURL,
-											});
-					$log->debug('Track is not remote. Track objectForUrl = '.Dumper($track));
+					$track = Slim::Schema->rs('Track')->single({'url' => $trackURL});
+					$log->debug('Track is not remote. TrackObj for url = '.Dumper($track));
 				}
 			} else {
 				return '';
@@ -2993,77 +3000,27 @@ sub refreshTitleFormats {
 
 # misc
 
-sub getRatingTSLegacy {
-	my $request = shift;
-	$log->debug('Used TS Legacy dispatch to get rating.');
-	$log->debug('request params = '.Dumper($request->getParamsCopy()));
-	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: access to rating values blocked until library scan is completed');
-		return;
-	}
-
-	if ($request->isNotQuery([['trackstat'],['getrating']])) {
-		$log->error('incorrect command');
-		$request->setStatusBadDispatch();
-		return;
-	}
-
-	if ($request->isQuery([['trackstat'],['getrating']]) && $request->source !~ /iPeng/) {
-		$request->setStatusBadDispatch();
-		$log->warn('TS legacy rating is only available for iPeng clients as a temp. workaround. Please use the correct ratingslight dispatch instead.');
-		return;
-	}
-
-	my $trackID = $request->getParam('_trackid');
-	if (defined($trackID) && $trackID =~ /^track_id:(.*)$/) {
-		$trackID = $1;
-	} elsif (defined($request->getParam('_trackid'))) {
-		$trackID = $request->getParam('_trackid');
-	} else {
-		$log->error("Can't set rating. No (valid) track ID found. Provided track ID was ".Dumper($trackID));
-		return;
-	}
-
-	my $track = Slim::Schema->find('Track', $trackID);
-	my $rating100ScaleValue = getRatingFromDB($track);
-
-	$request->addResult('rating', $rating100ScaleValue/20);
-	$request->addResult('ratingpercentage', $rating100ScaleValue);
-	$request->setStatusDone();
+sub refreshAll {
+	my $isPostScan = shift;
+	Slim::Music::Info::clearFormatDisplayCache();
+	refreshTitleFormats();
+	$isPostScan ? refreshVirtualLibraries() : refreshVLtimer();
 }
 
-sub adjustDisplayedRating {
-	my $rating100ScaleValue = shift;
-	$rating100ScaleValue = int(($rating100ScaleValue + 5)/10)*10;
-	return $rating100ScaleValue;
+sub refreshVLtimer {
+	$log->debug('Killing existing timers for VL refresh to prevent multiple calls');
+	Slim::Utils::Timers::killOneTimer(undef, \&refreshVirtualLibraries);
+	$log->debug('Scheduling a delayed VL refresh');
+	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + 5, \&refreshVirtualLibraries);
 }
 
-sub ratingValidator {
-	my ($rating, $ratingScale) = @_;
-	$log->debug('rating = '.$rating.' -- ratingScale = '.Dumper($ratingScale));
-	$rating =~ s/\s+//g; # remove all whitespace characters
-
-	if ($ratingScale && $ratingScale eq 'percent' && (($rating !~ /^\d+\z/) || ($rating < 0 || $rating > 100))) {
-		$log->error("Can't set rating. Invalid rating value! Rating values for 'setratingpercent' have to be on a scale from 0 to 100. The provided rating value was ".Dumper($rating));
-		return undef;
+sub getExcludedGenreList {
+	my $excludegenres_namelist = $prefs->get('excludegenres_namelist');
+	my $excludedgenreString = '';
+	if ((defined $excludegenres_namelist) && (scalar @{$excludegenres_namelist} > 0)) {
+		$excludedgenreString = join ',', map qq/'$_'/, @{$excludegenres_namelist};
 	}
-
-	if (!defined($ratingScale) && (($rating !~ /^\d+(\.5)?\z/) || ($rating < 0 || $rating > 5))) {
-		$log->error("Can't set rating. Invalid rating value! Rating values for 'setrating' have to be on a scale from 0 to 5. The provided rating value was ".Dumper($rating));
-		return undef;
-	}
-	return $rating;
-}
-
-sub ratingSanityCheck {
-	my $rating100ScaleValue = shift;
-	if ((!defined $rating100ScaleValue) || ($rating100ScaleValue < 0)) {
-		return 0;
-	}
-	if ($rating100ScaleValue > 100) {
-		return 100;
-	}
-	return $rating100ScaleValue;
+	return $excludedgenreString;
 }
 
 sub createRLfolder {
