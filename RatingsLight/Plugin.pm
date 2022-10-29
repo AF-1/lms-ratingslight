@@ -1709,7 +1709,7 @@ sub handleEndElement {
 
 			my $fullTrackPath = pathForItem($fullTrackURL);
 			if (-f $fullTrackPath) {
-				#$log->debug("found file at url \"$fullTrackPath\"");
+				$log->debug("Found file at url \"$fullTrackPath\"");
 				$trackURL = $fullTrackURL;
 			} else {
 				$log->debug("** Couldn't find file for FULL file url. Will try with RELATIVE file url and current LMS media folders.");
@@ -1734,7 +1734,7 @@ sub handleEndElement {
 				}
 			}
 			if (!$trackURL && !$trackURLmd5) {
-				$log->warn("Couldn't find file for url \"$fullTrackURL\"");
+				$log->warn("Neither track urlmd5 nor valid track url. Can't restore values for file with restore url \"$fullTrackURL\"");
 			} else {
 				writeRatingToDB(undef, $trackURL, $trackURLmd5, undef, $rating100ScaleValue, 1);
 			}
@@ -2713,7 +2713,7 @@ sub writeRatingToDB {
 
 	# use trackID, trackURLmd5 or trackURL to find track obj
 	if (!$track && defined($trackID)) {
-		$track = Slim::Schema->resultset('Track')->find($trackID);
+		$track = Slim::Schema->rs('Track')->find($trackID);
 		$log->debug('Found track obj using trackID');
 	}
 	if (!$track && defined($trackURLmd5)) {
@@ -2721,7 +2721,7 @@ sub writeRatingToDB {
 		$log->debug('Found track obj using trackURLmd5');
 	}
 	if (!$track && defined($trackURL)) {
-		$track = Slim::Schema->resultset('Track')->objectForUrl($trackURL);
+		$track = Slim::Schema->rs('Track')->objectForUrl($trackURL);
 		$log->debug('Found track obj using trackURL');
 	}
 
