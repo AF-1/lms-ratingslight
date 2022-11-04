@@ -439,36 +439,40 @@ sub setRating {
 }
 
 sub VFD_deviceRating {
-	my ($client, $callback, $params, $trackURL, $trackID, $rating100ScaleValue) = @_;
+	my ($client, $callback, $params, $trackID, $trackURL, $track, $rating100ScaleValue) = @_;
+	$log->debug('trackID = '.$trackID.' ## trackURL = '.$trackURL.' ## rating = '.$rating100ScaleValue.' ## callback = '.Dumper($callback));
 
-	$log->debug('VFD_deviceRating - trackURL = '.$trackURL);
-	$log->debug('VFD_deviceRating - trackID = '.$trackID);
-	$log->debug('VFD_deviceRating - rating = '.$rating100ScaleValue);
-	my $track = Slim::Schema->resultset('Track')->find($trackID);
+	$track = Slim::Schema->resultset('Track')->find($trackID) if (!$track && defined($trackID));
+	$track = Slim::Schema->rs('Track')->objectForUrl($trackURL) if (!$track && defined($trackURL));
 
 	# check if remote track is part of online library
-	if ((Slim::Music::Info::isRemoteURL($trackURL) == 1) && (!defined($track->extid))) {
-		$log->debug('Track is remote but not part of LMS library. Track URL: '.$trackURL);
+	if ((Slim::Music::Info::isRemoteURL($track->url) == 1) && (!defined($track->extid))) {
+		$log->debug('Track is remote but not part of LMS library. Track URL: '.$track->url);
 		return;
 	}
 
 	# check for dead/moved local tracks
-	if ((Slim::Music::Info::isRemoteURL($trackURL) != 1) && (!defined($track->filesize))) {
-		$log->debug('Track dead or moved??? Track URL: '.$trackURL);
+	if ((Slim::Music::Info::isRemoteURL($track->url) != 1) && (!defined($track->filesize))) {
+		$log->debug('Track dead or moved??? Track URL: '.$track->url);
 		return;
 	}
-	writeRatingToDB($trackID, $trackURL, undef, $track, $rating100ScaleValue);
+	writeRatingToDB($trackID, $track->url, undef, $track, $rating100ScaleValue);
 
 	my $cbtext = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating100ScaleValue));
-	$callback->([{
-		type => 'text',
-		name => $cbtext,
-		showBriefly => 1, popback => 3,
-		favorites => 0, refresh => 1,
-	}]);
-
-	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackID, $rating100ScaleValue/20, $rating100ScaleValue]);
-	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackID, $rating100ScaleValue/20, $rating100ScaleValue]);
+	if ($callback) {
+		$callback->([{
+			type => 'text',
+			name => $cbtext,
+			showBriefly => 1, popback => 3,
+			favorites => 0, refresh => 1
+		}]);
+	} else {
+		$client->showBriefly({
+			'line' => [string('PLUGIN_RATINGSLIGHT_TRACK_RATED'), $cbtext]
+		}, 3);
+	}
+	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $track->url, $trackID, $rating100ScaleValue/20, $rating100ScaleValue]);
+	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $track->url, $trackID, $rating100ScaleValue/20, $rating100ScaleValue]);
 	refreshAll();
 }
 
@@ -556,7 +560,7 @@ sub trackInfoHandlerRating {
 			{
 				name => getRatingTextLine($ratingValue),
 				url => \&VFD_deviceRating,
-				passthrough => [$url, $track->id, $ratingValue],
+				passthrough => [$track->id, $url, $track, $ratingValue],
 			});
 		}
 		$item->{items} = \@items;
@@ -2136,51 +2140,37 @@ sub getFunctions {
 			my $client = shift;
 			my $button = shift;
 			my $digit = shift;
-			$log->debug('IR command - button: '.$button);
-			$log->debug('IR command - digit: '.$digit);
 
 			if (Slim::Music::Import->stillScanning) {
 				$log->warn('Warning: access to rating values blocked until library scan is completed');
-				$client->showBriefly({
-					'line' => [$client->string('PLUGIN_RATINGSLIGHT'),$client->string('PLUGIN_RATINGSLIGHT_BLOCKED')]},
-					3);
+				$client->showBriefly({'line' => [$client->string('PLUGIN_RATINGSLIGHT'),$client->string('PLUGIN_RATINGSLIGHT_BLOCKED')]}, 3);
 				return;
 			}
-
 			return unless $digit >= '0' && $digit <= '9';
 
-			my $song = Slim::Player::Playlist::song($client);
-			my $curtrackinfo = $song->{_column_data};
-			my $curtrackURL = @{$curtrackinfo}{url};
-			my $curtrackid = @{$curtrackinfo}{id};
+			my $curTrack = $::VERSION lt '8.2' ? Slim::Player::Playlist::song($client) : Slim::Player::Playlist::track($client);
 			if ($digit >= 0 && $digit <=5) {
 				$rating100ScaleValue = $digit * 20;
 			}
 
 			if ($digit >= 6 && $digit <= 9) {
-				my $track = Slim::Schema->resultset('Track')->find($curtrackid);
-				my $currentrating = $track->rating;
-				if (!defined $currentrating) {
-					$currentrating = 0;
-				}
+				my $currentRating = $curTrack->rating || 0;
 				if ($digit == 6) {
-					$rating100ScaleValue = $currentrating - 20;
+					$rating100ScaleValue = $currentRating - 20;
 				}
 				if ($digit == 7) {
-					$rating100ScaleValue = $currentrating + 20;
+					$rating100ScaleValue = $currentRating + 20;
 				}
 				if ($digit == 8) {
-					$rating100ScaleValue = $currentrating - 10;
+					$rating100ScaleValue = $currentRating - 10;
 				}
 				if ($digit == 9) {
-					$rating100ScaleValue = $currentrating + 10;
+					$rating100ScaleValue = $currentRating + 10;
 				}
 				$rating100ScaleValue = ratingSanityCheck($rating100ScaleValue);
 			}
-			$log->debug('IR command - current track URL = '.$curtrackURL);
-			$log->debug('IR command - current track ID = '.$curtrackid);
-			$log->debug('IR command - rating = '.$rating100ScaleValue);
-			VFD_deviceRating($client, undef, undef, $curtrackURL, $curtrackid, $rating100ScaleValue);
+			$log->debug('IR command: button = '.$button.' ## digit = '.$digit.' ## trackURL = '.$curTrack->url.' ## track ID = '.$curTrack->id.' ## rating = '.$rating100ScaleValue);
+			VFD_deviceRating($client, undef, undef, $curTrack->id, $curTrack->url, $curTrack, $rating100ScaleValue);
 		},
 	);
 	return \%menuFunctions;
@@ -2261,31 +2251,49 @@ sub mapKeyHold {
 ## rating log, playlist
 
 sub addToRecentlyRatedPlaylist {
-	my $trackURL = shift;
+	my $track = shift;
 	my $playlistname = 'Recently Rated Tracks (Ratings Light)';
 	my $recentlymaxcount = $prefs->get('recentlymaxcount');
+	my $trackAlreadyInPL;
 
-	my $createplaylistrequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'new', 'name:'.$playlistname]);
-	my $playlistid = $createplaylistrequest->getResult('playlist_id') || $createplaylistrequest->getResult('overwritten_playlist_id');
-	$log->debug('playlistid = '.Dumper($playlistid));
-	if (!$playlistid) {
-		$log->error("No playlist id. Couldn't create or write to playlist 'Recently rated tracks'");
-		return;
-	}
-	my $trackcountRequest = Slim::Control::Request::executeRequest(undef, ['playlists', 'tracks', '0', '1000', 'playlist_id:'.$playlistid, 'tags:count']);
-	my $trackcount = $trackcountRequest->getResult('count');
-	if ($trackcount > ($recentlymaxcount - 1)) {
-		Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:delete', 'playlist_id:'.$playlistid, 'index:0']);
-		$log->debug('Playlist > max. allowed size. Remove 1 track from the start of the playlist');
+	my $playlist = Slim::Schema->rs('Playlist')->single({'title' => $playlistname});
+	if (!$playlist) {
+		Slim::Control::Request::executeRequest(undef, ['playlists', 'new', 'name:'.$playlistname]);
+		$playlist = Slim::Schema->rs('Playlist')->single({'title' => $playlistname});
 	}
 
-	Slim::Control::Request::executeRequest(undef, ['playlists', 'edit', 'cmd:add', 'playlist_id:'.$playlistid, 'url:'.$trackURL]);
+	my @PLtracks = $playlist->tracks;
+	if (scalar @PLtracks > 0) {
+		for my $PLtrack (@PLtracks) {
+			if ($PLtrack->id eq $track->id) {
+				$trackAlreadyInPL = 1;
+				$log->debug('Track "'.$track->title.'" is already in "Recently Rated Tracks" playlist. Won\'t add duplicate.');
+				last;
+			}
+		}
+	}
+
+	unless ($trackAlreadyInPL) {
+		my $PLtrackCount = $playlist->tracks->count;
+		if (($PLtrackCount > 1) && (($PLtrackCount + 1) > $recentlymaxcount)) {
+			my $deleteTrackCount = $PLtrackCount + 1 - $recentlymaxcount;
+			$deleteTrackCount = 1 if $deleteTrackCount < 1;
+			splice(@PLtracks, 0, $deleteTrackCount);
+			$log->debug("Current playlist track count = $PLtrackCount. Max. allowed playlist track count = $recentlymaxcount. Will remove $deleteTrackCount track(s) from the start of the playlist *before* adding new recently rated track.");
+		}
+
+		push @PLtracks, $track;
+		$playlist->setTracks(\@PLtracks);
+		$playlist->update;
+		main::idleStreams();
+		Slim::Player::Playlist::scheduleWriteOfPlaylist(undef, $playlist);
+		$log->debug('Added track "'.$track->title.'" to "Recently Rated Tracks" playlist');
+	}
 }
 
 sub logRatedTrack {
-	my ($track, $rating100ScaleValue) = @_;
-	my ($previousRating, $newRatring) = 0;
-	my $ratingtimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
+	my ($track, $rating100ScaleValue, $previousRating100ScaleValue) = @_;
+	my $ratingtimestamp = strftime "%Y-%m-%d -- %H:%M:%S", localtime time;
 	my $logFileName = 'RL_Rating-Log.txt';
 	my $logDir = $prefs->get('rlfolderpath');
 
@@ -2306,11 +2314,8 @@ sub logRatedTrack {
 	my $title = $track->title;
 	my $artist = $track->artist->name;
 	my $album = $track->album->title;
-	my $previousRating100ScaleValue = $track->rating;
 
-	if (defined $previousRating100ScaleValue) {
-		$previousRating = $previousRating100ScaleValue/20;
-	}
+	my $previousRating = $previousRating100ScaleValue/20;
 	my $newRating = $rating100ScaleValue/20;
 
 	# write log info to file
@@ -2320,7 +2325,7 @@ sub logRatedTrack {
 		return;
 	};
 	print $output $ratingtimestamp."\n";
-	print $output 'Artist: '.$artist.' ## Title: '.$title.' ## Album: '.$album."\n";
+	print $output "Title:\t ".$title."\nArtist:\t ".$artist."\nAlbum:\t ".$album."\n";
 	print $output 'Previous Rating: '.$previousRating.' --> New Rating: '.$newRating."\n\n";
 	close $output;
 }
@@ -2726,6 +2731,7 @@ sub writeRatingToDB {
 	}
 
 	if ($track && blessed $track && (UNIVERSAL::isa($track, 'Slim::Schema::Track') || UNIVERSAL::isa($track, 'Slim::Schema::RemoteTrack'))) {
+		my $previousRating100ScaleValue = $track->rating || 0;
 		$track->rating($rating100ScaleValue);
 
 		# confirm and log new rating value
@@ -2733,16 +2739,13 @@ sub writeRatingToDB {
 		if ($newTrackRating == $rating100ScaleValue) {
 			$log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.$rating100ScaleValue/20);
 			unless (defined($dontlogthis)) {
-				if (!$trackURL && $track) {
-					$trackURL = $track->url;
-				}
 				my $userecentlyratedplaylist = $prefs->get('userecentlyratedplaylist');
 				my $uselogfile = $prefs->get('uselogfile');
 				if (defined $uselogfile) {
-					logRatedTrack($track, $rating100ScaleValue);
+					logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue);
 				}
 				if (defined $userecentlyratedplaylist) {
-					addToRecentlyRatedPlaylist($trackURL);
+					addToRecentlyRatedPlaylist($track);
 				}
 			}
 		} else {
