@@ -87,13 +87,13 @@ sub beforeRender {
 	$log->debug("current browsemenus_sourceVL_id = ".Dumper($currentLibrary));
 
 	while (my ($k, $v) = each %{$libraries}) {
-		my $count = Slim::Utils::Misc::delimitThousands(Slim::Music::VirtualLibraries->getTrackCount($k));
+		my $count = Slim::Utils::Misc::delimitThousands(Slim::Music::VirtualLibraries->getTrackCount($k)) + 0;
 		my $name = $libraries->{$k}->{'name'};
 		my $VLID = $libraries->{$k}->{'id'};
 		$log->debug("VL: ".$name." (".$count.") - VLID:".$VLID);
 		unless (starts_with($VLID, "RATINGSLIGHT_") == 0) {
 			push @items, {
-				name => Slim::Utils::Unicode::utf8decode($name, 'utf8')." (".$count.($count eq '1' ? " ".string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACK").")" : " ".string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACKS").")"),
+				name => Slim::Utils::Unicode::utf8decode($name, 'utf8').sprintf(" ($count %s)", $count == 1 ? string('PLUGIN_RATINGSLIGHT_LANGSTRING_TRACK') : string('PLUGIN_RATINGSLIGHT_LANGSTRING_TRACKS')),
 				sortName => Slim::Utils::Unicode::utf8decode($name, 'utf8'),
 				library_id => $k,
 			};
