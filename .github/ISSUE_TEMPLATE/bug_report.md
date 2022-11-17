@@ -27,7 +27,7 @@ Steps to reproduce the behavior:
 
 
 <br><br>
-## **Expected behavior** ##
+## **EXPECTED BEHAVIOR** ##
 A clear and concise description of what you expected to happen.
 
 
