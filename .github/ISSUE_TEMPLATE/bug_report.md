@@ -9,42 +9,50 @@ assignees: ''
 
 **Please read the *FAQ* and take a look at the *closed* issues first to avoid duplicates. Thank you.**
 
+---
+<br>
 
-**Describe the bug**
+### **Describe the bug** ###
 A clear and concise description of what the bug is.
+<br><br><br>
 
-
-**To Reproduce**
+### **To Reproduce** ###
 Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
+<br><br><br>
 
 
-**Expected behavior**
+### **Expected behavior** ###
 A clear and concise description of what you expected to happen.
+<br><br><br>
 
 
-**Log excerpt**
+### **Log excerpt** ###
 Add relevant (error) messages from the LMS server log.
+<br><br><br>
 
 
-**Version info**
+### **Version info** ###
 LMS version:
 OS (version):
 Plugin version:
 Web skin/controller:  Examples: LMS Default, Material, jivelite (= piCorePlayer, SqueezePlay, Touch, Radio)
 Browser (version):
+<br><br><br>
 
 
-**Screenshots**
+### **Screenshots** ###
 If applicable, add screenshots to help explain your problem.
+<br><br><br>
 
 
-**Additional context**
+### **Additional context** ###
 Add any other context about the problem here.
+<br><br><br>
 
 
-**Uploads**
+### **Uploads**
 In case you want to provide larger files to illustrate the problem (e.g. your library.db and persist.db), please use a service like **https://wetransfer.com/** and include the download link in your bug report.
