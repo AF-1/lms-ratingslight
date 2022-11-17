@@ -11,13 +11,13 @@ assignees: ''
 
 ---
 
-## DESCRIBE THE BUG ##
+## DESCRIBE THE BUG
 A clear and concise description of what the bug is.
 
 
 
 <br><br>
-## TO REPRODUCE ##
+## TO REPRODUCE
 Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
@@ -27,19 +27,19 @@ Steps to reproduce the behavior:
 
 
 <br><br>
-## EXPECTED BEHAVIOR ##
+## EXPECTED BEHAVIOR
 A clear and concise description of what you expected to happen.
 
 
 
 <br><br>
-## LOG EXCERPT ##
+## LOG EXCERPT
 Add relevant (error) messages from the LMS server log.
 
 
 
 <br><br>
-## VERSION INFO ##
+## VERSION INFO
 * LMS version:
 * OS (version):
 * Plugin version:
@@ -49,18 +49,18 @@ Add relevant (error) messages from the LMS server log.
 
 
 <br><br>
-## SCREENSHOTS ##
+## SCREENSHOTS
 If applicable, add screenshots to help explain your problem.
 
 
 
 <br><br>
-## ADDITIONAL CONTEXT ##
+## ADDITIONAL CONTEXT
 Add any other context about the problem here.
 
 
 
 <br><br>
-## UPLOADS ##
+## UPLOADS
 In case you want to provide larger files to illustrate the problem (e.g. your library.db and persist.db), please use a service like **https://wetransfer.com/** and include the download link in your bug report.
 <br>
