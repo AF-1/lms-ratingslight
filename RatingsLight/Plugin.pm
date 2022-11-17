@@ -792,7 +792,7 @@ sub getActionsMenu {
 		{
 			itemtext => string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_MOREINFO'),
 			itemcmd1 => 'trackinfo',
-			itemcmd2 => 'items',
+			itemcmd2 => 'items'
 		}];
 
 	my $cnt = 0;
@@ -845,6 +845,7 @@ sub getActionsMenu {
 
 			$request->addResultLoop('item_loop',$cnt,'actions',$actions);
 			$request->addResultLoop('item_loop',$cnt,'text',$menuitemtext);
+			$request->addResultLoop('item_loop',$cnt,'style', 'itemplay') unless $menuitemcmd1 eq 'trackinfo';
 			$cnt++;
 		}
 	}
