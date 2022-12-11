@@ -1,7 +1,7 @@
 Ratings Light
 ====
 
-A plugin that takes care of rating tracks in your [Logitech Media Server](https://github.com/Logitech/slimserver) library.<br>
+A plugin [^1] that takes care of rating tracks in your [Logitech Media Server](https://github.com/Logitech/slimserver) library.<br>
 
 #### LMS web ui view:
 ![LMS web UI](screenshots/lms_webui.jpg)
@@ -57,7 +57,8 @@ A plugin that takes care of rating tracks in your [Logitech Media Server](https:
 
 **Some features are not enabled by default.** Please go to the plugin's settings page to enable them.
 
-[^1]: Browse menus are provided by LMS. Under certain circumstances you may see (empty) albums or artists in some menus that shouldn't be there. There's nothing I can do about it because LMS creates and provides these menus.<br>Just go down one level: click to *show all tracks* or *show all albums*.<br>In case this LMS issue ever gets resolved I'll update this page.
+[^1]: If you want localized strings in your language, read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.
+[^2]: Browse menus are provided by LMS. Under certain circumstances you may see (empty) albums or artists in some menus that shouldn't be there. There's nothing I can do about it because LMS creates and provides these menus.<br>Just go down one level: click to *show all tracks* or *show all albums*.<br>In case this LMS issue ever gets resolved I'll update this page.
 
 <br><br><br><br>
 
@@ -135,17 +136,6 @@ The <b>recently rated playlist</b> keeps a record of all tracks with changed rat
 - <b>Un</b>rating a track (rating = 0) will not delete this track from the playlist because unrating is a rating change too.<br>
 
 If you want to keep detailed track of your rating actions and don't need a playable list, I suggest you use the <b>log file</b>.</p></details><br>
-<br><br><br><br>
-
-### Translation
-The [**strings.txt**](https://github.com/AF-1/lms-ratingslight/blob/main/RatingsLight/strings.txt) file contains all localizable strings. Once you're done **testing** the plugin with your translated strings just create a pull request on GitHub.<br>
-* Please try not to use the [**single**](https://www.fileformat.info/info/unicode/char/27/index.htm) quote character (apostrophe) or the [**double**](https://www.fileformat.info/info/unicode/char/0022/index.htm) quote character (quotation mark) in your translated strings. They could cause problems. You can use the [*right single quotation mark*](https://www.fileformat.info/info/unicode/char/2019/index.htm) or the [*double quotation mark*](https://www.fileformat.info/info/unicode/char/201d/index.htm) instead. And if possible, avoid (special) characters that are used as [**metacharacters**](https://en.wikipedia.org/wiki/Metacharacter) in programming languages (Perl), regex or SQLite.
-* It's probably not a bad idea to keep the translated strings roughly as long as the original ones.<br>
-* Some of these strings are supposed to be used with different UIs: my tests usually cover the LMS *default* skin, *Material* skin, *piCorePlayer* (or any other jivelite player like *SqueezePlay*) and maybe some ip3k player like *Boom* if applicable.
-* Please leave *(multiple) blank lines* (used to visually delineate different parts) as they are.
-
-
-
 <br><br>
 
 I'd like to thank *mherger* for his invaluable support and *erland* for his plugins, a great source of inspiration.
