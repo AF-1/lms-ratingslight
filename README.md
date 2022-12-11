@@ -47,7 +47,7 @@ A plugin [^1] that takes care of rating tracks in your [Logitech Media Server](h
 	* using keywords in comments tags (auto-import after scan is possible)
 
 * **export** rated tracks to playlist files (as a backup or to import ratings in other apps)
-* **browse rated tracks by artist or genre**[^1] (with optional library view filter)
+* **browse rated tracks by artist or genre**[^2] (with optional library view filter)
 * *create* (scheduled) **backups** of your ratings and *restore* your ratings from backups
 * keep track of your **recently rated songs** with a dedicated *playlist* or a plain text *log file*
 * **show rated songs** for any *artist, album, genre, year* or *playlist* using the respective **context menu** (i.e. song details/**more** page if you're using the LMS *default* skin or *Material* skin)
