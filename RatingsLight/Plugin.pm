@@ -201,7 +201,7 @@ sub initPrefs {
 			mkdir($rlFolderPath, 0755) unless (-d $rlFolderPath);
 			chdir($rlFolderPath);
 		} or do {
-			$log->warn("Could not create or access RatingsLight folder in parent folder '$_[1]'!");
+			$log->error("Could not create or access RatingsLight folder in parent folder '$_[1]'!");
 			return;
 		};
 		$prefs->set('rlfolderpath', $rlFolderPath);
@@ -1295,7 +1295,7 @@ sub exportRatingsToPlaylistFiles {
 
 			my $filename = catfile($exportDir, $PLfilename);
 			my $output = FileHandle->new($filename, '>:utf8') or do {
-				$log->warn('Could not open '.$filename.' for writing.');
+				$log->error('Could not open '.$filename.' for writing.');
 				$prefs->set('status_exportingtoplaylistfiles', 0);
 				return;
 			};
@@ -1549,7 +1549,7 @@ sub restoreScanFunction {
 	my $restorefile = $prefs->get('restorefile');
 	if ($opened != 1) {
 		open(BACKUPFILE, $restorefile) || do {
-			$log->warn('Couldn\'t open backup file: '.$restorefile);
+			$log->error('Couldn\'t open backup file: '.$restorefile);
 			$prefs->set('status_restoringfrombackup', 0);
 			return 0;
 		};
@@ -2264,7 +2264,7 @@ sub logRatedTrack {
 	# write log info to file
 	my $filename = catfile($logDir, $logFileName);
 	my $output = FileHandle->new($filename, '>>:utf8') or do {
-		$log->warn('Could not open '.$filename.' for writing.');
+		$log->error('Could not open '.$filename.' for writing.');
 		return;
 	};
 	print $output $ratingtimestamp."\n";
@@ -2297,7 +2297,7 @@ sub clearAllRatings {
 		commit($dbh);
 	};
 	if ($@) {
-		$log->warn("Database error: $DBI::errstr");
+		$log->error("Database error: $DBI::errstr");
 		eval {
 			rollback($dbh);
 		};

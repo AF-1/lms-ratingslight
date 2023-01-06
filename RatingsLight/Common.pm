@@ -86,7 +86,7 @@ sub createBackup {
 	if (@ratedTracks) {
 		my $filename = catfile($backupDir, 'RL_Backup_'.$filename_timestamp.'.xml');
 		my $output = FileHandle->new($filename, '>:utf8') or do {
-			$log->warn('could not open '.$filename.' for writing.');
+			$log->error('could not open '.$filename.' for writing.');
 			$prefs->set('status_creatingbackup', 0);
 			return;
 		};
@@ -214,7 +214,7 @@ sub importRatingsFromCommentsTags {
 				commit($dbh);
 			};
 			if ($@) {
-				$log->warn("Database error: $DBI::errstr");
+				$log->error("Database error: $DBI::errstr");
 				eval {
 					rollback($dbh);
 				};
@@ -236,7 +236,7 @@ sub importRatingsFromCommentsTags {
 				commit($dbh);
 			};
 			if ($@) {
-				$log->warn("Database error: $DBI::errstr");
+				$log->error("Database error: $DBI::errstr");
 				eval {
 					rollback($dbh);
 				};
@@ -291,7 +291,7 @@ sub importRatingsFromBPMTags {
 			commit($dbh);
 		};
 		if ($@) {
-			$log->warn("Database error: $DBI::errstr");
+			$log->error("Database error: $DBI::errstr");
 			eval {
 				rollback($dbh);
 			};
@@ -312,7 +312,7 @@ sub importRatingsFromBPMTags {
 			commit($dbh);
 		};
 		if ($@) {
-			$log->warn("Database error: $DBI::errstr");
+			$log->error("Database error: $DBI::errstr");
 			eval {
 				rollback($dbh);
 			};
