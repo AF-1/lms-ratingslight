@@ -102,7 +102,7 @@ sub initPlugin {
 		Plugins::RatingsLight::Settings::Menus->new($class);
 		Plugins::RatingsLight::Settings::DSTM->new($class);
 
-		Slim::Web::Pages->addPageFunction('showratedtrackslist', \&handleRatedWebTrackList);
+		Slim::Web::Pages->addPageFunction('showratedtrackslist.html', \&handleRatedWebTrackList);
 	}
 
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightrating => (
@@ -453,9 +453,8 @@ sub VFD_deviceRating {
 }
 
 
-### infohandlers, context menus
+### rating menu
 
-## rating menu
 sub trackInfoHandlerRating {
 	my ($client, $url, $track, $remoteMeta, $tags) = @_;
 	my $rating100ScaleValue = 0;
@@ -591,11 +590,22 @@ sub getRatingMenu {
 	$request->setStatusDone();
 }
 
-## show rated tracks menus (web & jive)
-# web
+
+### show rated tracks menus - WEB
+
 sub handleRatedWebTrackList {
-	my $ratedtracksweblimit = $prefs->get('ratedtracksweblimit');
 	my ($client, $params, $callback, $httpClient, $response) = @_;
+	my $ratedtracksweblimit = $prefs->get('ratedtracksweblimit');
+
+	## execute action if action and action track id(s) provided
+	my $action = $params->{'action'};
+	$log->debug('action = '.Dumper($action));
+	my $actionTrackIDs = $params->{'actiontrackids'};
+	$log->debug('actionTrackIDs = '.Dumper($actionTrackIDs));
+
+	if ($action && ($action eq 'load' || $action eq 'insert' || $action eq 'add') && $actionTrackIDs) {
+		$client->execute(['playlistcontrol', 'cmd:'.$action, 'track_id:'.$actionTrackIDs]);
+	}
 
 	my $trackID = $params->{trackid} || 0;
 	my $objectType = $params->{objecttype};
@@ -663,7 +673,9 @@ sub handleRatedWebTrackList {
 	return Slim::Web::HTTP::filltemplatefile('plugins/RatingsLight/html/showratedtrackslist.html', $params);
 }
 
-# jive
+
+### show rated tracks menus - JIVE
+
 sub getRatedTracksMenu {
 	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
 	my $request = shift;
@@ -854,7 +866,10 @@ sub getActionsMenu {
 	$request->setStatusDone();
 }
 
-# VF devices (only objectType trackArtist + trackAlbum)
+
+### show rated tracks menus - VF devices
+# only objectType trackArtist + trackAlbum
+
 sub VFD_ratedtracks {
 	my ($client, $objectType, $thisID, $trackID) = @_;
 	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
@@ -944,7 +959,9 @@ sub VFD_execActions {
 	}]);
 }
 
-# common subs
+
+## common subs
+
 sub objectInfoHandler {
 	my ($objectType, $client, $url, $obj, $remoteMeta, $tags) = @_;
 	$tags ||= {};
@@ -1138,6 +1155,7 @@ sub getRatedTracks {
 		return \@ratedtracks;
 	}
 }
+
 
 
 ## import, export
