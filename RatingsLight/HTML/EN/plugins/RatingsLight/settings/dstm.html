@@ -4,38 +4,38 @@
 
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_RATED_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PERCENTAGE_RATED" desc="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PERCENTAGE_RATED_DESC" %]
 	<input type="text" class="stdedit sliderInput_0_100_1" name="pref_dstm_percentagerated" id="dstm_percentagerated" value="[% prefs.dstm_percentagerated %]" size="2">
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_TOPRATED" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PERCENTAGE_TOPRATED_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PERCENTAGE_TOPRATED" desc="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PERCENTAGE_TOPRATED_DESC" %]
 	<input type="text" class="stdedit sliderInput_0_100_1" name="pref_dstm_percentagetoprated" id="dstm_percentagetoprated" value="[% prefs.dstm_percentagetoprated %]" size="2">
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_NUMSEEDTRACKS_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_NUMSEEDTRACKS" desc="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_NUMSEEDTRACKS_DESC" %]
 	<input type="text" class="stdedit sliderInput_1_20_1" name="pref_dstm_num_seedtracks" id="dstm_num_seedtracks" value="[% prefs.dstm_num_seedtracks %]" size="2">
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PLAYEDTRACKSTOKEEP" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_PLAYEDTRACKSTOKEEP_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PLAYEDTRACKSTOKEEP" desc="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PLAYEDTRACKSTOKEEP_DESC" %]
 	<input type="text" class="stdedit sliderInput_1_200_1" name="pref_dstm_playedtrackstokeep" id="dstm_playedtrackstokeep" value="[% prefs.dstm_playedtrackstokeep %]" size="2">
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_BATCHSIZENEWTRACKS_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_BATCHSIZENEWTRACKS" desc="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_BATCHSIZENEWTRACKS_DESC" %]
 	<input type="text" class="stdedit sliderInput_5_50_1" name="pref_dstm_batchsizenewtracks" id="dstm_batchsizenewtracks" value="[% prefs.dstm_batchsizenewtracks %]" size="2">
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_MINTRACKDUR" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_MINTRACKDUR_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_MINTRACKDUR" desc="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_MINTRACKDUR_DESC" %]
 	<input type="text" class="stdedit sliderInput_0_1800_1" name="pref_dstm_minTrackDuration" id="dstm_minTrackDuration" value="[% prefs.dstm_minTrackDuration %]" size="2">
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_EXCLUDEDGENRES" desc="PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_EXCLUDEDGENRES_DESC" %]
-<details><summary><span class="categoryheader">[% "PLUGIN_RATINGSLIGHT_DSTM_SETTINGS_CHOOSEEXLUDEGENRES" | string %]</span>:</summary>
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_EXCLUDEDGENRES" desc="PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_EXCLUDEDGENRES_DESC" %]
+<details><summary><span class="categoryheader">[% "PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_CHOOSEEXLUDEGENRES" | string %]</span>:</summary>
 	<table border="0" width="100%">[% USE table genrelistsorted, cols=3, pad=0 %]
 		[%- FOREACH genrerow = table.rows %]
 			<tr>

@@ -15,28 +15,28 @@
 
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES_DESC" %]
 	<select name="pref_exportVL_id" id="exportVL_id">
 		[% FOREACH library = virtuallibraries %]
 			<option value="[% library.library_id %]">[% library.name %]</option>
 		[% END %]
 	</select>
 <br><br>
-<input name="export" type="submit" onclick="inprogress('exportstatus');" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_TO_FILES_BUTTON" | string %]">
-<span class='status' id='exportstatus'>[% "PLUGIN_RATINGSLIGHT_EXPORT_INPROGRESS" | string %]</span>
+<input name="export" type="submit" onclick="inprogress('exportstatus');" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES_BUTTON" | string %]">
+<span class='status' id='exportstatus'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_INPROGRESS" | string %]</span>
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF" desc="PLUGIN_RATINGSLIGHT_EXPORT_PLAYLISTS_ONLY_DIFF_DESC" %]
-	<input name="pref_onlyratingsnotmatchtags" id="onlyratingsnotmatchtags" type="checkbox" [% IF prefs.onlyratingsnotmatchtags %] checked [% END %]><span class="curselfiletag">[% "PLUGIN_RATINGSLIGHT_EXPORT_SELFILETAG" | string %]: <span class="rlbold">[% IF curselfiletag == 0 %][% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_BPM" | string %][% ELSE %][% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_COMMENT" | string %][% END %]</span>
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_ONLY_DIFF" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_ONLY_DIFF_DESC" %]
+	<input name="pref_onlyratingsnotmatchtags" id="onlyratingsnotmatchtags" type="checkbox" [% IF prefs.onlyratingsnotmatchtags %] checked [% END %]><span class="curselfiletag">[% "PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_SELFILETAG" | string %]: <span class="rlbold">[% IF curselfiletag == 0 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE_BPM" | string %][% ELSE %][% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE_COMMENT" | string %][% END %]</span>
 [% END %]
 <br><br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION" desc="PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PATHSUBSTITUTION" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PATHSUBSTITUTION_DESC" %]
 <table size="100">
 	<tr>
-		<th style="text-align:center;"><b>[% "PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_LMSPATH" | string %]</b></th>
-		<th style="text-align:center;padding-left:8px;"><b>[% "PLUGIN_RATINGSLIGHT_EXPORT_PATHSUBSTITUTION_NEWPATH" | string %]</b></th>
+		<th style="text-align:center;"><b>[% "PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PATHSUBSTITUTION_LMSPATH" | string %]</b></th>
+		<th style="text-align:center;padding-left:8px;"><b>[% "PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PATHSUBSTITUTION_NEWPATH" | string %]</b></th>
 	</tr>
 	<tr>
 		<th style="height:4px;" colspan="2"></th>
@@ -59,11 +59,11 @@
 [% END %]
 <br><br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION" desc="PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONSUBSTITUTION_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONSUBSTITUTION" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONSUBSTITUTION_DESC" %]
 	<input type="text" class="stdedit" name="pref_exportextension" id="exportextension" value="[% prefs.exportextension %]" size="4">
 [% END %]
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONEXCEPTIONS" desc="PLUGIN_RATINGSLIGHT_EXPORT_EXTENSIONEXCEPTIONS_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONEXCEPTIONS" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONEXCEPTIONS_DESC" %]
 	<input type="text" class="stdedit" name="pref_exportextensionexceptions" id="exportextensionexceptions" value="[% prefs.exportextensionexceptions %]" size="30">
 [% END %]
 

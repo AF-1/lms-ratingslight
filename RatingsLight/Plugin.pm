@@ -67,7 +67,7 @@ my $log = Slim::Utils::Log->addLogCategory({
 my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
-my (%restoreitem, $currentKey, $inTrack, $inValue, $backupParser, $backupParserNB, $restorestarted);
+my (%restoreitem, $currentKey, $inTrack, $inValue, $backupParser, $backupParserNB, $restorestarted, $material_enabled);
 my $opened = 0;
 
 sub initPlugin {
@@ -78,7 +78,9 @@ sub initPlugin {
 
 	Slim::Control::Request::addDispatch(['ratingslight', 'setrating', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'setratingpercent', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
-	Slim::Control::Request::addDispatch(['ratingslight', 'ratingmenu', '_trackid'], [0, 1, 1, \&getRatingMenu]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbumoptions', '_albumid'], [1, 1, 1, \&rateAlbumTracksOptions_jive]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'ratingmenu', '_trackid', '_isalbum', '_unratedonly'], [0, 1, 1, \&getRatingMenu]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbum', '_albumid', '_rating', '_unratedonly'], [1, 1, 1, \&rateAlbumTracks_jive]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratedtracksmenu', '_trackid', '_thisid', '_objecttype'], [0, 1, 1, \&getRatedTracksMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'actionsmenu'], [0, 1, 1, \&getActionsMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'], [0, 0, 0, undef]);
@@ -103,6 +105,8 @@ sub initPlugin {
 		Plugins::RatingsLight::Settings::DSTM->new($class);
 
 		Slim::Web::Pages->addPageFunction('showratedtrackslist.html', \&handleRatedWebTrackList);
+		Slim::Web::Pages->addPageFunction('ratealbumtracksselect', \&rateAlbumTracks_web);
+		Slim::Web::Pages->addPageFunction('ratealbumtracksoptions.html', \&rateAlbumTracks_web);
 	}
 
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightrating => (
@@ -132,6 +136,12 @@ sub initPlugin {
 		after => 'addalbum',
 		func => sub {
 			return objectInfoHandler('album', @_);
+		},
+	));
+	Slim::Menu::AlbumInfo->registerInfoProvider(ratingslightratealbum => (
+		after => 'ratingslightratedtracksinalbum',
+		func => sub {
+			return rateAlbumContextMenu(@_);
 		},
 	));
 	Slim::Menu::GenreInfo->registerInfoProvider(ratingslightratedtracksingenre => (
@@ -283,6 +293,9 @@ sub postinitPlugin {
 		Plugins::RatingsLight::DontStopTheMusic->init();
 	}
 
+	$material_enabled = Slim::Utils::PluginManager->isEnabled('Plugins::MaterialSkin::Plugin');
+	$log->debug('Plugin "Material Skin" is enabled') if $material_enabled;
+
 	# temp. workaround to allow legacy TS rating in iPeng until iPeng supports RL or is discontinued
 	if ($prefs->get('enableipengtslegacyrating') && !Slim::Utils::PluginManager->isEnabled('Plugins::TrackStat::Plugin')) {
 		Slim::Control::Request::addDispatch(['trackstat', 'getrating', '_trackid'], [0, 1, 0, \&getRatingTSLegacy]);
@@ -293,7 +306,7 @@ sub postinitPlugin {
 }
 
 
-## set ratings
+### set ratings
 
 sub setRating {
 	my $request = shift;
@@ -452,6 +465,189 @@ sub VFD_deviceRating {
 	refreshAll();
 }
 
+# rate album tracks
+sub rateAlbumContextMenu {
+	my ($client, $url, $obj, $remoteMeta, $tags) = @_;
+	$tags ||= {};
+
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn('Warning: not available until library scan is completed');
+		return;
+	}
+
+	my $albumID = $obj->id;
+	my $albumName = $obj->name;
+	$albumName = trimStringLength($albumName, 70);
+	$log->debug('album id = '.$albumID.' ## objectName = '.Dumper($albumName));
+
+	if ($tags->{menuMode}) {
+		return {
+			type => 'redirect',
+			name => string('PLUGIN_RATINGSLIGHT_RATEALBUM'),
+			jive => {
+				actions => {
+					go => {
+						player => 0,
+						cmd => ['ratingslight', 'ratealbumoptions', $albumID, $albumName],
+					},
+				}
+			},
+			favorites => 0,
+		};
+	} else {
+		return {
+			type => 'redirect',
+			name => $client->string('PLUGIN_RATINGSLIGHT_RATEALBUM'),
+			favorites => 0,
+			web => {
+				url => 'plugins/RatingsLight/html/ratealbumtracksselect?albumid='.$albumID.'&albumname='.$albumName
+			},
+		};
+	}
+}
+
+sub rateAlbumTracks_web {
+	my ($client, $params, $callback, $httpClient, $response) = @_;
+
+	my $ratingcontextmenusethalfstars = $prefs->get('ratingcontextmenusethalfstars');
+	my $albumID = $params->{albumid};
+	my $albumName = $params->{albumname};
+	$log->debug('albumID = '.$albumID.' ## albumName = '.Dumper($albumName));
+
+	$params->{albumid} = $albumID;
+	$params->{albumname} = $albumName;
+
+	my @ratingValues = ();
+	if (defined $ratingcontextmenusethalfstars) {
+		@ratingValues = qw(100 90 80 70 60 50 40 30 20 10 0);
+	} else {
+		@ratingValues = qw(100 80 60 40 20 0);
+	}
+	$params->{'ratingvalues'} = \@ratingValues;
+
+	my $ratingStrings = {};
+	foreach my $rating100ScaleValue (@ratingValues) {
+		$ratingStrings->{$rating100ScaleValue} = getRatingTextLine($rating100ScaleValue);
+	}
+	$params->{'ratingstrings'} = $ratingStrings;
+
+	my $albumRatingValue = $params->{'albumratingvalue'};
+	if (defined($albumRatingValue)) {
+		my $unratedOnly = $params->{'unratedonly'};
+		$log->debug('albumRatingValue = '.$albumRatingValue.' ## unratedOnly = '.Dumper($unratedOnly));
+		my $ratingSuccess = rateAlbum($albumID, $albumRatingValue, $unratedOnly);
+		if (!$ratingSuccess) {
+			$params->{'failed'} = 1;
+		} else {
+			$params->{'albumrated'} = 1;
+		}
+	}
+	return Slim::Web::HTTP::filltemplatefile('plugins/RatingsLight/html/ratealbumtracksoptions.html', $params);
+}
+
+sub rateAlbumTracksOptions_jive {
+	my $request = shift;
+	my $client = $request->client();
+
+	if (!$request->isQuery([['ratingslight'],['ratealbumoptions']])) {
+		$log->warn('incorrect command');
+		$request->setStatusBadDispatch();
+		return;
+	}
+	if (!defined $client) {
+		$log->warn('client required!');
+		$request->setStatusNeedsClient();
+		return;
+	}
+	my $albumID = $request->getParam('_albumid');
+	$log->debug('albumID = '.Dumper($albumID));
+	return unless $albumID;
+
+	$request->addResult('window', {text => string('PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS')});
+
+	my @ratingOptions = (string('PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS_ALL'), string('PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS_UNRATED'));
+
+	my $cnt = 0;
+	foreach (@ratingOptions) {
+		my $action = {
+			'go' => {
+				'player' => 0,
+				'cmd' => ['ratingslight', 'ratingmenu', $albumID, 1, $cnt],
+			},
+		};
+
+		$request->addResultLoop('item_loop', $cnt, 'text', $_);
+		$request->addResultLoop('item_loop', $cnt, 'style', 'itemNoAction');
+		$request->addResultLoop('item_loop', $cnt, 'type', 'redirect');
+		$request->addResultLoop('item_loop', $cnt, 'actions', $action);
+		$cnt++;
+	}
+
+	$request->addResult('offset', 0);
+	$request->addResult('count', $cnt);
+	$request->setStatusDone();
+}
+
+sub rateAlbumTracks_jive {
+	my $request = shift;
+	my $client = $request->client();
+
+	if (!$request->isQuery([['ratingslight'],['ratealbum']])) {
+		$log->warn('incorrect command');
+		$request->setStatusBadDispatch();
+		return;
+	}
+	if (!defined $client) {
+		$log->warn('client required!');
+		$request->setStatusNeedsClient();
+		return;
+	}
+	my $albumID = $request->getParam('_albumid');
+	my $albumRatingValue = $request->getParam('_rating');
+	$log->debug('albumID = '.$albumID.' ## albumRatingValue = '.$albumRatingValue);
+	return unless $albumID && $albumRatingValue;
+	my $unratedOnly = $request->getParam('_unratedonly');
+
+	my $ratingSuccess = rateAlbum($albumID, $albumRatingValue, $unratedOnly);
+	my $message = '';
+	if ($ratingSuccess) {
+		$message = string('PLUGIN_RATINGSLIGHT_RATEALBUM_SUCCESS');
+	} else {
+		$message = string('PLUGIN_RATINGSLIGHT_RATEALBUM_FAILED');
+	}
+
+	if (Slim::Buttons::Common::mode($client) !~ /^SCREENSAVER./) {
+		$client->showBriefly({'line' => [string('PLUGIN_RATINGSLIGHT'), $message]}, 5);
+	}
+	if ($material_enabled) {
+		Slim::Control::Request::executeRequest(undef, ['material-skin', 'send-notif', 'type:info', 'msg:'.$message, 'client:'.$client->id, 'timeout:5']);
+	}
+	$request->setStatusDone();
+}
+
+sub rateAlbum {
+	my ($albumID, $albumRatingValue, $unratedOnly) = @_;
+
+	my $album = Slim::Schema->resultset('Album')->single({'id' => $albumID});
+	my @albumTracks = $album->tracks;
+
+	if (scalar @albumTracks > 0) {
+		foreach (@albumTracks) {
+			if ($unratedOnly) {
+				my $curTrackRating = $_->rating || 0;
+				if ($curTrackRating > 0) {
+					$log->debug('Not rating already rated track "'.$_->title.'"');
+					next;
+				}
+			}
+			$log->debug('Setting rating of track "'.$_->title.'" to '.$albumRatingValue);
+			writeRatingToDB($_->id, undef, undef, $_, $albumRatingValue);
+		}
+	}
+	refreshAll();
+	return 1;
+}
+
 
 ### rating menu
 
@@ -464,11 +660,10 @@ sub trackInfoHandlerRating {
 
 	if (Slim::Music::Import->stillScanning) {
 		if ($tags->{menuMode}) {
-			my $jive = {};
 			return {
-				type => '',
+				type => 'text',
 				name => $text.' '.string('PLUGIN_RATINGSLIGHT_BLOCKED'),
-				jive => $jive,
+				jive => {},
 			};
 		} else {
 			return {
@@ -494,19 +689,17 @@ sub trackInfoHandlerRating {
 	$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating100ScaleValue));
 
 	if ($tags->{menuMode}) {
-		my $jive = {};
-		my $actions = {
-			go => {
-				player => 0,
-				cmd => ['ratingslight', 'ratingmenu', $track->id],
-			},
-		};
-		$jive->{actions} = $actions;
-
 		return {
 			type => 'redirect',
 			name => $text,
-			jive => $jive,
+			jive => {
+				actions => {
+					go => {
+						player => 0,
+						cmd => ['ratingslight', 'ratingmenu', $track->id],
+					},
+				}
+			},
 		};
 	} else {
 		my $item = {
@@ -559,6 +752,11 @@ sub getRatingMenu {
 		return;
 	}
 	my $track_id = $request->getParam('_trackid');
+
+	my $isAlbum = $request->getParam('_isalbum');
+	$log->debug('isAlbum = '.Dumper($isAlbum));
+	my $albumID = $track_id;
+
 	my $cnt = 0;
 
 	my @ratingValues = ();
@@ -568,21 +766,48 @@ sub getRatingMenu {
 		@ratingValues = qw(100 80 60 40 20 0);
 	}
 
-	foreach my $rating100ScaleValue (@ratingValues) {
-		my $actions = {
-			'do' => {
-				'cmd' => ['ratingslight', 'setratingpercent', $track_id, $rating100ScaleValue]
-			},
-			'play' => {
-				'cmd' => ['ratingslight', 'setratingpercent', $track_id, $rating100ScaleValue]
-			},
-		};
+	if ($isAlbum) {
+		my $windowTitle = string('PLUGIN_RATINGSLIGHT_RATEALBUM');
+		$request->addResult('window', {text => $windowTitle});
 
-		my $text = getRatingTextLine($rating100ScaleValue);
-		$request->addResultLoop('item_loop', $cnt, 'text', $text);
-		$request->addResultLoop('item_loop', $cnt, 'actions', $actions);
-		$request->addResultLoop('item_loop', $cnt, 'nextWindow', 'parent');
-		$cnt++;
+		my $unratedOnly = $request->getParam('_unratedonly');
+		$log->debug('unratedOnly = '.Dumper($unratedOnly));
+
+		foreach my $rating100ScaleValue (@ratingValues) {
+			my $actions = {
+				'do' => {
+					'cmd' => ['ratingslight', 'ratealbum', $albumID, $rating100ScaleValue, $unratedOnly]
+				},
+				'play' => {
+					'cmd' => ['ratingslight', 'ratealbum', $albumID, $rating100ScaleValue, $unratedOnly]
+				},
+			};
+
+			my $text = getRatingTextLine($rating100ScaleValue);
+			$request->addResultLoop('item_loop', $cnt, 'text', $text);
+			$request->addResultLoop('item_loop', $cnt, 'actions', $actions);
+			$request->addResultLoop('item_loop', $cnt, 'nextWindow', 'grandparent');
+
+			$cnt++;
+		}
+
+	} else {
+		foreach my $rating100ScaleValue (@ratingValues) {
+			my $actions = {
+				'do' => {
+					'cmd' => ['ratingslight', 'setratingpercent', $track_id, $rating100ScaleValue]
+				},
+				'play' => {
+					'cmd' => ['ratingslight', 'setratingpercent', $track_id, $rating100ScaleValue]
+				},
+			};
+
+			my $text = getRatingTextLine($rating100ScaleValue);
+			$request->addResultLoop('item_loop', $cnt, 'text', $text);
+			$request->addResultLoop('item_loop', $cnt, 'actions', $actions);
+			$request->addResultLoop('item_loop', $cnt, 'nextWindow', 'parent');
+			$cnt++;
+		}
 	}
 
 	$request->addResult('offset', 0);
@@ -1157,7 +1382,6 @@ sub getRatedTracks {
 }
 
 
-
 ## import, export
 
 sub importRatingsFromPlaylist {
@@ -1464,7 +1688,7 @@ sub delayedPostScanRefresh {
 		setRefreshCBTimer();
 	} else {
 		$log->debug('Starting post-scan refresh');
-		refreshAll(1);
+		refreshAll();
 	}
 }
 
@@ -2628,17 +2852,16 @@ sub refreshTitleFormats {
 # misc
 
 sub refreshAll {
-	my $isPostScan = shift;
 	Slim::Music::Info::clearFormatDisplayCache();
 	refreshTitleFormats();
-	$isPostScan ? refreshVirtualLibraries() : refreshVLtimer();
+	refreshVLtimer();
 }
 
 sub refreshVLtimer {
 	$log->debug('Killing existing timers for VL refresh to prevent multiple calls');
 	Slim::Utils::Timers::killOneTimer(undef, \&refreshVirtualLibraries);
 	$log->debug('Scheduling a delayed VL refresh');
-	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + 5, \&refreshVirtualLibraries);
+	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + 8, \&refreshVirtualLibraries);
 }
 
 sub createRLfolder {

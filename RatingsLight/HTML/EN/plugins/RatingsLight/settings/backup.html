@@ -16,56 +16,56 @@
 
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP" desc="" %]
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_MANUAL_BACKUP" desc="PLUGIN_RATINGSLIGHT_BACKUP_MANUAL_BACKUP_DESC" %]
-	<input name="backup" type="submit" class="stdclick" onclick="inprogress('backupstatus');" value="[% "PLUGIN_RATINGSLIGHT_BACKUP_MANUAL_BACKUP_BUTTON" | string %]">
-	<span class='status' id='backupstatus'>[% "PLUGIN_RATINGSLIGHT_BACKUP_MANUAL_BACKUP_INPROGRESS" | string %]</span>
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP" desc="" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_DESC" %]
+	<input name="backup" type="submit" class="stdclick" onclick="inprogress('backupstatus');" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_BUTTON" | string %]">
+	<span class='status' id='backupstatus'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_INPROGRESS" | string %]</span>
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS" desc="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS_DESC" %]
 	<input name="pref_scheduledbackups" id="scheduledbackups" type="checkbox" [% IF prefs.scheduledbackups %] checked [% END %]>
 [% END %]
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME" desc="PLUGIN_RATINGSLIGHT_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME_DESC" %]
 	<input type="text" class="stdedit" name="pref_backuptime" id="backuptime" value="[% prefs.backuptime %]" size="3">
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_PRESCANBACKUP" desc="PLUGIN_RATINGSLIGHT_BACKUP_PRESCANBACKUP_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_PRESCANBACKUP" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_PRESCANBACKUP_DESC" %]
 	<input name="pref_prescanbackup" id="prescanbackup" type="checkbox" [% IF prefs.prescanbackup %] checked [% END %]>
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS" desc="PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_DESC" %]
-	<input name="pref_autodeletebackups" id="autodeletebackups" type="checkbox" [% IF prefs.autodeletebackups %] checked [% END %]>[% IF prefs.scheduledbackups && !prefs.autodeletebackups %] <span class="recommended">[% "PLUGIN_RATINGSLIGHT_BACKUP_AUTODELETEBACKUPS_WARNING" | string %]</span>[% END %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS_DESC" %]
+	<input name="pref_autodeletebackups" id="autodeletebackups" type="checkbox" [% IF prefs.autodeletebackups %] checked [% END %]>[% IF prefs.scheduledbackups && !prefs.autodeletebackups %] <span class="recommended">[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS_WARNING" | string %]</span>[% END %]
 [% END %]
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_BACKUPDAYSTOKEEP" desc="PLUGIN_RATINGSLIGHT_BACKUP_BACKUPDAYSTOKEEP_DESC" %]
-	<input type="text" class="stdedit sliderInput_1_365_1" name="pref_backupsdaystokeep" id="backupsdaystokeep" value="[% prefs.backupsdaystokeep %]" size="2"> [% "PLUGIN_RATINGSLIGHT_BACKUP_BACKUPDAYSTOKEEP_BACKUPDAYS" | string %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPDAYSTOKEEP" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPDAYSTOKEEP_DESC" %]
+	<input type="text" class="stdedit sliderInput_1_365_1" name="pref_backupsdaystokeep" id="backupsdaystokeep" value="[% prefs.backupsdaystokeep %]" size="2"> [% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPDAYSTOKEEP_BACKUPDAYS" | string %]
 [% END %]
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_BACKUP_BACKUPMINFILESTOKEEP" desc="PLUGIN_RATINGSLIGHT_BACKUP_BACKUPMINFILESTOKEEP_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPMINFILESTOKEEP" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPMINFILESTOKEEP_DESC" %]
 	<input type="text" class="stdedit sliderInput_1_100_1" name="pref_backupfilesmin" id="backupfilesmin" value="[% prefs.backupfilesmin %]" size="2">
 [% END %]
 [% END %]
 <hr><br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE" desc="" %]
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE" desc="PLUGIN_RATINGSLIGHT_RESTORE_SELECTFILE_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE" desc="" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE_DESC" %]
 	<input type="text" class="stdedit selectFile_xml" name="pref_restorefile" id="restorefile" value="[% prefs.restorefile %]" size="40"><br><br>
-	<input name="restore" type="submit" class="stdclick" onclick="inprogress('restorestatus');" value="[% "PLUGIN_RATINGSLIGHT_RESTORE_BUTTON" | string %]">
-	<span class='status' id='restorestatus'>[% "PLUGIN_RATINGSLIGHT_RESTORE_INPROGESS" | string %]</span>
-	<span class='[% IF restoremissingfile %]error[% ELSE %]status[% END %]'>[% IF restoremissingfile == 1 %][% "PLUGIN_RATINGSLIGHT_RESTORE_MISSINGFILE" | string %][% ELSIF restoremissingfile == 2 %][% "PLUGIN_RATINGSLIGHT_RESTORE_NOXMLFILE" | string %][% ELSE %][% END %]</span>
+	<input name="restore" type="submit" class="stdclick" onclick="inprogress('restorestatus');" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_BUTTON" | string %]">
+	<span class='status' id='restorestatus'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_INPROGESS" | string %]</span>
+	<span class='[% IF restoremissingfile %]error[% ELSE %]status[% END %]'>[% IF restoremissingfile == 1 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_MISSINGFILE" | string %][% ELSIF restoremissingfile == 2 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOXMLFILE" | string %][% ELSE %][% END %]</span>
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE" desc="PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE_DESC" %]
 	<select name="pref_selectiverestore" id="selectiverestore">
 		[% FOREACH option = {
-			'0' => 'PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_ALL',
-			'1' => 'PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_LOCALONLY',
-			'2' => 'PLUGIN_RATINGSLIGHT_RESTORE_SELECTIVERESTORE_REMOTEONLY',
+			'0' => 'PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE_ALL',
+			'1' => 'PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE_LOCALONLY',
+			'2' => 'PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE_REMOTEONLY',
 		} %]
 			<option [% IF prefs.selectiverestore == option.key %]selected='selected' [% END %]value="[% option.key %]">[% option.value | string %]</option>
 		[%- END -%]
@@ -73,7 +73,7 @@
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE" desc="PLUGIN_RATINGSLIGHT_RESTORE_CLEARALLBEFORE_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_CLEARALLBEFORE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_CLEARALLBEFORE_DESC" %]
 	<input name="pref_clearallbeforerestore" id="clearallbeforerestore" type="checkbox" [% IF prefs.clearallbeforerestore %] checked [% END %]>
 [% END %]
 [% END %]

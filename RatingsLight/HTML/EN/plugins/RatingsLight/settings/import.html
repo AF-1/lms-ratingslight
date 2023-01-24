@@ -16,13 +16,13 @@
 
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS" desc="PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_DESC" %]
-[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_HEADER" | string %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS" desc="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_DESC" %]
+[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_HEADER" | string %]
 <br><br>
 <table>
 	<tr>
-		<th style="text-align:center;"><b>[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLNAME" | string %]</b></th>
-		<th style="text-align:center;padding-left:8px;"><b>[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLRATING" | string %]</b></th>
+		<th style="text-align:center;"><b>[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_PLNAME" | string %]</b></th>
+		<th style="text-align:center;padding-left:8px;"><b>[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_PLRATING" | string %]</b></th>
 	</tr>
 	<tr>
 		<th style="height:4px;" colspan="2"></th>
@@ -45,48 +45,48 @@
 			</select>
 		</td>
 	[% ELSE %]
-		<td colspan="2" style="text-align: center;">[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLRATING_NOPLFOUND" | string %]</td>
+		<td colspan="2" style="text-align: center;">[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_PLRATING_NOPLFOUND" | string %]</td>
 	[% END %]
 	</tr>
 </table>
 [% IF playlistcount %]
 <br>
-	<input style="margin-top:-1px;" name="rateplaylistnow" type="submit" onclick="inprogress('playlistratingstatus');" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_RATENOW_BUTTON" | string %]">
-	<span class='status' id='playlistratingstatus'>[% "PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_INPROGRESS" | string %]</span>
+	<input style="margin-top:-1px;" name="rateplaylistnow" type="submit" onclick="inprogress('playlistratingstatus');" class="stdclick" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_RATENOW_BUTTON" | string %]">
+	<span class='status' id='playlistratingstatus'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_INPROGRESS" | string %]</span>
 [% END %]
 
 [% END %]
 <br><br>
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLMAXTRACKS" desc="PLUGIN_RATINGSLIGHT_IMPORT_PLAYLISTS_PLMAXTRACKS_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_PLMAXTRACKS" desc="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_PLMAXTRACKS_DESC" %]
 	<input type="text" class="stdedit sliderInput_1_5000_50" name="pref_playlistimport_maxtracks" id="playlistimport_maxtracks" value="[% prefs.playlistimport_maxtracks %]" size="3">
 [% END %]
 <br><hr><br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS" desc="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_DESC" %] [% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_HEADER" | string %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS" desc="" %] [% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_HEADER" | string %]
 <br><br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT" desc="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_DESC" %]
-	<input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onclick="inprogress('filetagimportstatus');" value="[% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_BUTTON" | string %]">
-	<span class='status' id='filetagimportstatus'>[% "PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_MANUAL_IMPORT_INPROGRESS" | string %]</span>
-	<span class='[% IF missingkeywords %]error[% ELSE %]status[% END %]'>[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_MANUAL_IMPORT_MISSINGKEYWORDS" | string %]</span>
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT" desc="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT_DESC" %]
+	<input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onclick="inprogress('filetagimportstatus');" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT_BUTTON" | string %]">
+	<span class='status' id='filetagimportstatus'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT_INPROGRESS" | string %]</span>
+	<span class='[% IF missingkeywords %]error[% ELSE %]status[% END %]'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_MANUAL_IMPORT_MISSINGKEYWORDS" | string %]</span>
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_AUTOSCAN" desc="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_AUTOSCAN_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_AUTOSCAN" desc="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_AUTOSCAN_DESC" %]
 	<input name="pref_autoscan" id="autoscan" type="checkbox" [% IF prefs.autoscan %] checked [% END %]>
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_DONTUNRATE" desc="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_DONTUNRATE_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_DONTUNRATE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_DONTUNRATE_DESC" %]
 	<input name="pref_tagimport_dontunrate" id="tagimport_dontunrate" type="checkbox" [% IF prefs.tagimport_dontunrate %] checked [% END %]>
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE" desc="PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_DESC" %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE_DESC" %]
 	<select name="pref_filetagtype" id="filetagtype">
 		[% FOREACH option = {
-			'0' => 'PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_BPM',
-			'1' => 'PLUGIN_RATINGSLIGHT_IMPORT_FILETAGS_FILETAGTYPE_COMMENT',
+			'0' => 'PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE_BPM',
+			'1' => 'PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE_COMMENT',
 		} %]
 			<option [% IF prefs.filetagtype == option.key %]selected='selected' [% END %]value="[% option.key %]">[% option.value | string %]</option>
 		[%- END -%]
@@ -96,14 +96,14 @@
 
 <div class="commentstagsection">
 	[% WRAPPER setting title="" desc="" %]
-		[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_EXAMPLE" | string %]
+		[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_EXAMPLE" | string %]
 	[% END %]
 
-	[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_RATING_KEYWORD" desc="PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_RATING_KEYWORD_DESC" %]
+	[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_RATING_KEYWORD" desc="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_RATING_KEYWORD_DESC" %]
 	<table style="margin-left:5px;" size="50">
 		<tr>
-			<th style="text-align:center;">[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_RATING_KEYWORD_PREFIX" | string %]</th>
-			<th style="text-align:center;padding-left:8px;">[% "PLUGIN_RATINGSLIGHT_IMPORT_COMMENTSTAGS_RATING_KEYWORD_SUFFIX" | string %]</th>
+			<th style="text-align:center;">[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_RATING_KEYWORD_PREFIX" | string %]</th>
+			<th style="text-align:center;padding-left:8px;">[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_RATING_KEYWORD_SUFFIX" | string %]</th>
 		</tr>
 		<tr>
 			<th style="height:4px;" colspan="2"></th>

@@ -1,0 +1,50 @@
+[% thisname = 'PLUGIN_RATINGSLIGHT_RATEALBUM' | string %]
+[% pagetitle = 'PLUGIN_RATINGSLIGHT_WEB_ALBUMRATE_INFOPREFIX' | string; pagetitle = pagetitle _ " (" _ albumname _ ") > " _ thisname %]
+[% pwd_list = [ pagetitle ] %]
+[% PROCESS pageheader.html %]
+<style>.wrapper{padding:5px;}.titlebold{font-weight:bold;}.inputbtn{padding:2px;}.filler{height:15px;}.warning{color:red;}</style>
+<br>
+<div class="wrapper">
+	<span class="titlebold">[% "PLUGIN_RATINGSLIGHT_RATEALBUM_HEADER" | string %] [% albumname %]</span>
+</div>
+<form action="[% webroot %]plugins/RatingsLight/html/ratealbumtracksoptions.html" name="rateAlbumTracksForm" method="post">
+	<div class="wrapper">
+		<table>
+			<tr>
+				<td>
+					<input type="checkbox" name="unratedonly" value="1" onclick="changeNumSelected(this)">&nbsp;&nbsp;[% "PLUGIN_RATINGSLIGHT_RATEALBUM_ONLYUNRATED" | string %]
+				</td>
+			</tr>
+			<tr class="filler">&nbsp;</tr>
+			<tr>
+				<td>
+					<select name="albumratingvalue">
+						[% FOREACH ratingval IN ratingvalues %]
+						<option value="[% ratingval %]">[% ratingstrings.$ratingval %]</option>
+						[% END %]
+					</select>
+				</td>
+			</tr>
+			<tr class="filler">&nbsp;</tr>
+			<input type="hidden" name="albumid" value="[% albumid %]">
+			<input type="hidden" name="albumname" value="[% albumname %]">
+			<tr>
+				<td>
+					<input class="inputbtn" type="submit" value="[% "PLUGIN_RATINGSLIGHT_RATEALBUM_BUTTON" | string %]">
+				</td>
+			</tr>
+		</table>
+	</div>
+</form>
+<br><br><br>
+<div class="wrapper warning">
+	[% IF failed %][% "PLUGIN_RATINGSLIGHT_RATEALBUM_FAILED" | string %][% END %]
+</div>
+
+[% IF albumrated %]
+<script type="text/javascript">
+		setTimeout(location.href = "[% webroot %]clixmlbrowser/clicmd=browselibrary+items&linktitle=BROWSE_BY_ALBUM&mode=albums/index.html?mode=albums&player=[% playerURI %]", 500);
+</script>
+[% END %]
+
+[% PROCESS pagefooter.html %]
