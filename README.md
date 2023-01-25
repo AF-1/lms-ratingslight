@@ -97,10 +97,13 @@ If you've always wanted the **Now Playing** screen of your piCorePlayer, SB Touc
 ## FAQ
 <details><summary>»<b>Does <i>Ratings Light</i> work with <i>online</i> tracks?</b>«</summary><br><p>It should work with online tracks that have been <b>added to your LMS library as part of an album</b>. LMS does not import single online tracks or tracks of online playlists as library tracks and therefore they cannot be processed by Ratings Light. That's a restriction imposed by LMS.</p></details><br>
 
-<details><summary>»<b>Is <i>album</i> rating supported?</b>«</summary><br><p>Short answer: no. <i>Album ratings</i> per se do not exist in LMS. So any displayed album rating would have to be calculated, i.e. the average track rating of all album tracks. Most people have only very few rated tracks in an album, and so you get 'meaningful' (average) album ratings like 0.23 or 0.35.<br>
-Setting ratings for an entire album basically tells LMS to set the rating of <b>all</b> album tracks to some value - because there is no album rating other than the calculated one. That would mean: all album tracks would be rated equally - and even the best albums have weak tracks.<br>
-So I'm not convinced that displaying and setting <i>album ratings</i> would be of any use at all. Therefore it's not supported.<br>
-Instead I recommend you mark complete albums that you like very much as <i>LMS favourites</i> or add them to some static playlist.</p></details><br>
+<details><summary>»<b>Is <i>album</i> rating supported?</b>«</summary><br><p><i>“Album ratings“</i> as such do not exist in LMS, only <b>track</b> ratings. You can <b>set</b> a rating for all or only the unrated tracks in an album using the <b>album context menu</b>.<br>RL does <b>not display</b> “album ratings“, i.e. the average track rating of all album tracks. Most albums would probably have a very low average track rating (displayed as zero stars) and you'd have to display the “album rating“ in the album context menu.</p></details><br>
+
+<details><summary>»<b>Where does Ratings Light store track ratings?</b>«</summary><br><p><i>Ratings Light</i> does not use its own database. It tells LMS to store the track ratings in the <b>LMS</b> <i>persistent</i> database which is not cleared on rescans. However, if you value your ratings very much, I'd recommend to enable <i>scheduled</i> backups in RL. Or at least create occasional <i>manual</i> backups.</p></details><br>
+
+<details><summary>»<b>How do I migrate ratings from <i>TrackStat</i> to <i>Ratings Light</i>?</b>«</summary><br><p>You don't have to. Since ratings are stored in an LMS database (see FAQ above), you just <b>un</b>install <i>TrackStat</i> and install <i>Ratings Light</i>. TrackStat had its own database table (with identical columns though) but <i>ratings</i> should be in sync.</p></details><br>
+
+<details><summary>»<b>Does <i>Ratings Light</i> auto-rate tracks when I play or skip them?</b>«</summary><br><p>If you want a parameter that reflects your <b>recent</b> listening habits/decisions and increases or decreases when you play or skip a track, I don't think track ratings are the best choice. So <i>Ratings Light</i> does not auto-rate tracks.<br>With the <b>dynamic played/skipped value</b> of the <a href="https://github.com/AF-1/lms-alternativeplaycount#faq"><b>Alternative Play Count</b></a> plugin, you have an alternative that serves exactly this purpose but does not mess with your tracking ratings.</p></details><br>
 
 <details><summary>»<b>How does <i>importing ratings from file tags</i> work?</b>«</summary><br><p><i>Ratings Light</i> does not scan files, it has no scanner module. LMS scans your music files and stores the data found in the file tags in the LMS database.<br>
 <i>Importing rating values from file tags</i> with RL therefore means that RL reads the file tag values stored in the LMS database, converts them to rating values and saves them to the LMS persistent database.<br>
@@ -110,10 +113,6 @@ RL expects integer rating values on a 10-step rating scale from 0 to 100 in the 
 If you want to use the <b>comments</b> tag, choose at least one short keyword to prefix the rating value. You can also choose a keyword suffix. RL supports importing integer rating values (no half-star ratings) on a scale from 1 to 5.<br>
 <b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx".<br>If a comments tag contains "favstars<b>4</b>xx", RL will save the track rating value for <b>4</b> stars.
 </p></details><br>
-
-<details><summary>»<b>Where does Ratings Light store track ratings?</b>«</summary><br><p><i>Ratings Light</i> does not use its own database. It tells LMS to store the track ratings in the <b>LMS</b> <i>persistent</i> database which is not cleared on rescans. However, if you value your ratings very much, I'd recommend to enable <i>scheduled</i> backups in RL. Or at least create occasional <i>manual</i> backups.</p></details><br>
-
-<details><summary>»<b>How do I migrate ratings from <i>TrackStat</i> to <i>Ratings Light</i>?</b>«</summary><br><p>You don't have to. Since ratings are stored in an LMS database (see FAQ above), you just <b>un</b>install <i>TrackStat</i> and install <i>Ratings Light</i>. TrackStat had its own database table (with identical columns though) but <i>ratings</i> should be in sync.</p></details><br>
 
 <details><summary>»<b>Can Ratings Light sync track ratings to <i>music streaming providers</i> or other <i>online services</i>?</b>«</summary><br><p>Short answer: no. Many music streaming providers and online services now use a binary scheme (e.g. called <i>like</i> or <i>heart</i>) to "rate" tracks, albums or artists. But even if some still supported a 5-star rating scale, I simply would not have the time to keep RL compatible with possible (API) changes of all those different services in the long run.<br>If you wanted to reduce star track ratings to binary likes or hearts and sync them to a specific online service, this should be done by the LMS plugin for this specific online services.</p></details><br>
 
@@ -137,5 +136,3 @@ The <b>recently rated playlist</b> keeps a record of all tracks with changed rat
 
 If you want to keep detailed track of your rating actions and don't need a playable list, I suggest you use the <b>log file</b>.</p></details><br>
 <br><br>
-
-I'd like to thank *mherger* for his invaluable support and *erland* for his plugins, a great source of inspiration.
