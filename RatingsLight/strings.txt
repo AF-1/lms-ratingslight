@@ -475,11 +475,11 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_STAR_TEXT
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_STAR_2605
 	EN	★ - blackstar (unicode 2605)
 
-PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGCONTEXTMENU_SETHALFSTARS
-	EN	Allow context menu half-star ratings
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS
+	EN	Use half-star ratings
 
-PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGCONTEXTMENU_SETHALFSTARS_DESC
-	EN	Show/hide half-star ratings in the <b>context rating menu</b>. This affects only the context rating menu where you rate tracks.<br>The <b>current track rating</b> in the track context menu will <i>always</i> show the <b>exact</b> track rating incl. half-stars, no matter what.
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS_DESC
+	EN	Use half-star ratings to rate your tracks.<br><br><b>Please note:</b> Even if you disable <b>setting</b> of half-star ratings, <i>Ratings Light</i> will still <b>display</b> the <b>exact</b> track rating incl. half-stars.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING
 	EN	Enable iPeng rating workaround

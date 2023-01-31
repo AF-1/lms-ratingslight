@@ -1,90 +1,200 @@
 <style>
 @charset "UTF-8";
-font-family: sans-serif;
-.rating {
-	display: none;
-	font-weight: bold;
-	color: #000000;
-	white-space: nowrap; }
-
-.rating .star {
+@font-face {
+	font-family: 'FontAwesome';
+	src: url('[% webroot %]plugins/RatingsLight/html/font/fontawesome-webfont.woff?v=4.7.0') format('woff');
+	font-weight: normal;
+	font-style: normal;
+}
+.fa {
 	display: inline-block;
-	position: relative;
-	letter-spacing: 0.05em; }
+	font: normal normal normal 11px/1 FontAwesome;
+	font-size: inherit;
+	text-rendering: auto;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+.fa-star:before {
+	content: "\f005";
+}
+.fa-star-o:before {
+	content: "\f006";
+}
+.fa-remove:before,
+.fa-close:before,
+.fa-times:before {
+	content: "\f00d";
+}
+.fa-star-half:before {
+	content: "\f089";
+}
+.fa-star-half-empty:before,
+.fa-star-half-full:before,
+.fa-star-half-o:before {
+	content: "\f123";
+}
 
-.rating .star::before {
-	display: inline-block;
-	color: #bfbfbf;
-	content: '\2606'; /* = '☆' */
-	width: 1em;
-	height: 1em; }
-
-.rating .star::after {
-	display: inline-block;
-	position: absolute;
-	content: '\2605'; /* = '★' */
-	top: 0;
-	left: 0;
-	opacity: 0;
-	width: 0;
-	height: 0;
-	overflow: hidden; }
-
-.rating:not([disabled]) .star:hover::after,
-.rating .star.active::after {
-	opacity: 1;
-	width: 1em;
-	height: 1.2em; }
-
-.rating .star.active.half::after {width: 0.5em; }
-
-.unrate_btn {
-	display: inline-block;
-	padding-bottom: 1px;
-	vertical-align: middle;
-	padding-left: 8px;
-	visibility:[% IF item.itemvalue>0 %]visible[% ELSE %]hidden[% END %]; }
-.unrate_btn:before {
-	font-size: 16px !important;
-	content: '\2612';
-	color: #000000;
-	width: 1em;
-	height: 1em; }
-
+/* Thanks to Andrea Crawford for her pen: https://codepen.io/andreacrawford/pen/NvqJXW */
+.ratingtitle {
+}
+.rating-group {
+	display: inline-flex;
+}
+.rating__icon {
+	pointer-events: none;
+}
+.rating__input {
+	position: absolute !important;
+	left: -9999px !important;
+}
+.rating__label {
+	cursor: pointer;
+	/* if you change the left/right padding, update the margin-right property of .rating__label--half as well. */
+	padding: 0 3px;
+	font-size: 11px;
+}
+@supports not (-moz-appearance:none) {
+	.rating__label {
+		align-self: center;
+		margin: 0 auto;
+	}
+}
+.rating__label--half {
+	padding-right: 0;
+	margin-right: -8px;
+	z-index: 2;
+}
+.rating__icon--star {
+	color: black;
+}
+.rating__icon--none {
+	color: black;
+}
+.rating__input:checked ~ .rating__label .rating__icon--star {
+	color: #ddd;
+}
+.rating-group:hover .rating__label .rating__icon--star,
+.rating-group:hover .rating__label--half .rating__icon--star {
+	color: black;
+}
+.rating__input:hover ~ .rating__label .rating__icon--star,
+.rating__input:hover ~ .rating__label--half .rating__icon--star {
+	color: #ddd;
+}
+.rating-group:hover .rating__input--none:not(:hover) + .rating__label .rating__icon--none {
+	color: black;
+}
+.rating__input--none:hover + .rating__label .rating__icon--none {
+	color: red;
+}
+.greystars {
+	color: #ddd !important;
+}
+.halfstarinvisible {
+	visibility: hidden;
+}
+#unratebtn {
+	visibility:[% IF item.itemvalue > 0 %]visible[% ELSE %]hidden[% END %];
+}
+#unratebtn .rating__label .rating__icon--none {
+	font-size: 11px !important;
+	margin-bottom: 1px !important;
+}
 </style>
-[% "PLUGIN_RATINGSLIGHT_RATING" | string %]
-	<span class="rating" data-default-rating="[% item.itemvalue5starexact %]"></span>
-	<span id="unrate_button" class="unrate_btn" onclick="r.setDefaultRating(0); clearlmsrating();" title="[% "PLUGIN_RATINGSLIGHT_UNRATEACTION" | string %]"></span>
-
-<script src="[% webroot %]plugins/RatingsLight/html/js/SimpleStarRating.js"></script>
+<div class="ratingwrapper">
+	<span class="ratingtitle">
+		[% "PLUGIN_RATINGSLIGHT_RATING" | string %]
+	</span>
+	<span id="rating-group" class="rating-group">
+		<input class="rating__input rating__input--none" name="trackrating" id="ratinghalfstars-0" value="0" type="radio"[% IF item.itemvalue == 0 %] checked[% END %]>
+		<label aria-label="0 stars" class="rating__label" for="ratinghalfstars-0">&nbsp;</label>
+		<label aria-label="0.5 stars"[% IF item.usehalfstars %] title="0.5 stars"[% END %] class="rating__label rating__label--half" for="ratinghalfstars-10"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+		<input class="rating__input" name="trackrating" id="ratinghalfstars-10" value="10" type="radio"[% IF item.itemvalue == 10 %] checked[% END %][% UNLESS item.usehalfstars %] disabled[% END %]>
+		<label aria-label="1 star" title="1 star" class="rating__label" for="ratinghalfstars-20"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+		<input class="rating__input" name="trackrating" id="ratinghalfstars-20" value="20" type="radio"[% IF item.itemvalue == 20 %] checked[% END %]>
+		<label aria-label="1.5 stars"[% IF item.usehalfstars %] title="1.5 stars"[% END %] class="rating__label rating__label--half" for="ratinghalfstars-30"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+		<input class="rating__input" name="trackrating" id="ratinghalfstars-30" value="30" type="radio"[% IF item.itemvalue == 30 %] checked[% END %][% UNLESS item.usehalfstars %] disabled[% END %]>
+		<label aria-label="2 stars" title="2 stars" class="rating__label" for="ratinghalfstars-40"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+		<input class="rating__input" name="trackrating" id="ratinghalfstars-40" value="40" type="radio"[% IF item.itemvalue == 40 %] checked[% END %]>
+		<label aria-label="2.5 stars"[% IF item.usehalfstars %] title="2.5 stars"[% END %] class="rating__label rating__label--half" for="ratinghalfstars-50"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+		<input class="rating__input" name="trackrating" id="ratinghalfstars-50" value="50" type="radio"[% IF item.itemvalue == 50 %] checked[% END %][% UNLESS item.usehalfstars %] disabled[% END %]>
+		<label aria-label="3 stars" title="3 stars" class="rating__label" for="ratinghalfstars-60"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+		<input class="rating__input" name="trackrating" id="ratinghalfstars-60" value="60" type="radio"[% IF item.itemvalue == 60 %] checked[% END %]>
+		<label aria-label="3.5 stars"[% IF item.usehalfstars %] title="3.5 stars"[% END %] class="rating__label rating__label--half" for="ratinghalfstars-70"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+		<input class="rating__input" name="trackrating" id="ratinghalfstars-70" value="70" type="radio"[% IF item.itemvalue == 70 %] checked[% END %][% UNLESS item.usehalfstars %] disabled[% END %]>
+		<label aria-label="4 stars" title="4 stars" class="rating__label" for="ratinghalfstars-80"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+		<input class="rating__input" name="trackrating" id="ratinghalfstars-80" value="80" type="radio"[% IF item.itemvalue == 80 %] checked[% END %]>
+		<label aria-label="4.5 stars"[% IF item.usehalfstars %] title="4.5 stars"[% END %] class="rating__label rating__label--half" for="ratinghalfstars-90"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+		<input class="rating__input" name="trackrating" id="ratinghalfstars-90" value="90" type="radio"[% IF item.itemvalue == 90 %] checked[% END %][% UNLESS item.usehalfstars %] disabled[% END %]>
+		<label aria-label="5 stars" title="5 stars" class="rating__label" for="ratinghalfstars-100"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+		<input class="rating__input" name="trackrating" id="ratinghalfstars-100" value="100" type="radio"[% IF item.itemvalue == 100 %] checked[% END %]>
+		&nbsp;
+	</span>
+	<span id="unratebtn">
+		<input class="rating__input rating__input--none" name="trackrating" id="ratinghalfstars-0x" value="0" type="radio">
+		<label aria-label="Unrate" title="Unrate" class="rating__label" for="ratinghalfstars-0x"><i class="rating__icon rating__icon--none fa fa-times"></i></label>
+	</span>
+</div>
 <script type="text/javascript">
-	var ratings = document.getElementsByClassName('rating');
-
+	let currentRating = [% item.itemvalue %];
+	var ratings = document.getElementsByName('trackrating');
 	for (var i = 0; i < ratings.length; i++) {
-		var r = new SimpleStarRating(ratings[i]);
+		ratings[i].addEventListener('click', function() {
+			ratings.forEach((trackrating) => {
+				if (trackrating.checked && trackrating.value != currentRating) {
+					//console.log('new rating '+trackrating.value+' != current rating '+currentRating);
+					if (trackrating.value == 0) {
+						ratings.forEach((trackrating) => {
+							trackrating.checked = false;
+						});
+						document.getElementById('ratinghalfstars-0').checked = 'true';
+						document.getElementById('unratebtn').style.visibility = 'hidden';
+					} else {
+						document.getElementById('unratebtn').style.visibility = 'visible';
+					}
+					currentRating = trackrating.value;
 
-		ratings[i].addEventListener('rate', function(e) {
-			lmsrating = (e.detail * 20);
-			document.getElementById('unrate_button').style.visibility = 'visible';
-			ajaxRequest('/jsonrpc.js', {
-				id: 1,
-				method: "slim.request",
-				params: [
-					playerid,
-					["ratingslight","setratingpercent",[% item.itemid %],lmsrating],
-				]
+					ajaxRequest('/jsonrpc.js', {
+						id: 1,
+						method: "slim.request",
+						params: [
+							playerid,
+							["ratingslight", "setratingpercent", [% item.itemid %], trackrating.value],
+						]
+					});
+				}
 			});
 		});
 	};
-	function clearlmsrating() {
-		document.getElementById('unrate_button').style.visibility = 'hidden';
-		ajaxRequest('/jsonrpc.js', {
-			id: 1,
-			method: "slim.request",
-			params: [
-				playerid,
-				["ratingslight","setratingpercent",[% item.itemid %],0],
-			]
+
+	let unrateBtn = document.getElementById('unratebtn');
+	unrateBtn.addEventListener('mouseover', function() {
+		var stars = document.querySelectorAll('.rating-group .rating__label .rating__icon--star, .rating-group .rating__label--half .rating__icon--star');
+		for (var i = 0; i < stars.length; i++) {
+			stars[i].classList.add("greystars");
+		}
+	});
+
+	unrateBtn.addEventListener('mouseout', function() {
+		var stars = document.querySelectorAll('.rating-group .rating__label .rating__icon--star, .rating-group .rating__label--half .rating__icon--star');
+		for (var i = 0; i < stars.length; i++) {
+			stars[i].classList.remove("greystars");
+		}
+	});
+
+[% UNLESS item.usehalfstars %]
+		let ratingGroup = document.getElementById('rating-group');
+		ratingGroup.addEventListener('mouseover', function() {
+			var halfstars = document.querySelectorAll('.fa-star-half');
+			for (var i = 0; i < halfstars.length; i++) {
+				halfstars[i].classList.add("halfstarinvisible");
+			}
 		});
-	};
+		ratingGroup.addEventListener('mouseout', function() {
+			var halfstars = document.querySelectorAll('.fa-star-half');
+			for (var i = 0; i < halfstars.length; i++) {
+				halfstars[i].classList.remove("halfstarinvisible");
+			}
+		});
+[% END %]
 </script>

@@ -191,8 +191,9 @@ sub initPrefs {
 		showratedtracksmenus => 0,
 		displayratingchar => 0,
 		recentlymaxcount => 30,
-		ratedtracksweblimit => 60,
-		ratedtrackscontextmenulimit => 60,
+		usehalfstarratings => 1,
+		ratedtracksweblimit => 80,
+		ratedtrackscontextmenulimit => 80,
 		dstm_minTrackDuration => 90,
 		dstm_percentagerated => 30,
 		dstm_percentagetoprated => 30,
@@ -263,7 +264,7 @@ sub initPrefs {
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 100}, 'backupfilesmin');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 2, 'high' => 200}, 'recentlymaxcount');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 200}, 'ratedtracksweblimit');
-	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 100}, 'ratedtrackscontextmenulimit');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 200}, 'ratedtrackscontextmenulimit');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 0, 'high' => 1800}, 'dstm_minTrackDuration');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 0, 'high' => 100}, 'dstm_percentagerated');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 0, 'high' => 100}, 'dstm_percentagetoprated');
@@ -509,7 +510,7 @@ sub rateAlbumContextMenu {
 sub rateAlbumTracks_web {
 	my ($client, $params, $callback, $httpClient, $response) = @_;
 
-	my $ratingcontextmenusethalfstars = $prefs->get('ratingcontextmenusethalfstars');
+	my $usehalfstarratings = $prefs->get('usehalfstarratings');
 	my $albumID = $params->{albumid};
 	my $albumName = $params->{albumname};
 	$log->debug('albumID = '.$albumID.' ## albumName = '.Dumper($albumName));
@@ -518,7 +519,7 @@ sub rateAlbumTracks_web {
 	$params->{albumname} = $albumName;
 
 	my @ratingValues = ();
-	if (defined $ratingcontextmenusethalfstars) {
+	if (defined $usehalfstarratings) {
 		@ratingValues = qw(100 90 80 70 60 50 40 30 20 10 0);
 	} else {
 		@ratingValues = qw(100 80 60 40 20 0);
@@ -654,7 +655,7 @@ sub rateAlbum {
 sub trackInfoHandlerRating {
 	my ($client, $url, $track, $remoteMeta, $tags) = @_;
 	my $rating100ScaleValue = 0;
-	my $ratingcontextmenusethalfstars = $prefs->get('ratingcontextmenusethalfstars');
+	my $usehalfstarratings = $prefs->get('usehalfstarratings');
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING');
 	$tags ||= {};
 
@@ -706,7 +707,7 @@ sub trackInfoHandlerRating {
 			type => 'text',
 			name => $text,
 			itemvalue => $rating100ScaleValue,
-			itemvalue5starexact => $rating100ScaleValue/20,
+			usehalfstars => $usehalfstarratings,
 			itemid => $track->id,
 			web => {
 				'type' => 'htmltemplate',
@@ -716,7 +717,7 @@ sub trackInfoHandlerRating {
 
 		delete $item->{type};
 		my @ratingValues = ();
-		if (defined $ratingcontextmenusethalfstars) {
+		if ($usehalfstarratings) {
 			@ratingValues = qw(100 90 80 70 60 50 40 30 20 10 0);
 		} else {
 			@ratingValues = qw(100 80 60 40 20 0);
@@ -739,7 +740,7 @@ sub trackInfoHandlerRating {
 sub getRatingMenu {
 	my $request = shift;
 	my $client = $request->client();
-	my $ratingcontextmenusethalfstars = $prefs->get('ratingcontextmenusethalfstars');
+	my $usehalfstarratings = $prefs->get('usehalfstarratings');
 
 	if (!$request->isQuery([['ratingslight'],['ratingmenu']])) {
 		$log->warn('incorrect command');
@@ -760,7 +761,7 @@ sub getRatingMenu {
 	my $cnt = 0;
 
 	my @ratingValues = ();
-	if (defined $ratingcontextmenusethalfstars) {
+	if (defined $usehalfstarratings) {
 		@ratingValues = qw(100 90 80 70 60 50 40 30 20 10 0);
 	} else {
 		@ratingValues = qw(100 80 60 40 20 0);
