@@ -191,7 +191,6 @@ sub initPrefs {
 		showratedtracksmenus => 0,
 		displayratingchar => 0,
 		recentlymaxcount => 30,
-		usehalfstarratings => 1,
 		ratedtracksweblimit => 80,
 		ratedtrackscontextmenulimit => 80,
 		dstm_minTrackDuration => 90,
