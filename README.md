@@ -73,9 +73,9 @@ It usually takes a few hours for a *new* release to be listed on the LMS plugin 
 <br><br><br><br>
 
 
-## Reporting a bug
+## Reporting a new issue
 
-If you think that you've found a bug, open an [**issue here on GitHub**](https://github.com/AF-1/lms-ratingslight/issues) and fill out the ***Bug report* issue template**. Please post bug reports on **GitHub only**.
+If you want to report a new issue, please fill out this [**issue report template**](https://github.com/AF-1/lms-ratingslight/issues/new?template=bug_report.md&title=%5BISSUE%5D+).
 <br><br><br><br>
 
 
