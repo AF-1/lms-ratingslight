@@ -57,7 +57,7 @@ A plugin[^1] that takes care of rating tracks in your [Logitech Media Server](ht
 
 **Some features are not enabled by default.** Please go to the plugin's settings page to enable them.
 
-[^1]: If you want localized strings in your language, read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.
+[^1]: If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.
 [^2]: Browse menus are provided by LMS. Under certain circumstances you may see (empty) albums or artists in some menus that shouldn't be there. There's nothing I can do about it because LMS creates and provides these menus.<br>Just go down one level: click to *show all tracks* or *show all albums*.<br>In case this LMS issue ever gets resolved I'll update this page.
 
 <br><br><br><br>
@@ -67,7 +67,7 @@ A plugin[^1] that takes care of rating tracks in your [Logitech Media Server](ht
 
 You should be able to install *Ratings Light* from *LMS* > *Settings* > *Plugins*.
 
-If you want to test a new patch that hasn't made it into a release version yet or you need to install a previous version, you'll have to [install the plugin manually](https://github.com/AF-1/sobras/wiki/Manual-installation-of-LMS-plugins).
+If you want to test a new patch that hasn't made it into a release version yet, you'll have to [install the plugin manually](https://github.com/AF-1/sobras/wiki/Manual-installation-of-LMS-plugins).
 
 It usually takes a few hours for a *new* release to be listed on the LMS plugin page.
 <br><br><br><br>
