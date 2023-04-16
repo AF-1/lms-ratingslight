@@ -121,8 +121,7 @@ sub createBackup {
 		}
 		print $output "<!-- This backup contains ".$trackcount.($trackcount == 1 ? " rated track" : " rated tracks")." -->\n";
 		close $output;
-		my $ended = time() - $started;
-		$log->debug('Backup completed after '.$ended.' seconds.');
+		$log->debug('Backup completed after '.(time() - $started).' seconds.');
 
 		cleanupBackups();
 	} else {
@@ -246,9 +245,7 @@ sub importRatingsFromCommentsTags {
 		}
 	}
 
-	my $ended = time() - $started;
-
-	$log->debug('Import completed after '.$ended.' seconds.');
+	$log->debug('Import completed after '.(time() - $started).' seconds.');
 	$prefs->set('status_importingfromcommentstags', 0);
 }
 
@@ -321,9 +318,7 @@ sub importRatingsFromBPMTags {
 		$sth->finish();
 	}
 
-	my $ended = time() - $started;
-
-	$log->debug('Import completed after '.$ended.' seconds.');
+	$log->debug('Import completed after '.(time() - $started).' seconds.');
 	$prefs->set('status_importingfromBPMtags', 0);
 }
 
