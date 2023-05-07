@@ -1225,7 +1225,12 @@ sub objectInfoHandler {
 	if ($objectType eq 'trackAlbum') {
 		$objectType = 'album';
 		$trackID = $objectID;
-		$objectID = $obj->album->id;
+		if ($obj->album) {
+			$objectID = $obj->album->id;
+		} else {
+			$log->debug('Track has no album. Cannot retrieve album id.');
+			return;
+		}
 		$objectName = $obj->album->name;
 		$curTrackRating = getRatingFromDB($obj);
 		$vfd = 1;
@@ -1234,7 +1239,12 @@ sub objectInfoHandler {
 	if ($objectType eq 'trackArtist') {
 		$objectType = 'artist';
 		$trackID = $objectID;
-		$objectID = $obj->artist->id;
+		if ($obj->artist) {
+			$objectID = $obj->artist->id;
+		} else {
+			$log->debug('Track has no artist. Cannot retrieve artist id.');
+			return;
+		}
 		$objectName = $obj->artist->name;
 		$curTrackRating = getRatingFromDB($obj);
 		$vfd = 1;
