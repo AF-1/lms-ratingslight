@@ -116,6 +116,12 @@ If you want to use the <b>comments</b> tag, choose at least one short keyword to
 <b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx".<br>If a comments tag contains "favstars<b>4</b>xx", RL will save the track rating value for <b>4</b> stars.
 </p></details><br>
 
+<details><summary>»<b>When I create a backup, RL <i>does not write a backup file</i>.</b>«<br>&nbsp;&nbsp;&nbsp;&nbsp;»<b>When I <i>export rated tracks to playlist files</i>, RL does not write any playlist files.</b>«</summary><br><p>
+The <i>RatingsLight</i> folder is where RL stores its backup files and playlist files. On every LMS (re)start, RL checks if there's a folder called <i>RatingsLight</i> in the parent folder. The default <b>parent</b> folder is the <i>LMS playlist folder</i> but you can change that in RL's preferences. If it doesn't find the folder <i>RatingsLight</i> inside the specified parent folder, it will try to create it.<br><br>
+The most likely cause is that RL can't create the folder because LMS doesn't have read/write permissions for the parent folder (or the <i>RatingsLight</i> folder). You'll probably find matching error messages in the server log.<br><br>
+So please make sure that <b>LMS has read/write permissions (755) for the <i>parent</i> folder - and the <i>RatingsLight</i> folder</b> (if it exists but cannot be accessed).
+</p></details><br>
+
 <details><summary>»<b>Can Ratings Light sync track ratings to <i>music streaming providers</i> or other <i>online services</i>?</b>«</summary><br><p>Short answer: no. Many music streaming providers and online services now use a binary scheme (e.g. called <i>like</i> or <i>heart</i>) to "rate" tracks, albums or artists. But even if some still supported a 5-star rating scale, I simply would not have the time to keep RL compatible with possible (API) changes of all those different services in the long run.<br>If you wanted to reduce star track ratings to binary likes or hearts and sync them to a specific online service, this should be done by the LMS plugin for this specific online services.</p></details><br>
 
 <details><summary>»<b>Can I use CLI commands to set ratings?</b>«</summary><br><p>

@@ -211,7 +211,7 @@ sub initPrefs {
 			mkdir($rlFolderPath, 0755) unless (-d $rlFolderPath);
 			chdir($rlFolderPath);
 		} or do {
-			$log->error("Could not create or access RatingsLight folder in parent folder '$_[1]'!");
+			$log->error("Could not create or access RatingsLight folder in parent folder '$_[1]'! Please make sure that LMS has read/write permissions (755) for the parent folder.");
 			return;
 		};
 		$prefs->set('rlfolderpath', $rlFolderPath);
@@ -1546,7 +1546,7 @@ sub exportRatingsToPlaylistFiles {
 
 			my $filename = catfile($exportDir, $PLfilename);
 			my $output = FileHandle->new($filename, '>:utf8') or do {
-				$log->error('Could not open '.$filename.' for writing.');
+				$log->error('Could not open '.$filename.' for writing. Does the RatingsLight folder exist? Does LMS have read/write permissions (755) for the (parent) folder?');
 				$prefs->set('status_exportingtoplaylistfiles', 0);
 				return;
 			};
@@ -2528,7 +2528,7 @@ sub logRatedTrack {
 	# write log info to file
 	my $filename = catfile($logDir, $logFileName);
 	my $output = FileHandle->new($filename, '>>:utf8') or do {
-		$log->error('Could not open '.$filename.' for writing.');
+		$log->error('Could not open '.$filename.' for writing. Does the RatingsLight folder exist? Does LMS have read/write permissions (755) for the (parent) folder?');
 		return;
 	};
 	print $output $ratingtimestamp."\n";
@@ -2894,7 +2894,7 @@ sub createRLfolder {
 		mkdir($rlFolderPath, 0755) unless (-d $rlFolderPath);
 		chdir($rlFolderPath);
 	} or do {
-		$log->error("Could not create or access RatingsLight folder in parent folder '$rlParentFolderPath'!");
+		$log->error("Could not create or access RatingsLight folder in parent folder '$rlParentFolderPath'! Please make sure that LMS has read/write permissions (755) for the parent folder.");
 		return;
 	};
 	$prefs->set('rlfolderpath', $rlFolderPath);
