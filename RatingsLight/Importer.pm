@@ -34,10 +34,10 @@ my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
 sub initPlugin {
-	$log->debug('importer module init');
+	main::DEBUGLOG && $log->is_debug && $log->debug('importer module init');
 	my $preScanBackup = $prefs->get('prescanbackup');
 	if ($preScanBackup) {
-		$log->debug('creating pre-scan backup before scan process starts');
+		main::DEBUGLOG && $log->is_debug && $log->debug('creating pre-scan backup before scan process starts');
 		createBackup();
 	}
 	toggleUseImporter();
@@ -46,20 +46,20 @@ sub initPlugin {
 sub toggleUseImporter {
 	my $enableautoscan = $prefs->get('autoscan');
 	if (defined $enableautoscan) {
-		$log->debug('enabling importer');
+		main::DEBUGLOG && $log->is_debug && $log->debug('enabling importer');
 		Slim::Music::Import->addImporter('Plugins::RatingsLight::Importer', {
 			'type' => 'post',
 			'weight' => 199,
 			'use' => 1,
 		});
 	} else {
-		$log->debug('disabling importer');
+		main::DEBUGLOG && $log->is_debug && $log->debug('disabling importer');
 		Slim::Music::Import->useImporter('Plugins::RatingsLight::Importer',0);
 	}
 }
 
 sub startScan {
-	$log->debug('starting importer');
+	main::DEBUGLOG && $log->is_debug && $log->debug('starting importer');
 	my $filetagtype = $prefs->get('filetagtype');
 	if ($filetagtype == 1) {
 		importRatingsFromCommentsTags();

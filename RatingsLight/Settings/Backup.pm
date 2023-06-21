@@ -88,7 +88,7 @@ sub handler {
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
 		my $selectedfile = $paramRef->{'pref_restorefile'};
-		$log->debug("restorefile = ".$selectedfile);
+		main::DEBUGLOG && $log->is_debug && $log->debug("restorefile = ".$selectedfile);
 		if ((!defined ($paramRef->{'pref_restorefile'})) || ($paramRef->{'pref_restorefile'} eq '')) {
 			$paramRef->{'restoremissingfile'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);

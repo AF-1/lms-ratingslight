@@ -24,7 +24,6 @@ use strict;
 use warnings;
 use utf8;
 
-use Data::Dumper;
 use Slim::Utils::Log;
 use Slim::Utils::Prefs;
 use Slim::Schema;
@@ -67,18 +66,18 @@ sub init {
 sub dontStopTheMusic {
 	my ($mixtype, $client, $cb) = @_;
 	return unless $client;
-	$log->debug('DSTM mixtype = '.$mixtype);
+	main::DEBUGLOG && $log->is_debug && $log->debug('DSTM mixtype = '.$mixtype);
 
 	my $topratedminrating = $prefs->get('topratedminrating');
 	my $tracks = [];
 	my $dstm_batchsizenewtracks = $prefs->get('dstm_batchsizenewtracks');
 	my $excludedgenrelist = getExcludedGenreList();
-	$log->debug('excludedgenrelist = '.$excludedgenrelist);
+	main::DEBUGLOG && $log->is_debug && $log->debug('excludedgenrelist = '.$excludedgenrelist);
 	my $dstm_minTrackDuration = $prefs->get('dstm_minTrackDuration');
 	my $dstm_percentagerated = $prefs->get('dstm_percentagerated');
 	my $dstm_percentagetoprated = $prefs->get('dstm_percentagetoprated');
 	my $currentLibrary = Slim::Music::VirtualLibraries->getLibraryIdForClient($client);
-	$log->debug('current client VlibID = '.$currentLibrary);
+	main::DEBUGLOG && $log->is_debug && $log->debug('current client VlibID = '.$currentLibrary);
 
 	my $sqlstatement;
 
@@ -353,7 +352,7 @@ drop table randomweightedratingscombined;";
 		};
 	}
 	my $tracksfound = scalar @{$tracks} || 0;
-	$log->debug('RL DSTM - tracks found/used: '.$tracksfound);
+	main::DEBUGLOG && $log->is_debug && $log->debug('RL DSTM - tracks found/used: '.$tracksfound);
 	# Prune previously played playlist tracks
 	my $songIndex = Slim::Player::Source::streamingSongIndex($client);
 	my $dstm_playedtrackstokeep = $prefs->get('dstm_playedtrackstokeep');
@@ -388,7 +387,7 @@ sub getSeedGenres {
 			foreach my $thisID (@seedIDs) {
 				my $track = Slim::Schema->resultset('Track')->find($thisID);
 				my $thisgenreid = $track->genre->id;
-				$log->debug('seed genrename = '.$track->genre->name.' -- genre ID: '.$thisgenreid);
+				main::DEBUGLOG && $log->is_debug && $log->debug('seed genrename = '.$track->genre->name.' -- genre ID: '.$thisgenreid);
 				push @{$genrelist},$thisgenreid;
 			}
 			my @filteredgenrelist = sort (uniq(@{$genrelist}));

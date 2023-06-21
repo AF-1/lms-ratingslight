@@ -31,7 +31,6 @@ use Slim::Utils::Prefs;
 use Slim::Utils::Misc;
 use Slim::Utils::Strings;
 use Slim::Utils::Strings qw(string cstring);
-use Data::Dumper;
 
 my $prefs = preferences('plugin.ratingslight');
 my $log = logger('plugin.ratingslight');
@@ -133,13 +132,13 @@ sub beforeRender {
 	my $libraries = Slim::Music::VirtualLibraries->getLibraries();
 
 	my %hiddenVLs = map {$_ => 1} ("Ratings Light - Rated Tracks", "Ratings Light - Top Rated Tracks");
-	$log->debug("hidden libraries: ".Dumper(\%hiddenVLs));
+	main::DEBUGLOG && $log->is_debug && $log->debug("hidden libraries: ".Data::Dump::dump(\%hiddenVLs));
 
 	while (my ($k, $v) = each %{$libraries}) {
 		my $count = Slim::Music::VirtualLibraries->getTrackCount($k);
 		my $name = Slim::Music::VirtualLibraries->getNameForId($k);
 		my $displayName = Slim::Utils::Unicode::utf8decode($name, 'utf8').' ('.Slim::Utils::Misc::delimitThousands($count).($count == 1 ? ' '.string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACK") : ' '.string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACKS")).')';
-		$log->debug("VL: ".$displayName);
+		main::DEBUGLOG && $log->is_debug && $log->debug("VL: ".$displayName);
 
 		unless ($hiddenVLs{$name}) {
 			push @items, {

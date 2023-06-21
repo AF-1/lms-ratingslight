@@ -24,7 +24,6 @@ use strict;
 use warnings;
 use utf8;
 
-use Data::Dumper;
 use Slim::Utils::Log;
 use Slim::Schema;
 use Slim::Utils::DateTime;
@@ -38,7 +37,6 @@ use File::stat;
 use FindBin qw($Bin);
 use POSIX qw(strftime);
 use Time::HiRes qw(time);
-use URI::Escape qw(uri_escape_utf8 uri_unescape);
 use Path::Class;
 
 use base 'Exporter';
@@ -92,7 +90,7 @@ sub createBackup {
 		};
 		my $trackcount = scalar(@ratedTracks);
 		my $ignoredtracks = 0;
-		$log->debug('Found '.$trackcount.($trackcount == 1 ? ' rated track' : ' rated tracks').' in the LMS persistent database');
+		main::DEBUGLOG && $log->is_debug && $log->debug('Found '.$trackcount.($trackcount == 1 ? ' rated track' : ' rated tracks').' in the LMS persistent database');
 
 		print $output "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
 		print $output "<!-- Backup of Rating Values -->\n";
@@ -110,8 +108,8 @@ sub createBackup {
 			my $rating100ScaleValue = $ratedTrack->{'rating'};
 			my $remote = $ratedTrack->{'remote'};
 			my $BACKUPrelFilePath = getRelFilePath($BACKUPtrackURL);
-			$BACKUPtrackURL = uri_escape_utf8($BACKUPtrackURL);
-			$BACKUPrelFilePath = uri_escape_utf8($BACKUPrelFilePath);
+			$BACKUPtrackURL = escape($BACKUPtrackURL);
+			$BACKUPrelFilePath = escape($BACKUPrelFilePath);
 			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<urlmd5>".$urlmd5."</urlmd5>\n\t\t<relurl>".$BACKUPrelFilePath."</relurl>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<remote>".$remote."</remote>\n\t</track>\n";
 		}
 		print $output "</RatingsLight>\n";
@@ -121,11 +119,11 @@ sub createBackup {
 		}
 		print $output "<!-- This backup contains ".$trackcount.($trackcount == 1 ? " rated track" : " rated tracks")." -->\n";
 		close $output;
-		$log->debug('Backup completed after '.(time() - $started).' seconds.');
+		main::DEBUGLOG && $log->is_debug && $log->debug('Backup completed after '.(time() - $started).' seconds.');
 
 		cleanupBackups();
 	} else {
-		$log->info('Found no rated tracks in the LMS database.');
+		main::INFOLOG && $log->is_info && $log->info('Found no rated tracks in the LMS database.');
 	}
 	$prefs->set('status_creatingbackup', 0);
 }
@@ -142,7 +140,7 @@ sub cleanupBackups {
 		opendir(my $DH, $backupDir) or die "Error opening $backupDir: $!";
 		@files = grep(/^RL_Backup_.*$/, readdir($DH));
 		closedir($DH);
-		$log->debug('number of backup files found: '.scalar(@files));
+		main::DEBUGLOG && $log->is_debug && $log->debug('number of backup files found: '.scalar(@files));
 		my $mtime;
 		my $etime = int(time());
 		my $n = 0;
@@ -157,14 +155,14 @@ sub cleanupBackups {
 				}
 			}
 		} else {
-			$log->debug('Not deleting any backups. Number of backup files to keep ('.$backupFilesMin.') '.((scalar(@files) - $n) == $backupFilesMin ? '=' : '>').' backup files found ('.scalar(@files).').');
+			main::DEBUGLOG && $log->is_debug && $log->debug('Not deleting any backups. Number of backup files to keep ('.$backupFilesMin.') '.((scalar(@files) - $n) == $backupFilesMin ? '=' : '>').' backup files found ('.scalar(@files).').');
 		}
-		$log->debug('Deleted '.$n.($n == 1 ? ' backup. ' : ' backups. ').(scalar(@files) - $n).((scalar(@files) - $n) == 1 ? " backup" : " backups")." remaining.");
+		main::DEBUGLOG && $log->is_debug && $log->debug('Deleted '.$n.($n == 1 ? ' backup. ' : ' backups. ').(scalar(@files) - $n).((scalar(@files) - $n) == 1 ? " backup" : " backups")." remaining.");
 	}
 }
 
 sub importRatingsFromCommentsTags {
-	$log->debug('starting ratings import from comments tags');
+	main::DEBUGLOG && $log->is_debug && $log->debug('starting ratings import from comments tags');
 	my $class = shift;
 	if ($prefs->get('status_importingfromcommentstags') == 1) {
 		$log->warn('Import is already in progress, please wait for the previous import to finish');
@@ -245,12 +243,12 @@ sub importRatingsFromCommentsTags {
 		}
 	}
 
-	$log->debug('Import completed after '.(time() - $started).' seconds.');
+	main::DEBUGLOG && $log->is_debug && $log->debug('Import completed after '.(time() - $started).' seconds.');
 	$prefs->set('status_importingfromcommentstags', 0);
 }
 
 sub importRatingsFromBPMTags {
-	$log->debug('starting ratings import from BPM tags');
+	main::DEBUGLOG && $log->is_debug && $log->debug('starting ratings import from BPM tags');
 	my $class = shift;
 	if ($prefs->get('status_importingfromBPMtags') == 1) {
 		$log->warn('Import is already in progress, please wait for the previous import to finish');
@@ -318,16 +316,16 @@ sub importRatingsFromBPMTags {
 		$sth->finish();
 	}
 
-	$log->debug('Import completed after '.(time() - $started).' seconds.');
+	main::DEBUGLOG && $log->is_debug && $log->debug('Import completed after '.(time() - $started).' seconds.');
 	$prefs->set('status_importingfromBPMtags', 0);
 }
 
 sub getRelFilePath {
-	$log->debug('Getting relative file url/path.');
+	main::DEBUGLOG && $log->is_debug && $log->debug('Getting relative file url/path.');
 	my $fullTrackURL = shift;
 	my $relFilePath;
 	my $lmsmusicdirs = getMusicDirs();
-	$log->debug('Valid LMS music dirs = '.Dumper($lmsmusicdirs));
+	main::DEBUGLOG && $log->is_debug && $log->debug('Valid LMS music dirs = '.Data::Dump::dump($lmsmusicdirs));
 
 	foreach (@{$lmsmusicdirs}) {
 		my $dirSep = File::Spec->canonpath("/");
@@ -335,17 +333,17 @@ sub getRelFilePath {
 		my $fullTrackPath = Slim::Utils::Misc::pathFromFileURL($fullTrackURL);
 		my $match = checkInFolder($fullTrackPath, $mediaDirPath);
 
-		$log->debug("Full file path \"$fullTrackPath\" is".($match == 1 ? "" : " NOT")." part of media dir \"".$mediaDirPath."\"");
+		main::DEBUGLOG && $log->is_debug && $log->debug("Full file path \"$fullTrackPath\" is".($match == 1 ? "" : " NOT")." part of media dir \"".$mediaDirPath."\"");
 		if ($match == 1) {
 			$relFilePath = file($fullTrackPath)->relative($_);
 			$relFilePath = Slim::Utils::Misc::fileURLFromPath($relFilePath);
 			$relFilePath =~ s/^(file:)?\/+//isg;
-			$log->debug('Saving RELATIVE file path: '.$relFilePath);
+			main::DEBUGLOG && $log->is_debug && $log->debug('Saving RELATIVE file path: '.$relFilePath);
 			last;
 		}
 	}
 	if (!$relFilePath) {
-		$log->debug("Couldn't get relative file path for \"$fullTrackURL\".");
+		main::DEBUGLOG && $log->is_debug && $log->debug("Couldn't get relative file path for \"$fullTrackURL\".");
 	}
 	return $relFilePath;
 }
@@ -356,7 +354,7 @@ sub checkInFolder {
 
 	$path = Slim::Utils::Misc::fixPath($path) || return 0;
 	$path = Slim::Utils::Misc::pathFromFileURL($path) || return 0;
-	$log->debug('path = '.$path.' -- checkdir = '.$checkdir);
+	main::DEBUGLOG && $log->is_debug && $log->debug('path = '.$path.' -- checkdir = '.$checkdir);
 
 	if ($checkdir && $path =~ /^\Q$checkdir\E/) {
 		return 1;
@@ -422,5 +420,7 @@ sub rollback {
 		$dbh->rollback();
 	}
 }
+
+*escape = \&URI::Escape::uri_escape_utf8;
 
 1;

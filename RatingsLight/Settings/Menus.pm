@@ -31,7 +31,6 @@ use Slim::Utils::Prefs;
 use Slim::Utils::Misc;
 use Slim::Utils::Strings;
 use Slim::Utils::Strings qw(string cstring);
-use Data::Dumper;
 
 my $prefs = preferences('plugin.ratingslight');
 my $log = logger('plugin.ratingslight');
@@ -81,10 +80,10 @@ sub beforeRender {
 
 	my @items;
 	my $libraries = Slim::Music::VirtualLibraries->getLibraries();
-	$log->debug("Menu Settings - ALL libraries: ".Dumper($libraries));
+	main::DEBUGLOG && $log->is_debug && $log->debug("Menu Settings - ALL libraries: ".Data::Dump::dump($libraries));
 
 	my $currentLibrary = $prefs->get('browsemenus_sourceVL_id');
-	$log->debug("current browsemenus_sourceVL_id = ".Dumper($currentLibrary));
+	main::DEBUGLOG && $log->is_debug && $log->debug("current browsemenus_sourceVL_id = ".Data::Dump::dump($currentLibrary));
 
 	while (my ($k, $v) = each %{$libraries}) {
 		my $count = Slim::Music::VirtualLibraries->getTrackCount($k);
@@ -92,7 +91,7 @@ sub beforeRender {
 		my $displayName = Slim::Utils::Unicode::utf8decode($name, 'utf8').' ('.Slim::Utils::Misc::delimitThousands($count).($count == 1 ? ' '.string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACK") : ' '.string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACKS")).')';
 
 		my $VLID = $libraries->{$k}->{'id'};
-		$log->debug("VL: ".$displayName." - VLID:".$VLID);
+		main::DEBUGLOG && $log->is_debug && $log->debug("VL: ".$displayName." - VLID:".$VLID);
 		unless (starts_with($VLID, "RATINGSLIGHT_") == 0) {
 			push @items, {
 				name => $displayName,
@@ -107,7 +106,7 @@ sub beforeRender {
 		sortName => "Complete Library",
 		library_id => undef,
 	};
-	$log->debug("libraries for settings page: ".Dumper(\@items));
+	main::DEBUGLOG && $log->is_debug && $log->debug("libraries for settings page: ".Data::Dump::dump(\@items));
 	$paramRef->{virtuallibraries} = \@items;
 }
 

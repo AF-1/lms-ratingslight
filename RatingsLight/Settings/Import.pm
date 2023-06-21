@@ -31,7 +31,6 @@ use Slim::Utils::Log;
 use Slim::Utils::Prefs;
 use Slim::Utils::Misc;
 use Slim::Utils::Strings;
-use Data::Dumper;
 
 my $prefs = preferences('plugin.ratingslight');
 my $log = logger('plugin.ratingslight');
@@ -84,8 +83,8 @@ sub handler {
 		}
 		my $filetagtype = $prefs->get('filetagtype');
 		if ($filetagtype == 1) {
-			$log->debug("rating keyword prefix = ".$paramRef->{'pref_rating_keyword_prefix'});
-			$log->debug("rating keyword suffix = ".$paramRef->{'pref_rating_keyword_suffix'});
+			main::DEBUGLOG && $log->is_debug && $log->debug("rating keyword prefix = ".$paramRef->{'pref_rating_keyword_prefix'});
+			main::DEBUGLOG && $log->is_debug && $log->debug("rating keyword suffix = ".$paramRef->{'pref_rating_keyword_suffix'});
 			if (((!defined ($paramRef->{'pref_rating_keyword_prefix'})) || ($paramRef->{'pref_rating_keyword_prefix'} eq '')) && ((!defined ($paramRef->{'pref_rating_keyword_suffix'})) || ($paramRef->{'pref_rating_keyword_suffix'} eq ''))) {
 				$paramRef->{'missingkeywords'} = 1;
 				$result = $class->SUPER::handler($client, $paramRef);
@@ -124,7 +123,7 @@ sub beforeRender {
 
 	if ($playlistcount > 0) {
 		my @sortedarray = sort {$a->{id} <=> $b->{id}} @localPlaylists;
-		$log->debug("sorted playlists = ".Dumper(\@sortedarray));
+		main::DEBUGLOG && $log->is_debug && $log->debug("sorted playlists = ".Data::Dump::dump(\@sortedarray));
 		$paramRef->{playlistcount} = $playlistcount;
 		$paramRef->{allplaylists} = \@sortedarray;
 	}
