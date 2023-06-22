@@ -207,9 +207,8 @@ sub initPrefs {
 		my $rlFolderPath = catdir($_[1], 'RatingsLight');
 		eval {
 			mkdir($rlFolderPath, 0755) unless (-d $rlFolderPath);
-			chdir($rlFolderPath);
 		} or do {
-			$log->error("Could not create or access RatingsLight folder in parent folder '$_[1]'! Please make sure that LMS has read/write permissions (755) for the parent folder.");
+			$log->error("Could not create RatingsLight folder in parent folder '$_[1]'! Please make sure that LMS has read/write permissions (755) for the parent folder.");
 			return;
 		};
 		$prefs->set('rlfolderpath', $rlFolderPath);
