@@ -467,7 +467,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER
 	EN	Rating character
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_DESC
-	EN	Choose the displayed rating character for menus and titelformats.<br><br><b>*** IMPORTANT, please read ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> and other players running jivelite <b>do not support displaying the unicode blackstar character out of the box</b>.<br>This character is not part of their <i>default</i> font. If you want to display this character on these devices you'll have to <b>replace the default font</b> on these devices with a font that contains this character.<br><br>More information, instructions, and fonts here: <b>https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font</b>
+	EN	Choose the displayed rating character for menus and titelformats.<br><br><b>*** IMPORTANT, please read ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> and other players running jivelite <b>do not support displaying the unicode blackstar character out of the box</b>.<br>This character is not part of their <i>default</i> font. If you want to display this character on these devices you'll have to <b>replace the default font</b> on these devices with a font that contains this character.<br><br><a href="https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font" target="_blank" rel="noopener noreferrer">Click here for more information, instructions and fonts.</a>
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_STAR_TEXT
 	EN	* - common text star

@@ -83,10 +83,10 @@ sub initPlugin {
 	Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
 
 	addTitleFormat('RL_RATING_STARS');
-	Slim::Music::TitleFormatter::addFormat('RL_RATING_STARS',\&getTitleFormat_Rating);
+	Slim::Music::TitleFormatter::addFormat('RL_RATING_STARS',\&getTitleFormat_Rating, 1);
 
 	addTitleFormat('RL_RATING_STARS_APPENDED');
-	Slim::Music::TitleFormatter::addFormat('RL_RATING_STARS_APPENDED',\&getTitleFormat_Rating_AppendedStars);
+	Slim::Music::TitleFormatter::addFormat('RL_RATING_STARS_APPENDED',\&getTitleFormat_Rating_AppendedStars, 1);
 
 	if (main::WEBUI) {
 		require Plugins::RatingsLight::Settings::Basic;
@@ -2858,9 +2858,9 @@ sub addTitleFormat {
 }
 
 sub refreshTitleFormats {
-	main::DEBUGLOG && $log->is_debug && $log->debug('Refreshing title formats');
 	for my $client (Slim::Player::Client::clients()) {
 		next unless $client && $client->controller();
+		main::DEBUGLOG && $log->is_debug && $log->debug("Refreshing title formats on client '".$client->name."'");		
 		$client->currentPlaylistUpdateTime(Time::HiRes::time());
 	}
 }
