@@ -78,7 +78,7 @@ sub initPlugin {
 	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'], [0, 0, 0, undef]);
 	Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'], [0, 1, 0, undef]);
 
-	Slim::Control::Request::subscribe(sub { setRefreshTimer(1) },[['rescan'],['done']]);
+	Slim::Control::Request::subscribe(\&setRefreshTimer, [['rescan'],['done']]);
 
 	Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
 
@@ -271,7 +271,7 @@ sub initPrefs {
 	$prefs->setValidate('file', 'restorefile');
 
 	$prefs->setChange(\&Plugins::RatingsLight::Importer::toggleUseImporter, 'autoscan');
-	$prefs->setChange(\&initVirtualLibraries, 'browsemenus_sourceVL_id', 'showratedtracksmenus');
+	$prefs->setChange(\&initVLibsTimer, 'browsemenus_sourceVL_id', 'showratedtracksmenus', 'usehalfstarratings');
 	$prefs->setChange(\&initIR, 'enableIRremotebuttons');
 	$prefs->setChange(sub {
 			Slim::Music::Info::clearFormatDisplayCache();
@@ -813,6 +813,213 @@ sub getRatingMenu {
 }
 
 
+### common subs
+
+sub objectInfoHandler {
+	my ($objectType, $client, $url, $obj, $remoteMeta, $tags) = @_;
+	$tags ||= {};
+	main::DEBUGLOG && $log->is_debug && $log->debug('objectType = '.$objectType.' ## url = '.Data::Dump::dump($url));
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn('Warning: not available until library scan is completed');
+		return;
+	}
+
+	my $trackID = 0;
+	my $vfd = 0;
+	my $objectID = $obj->id unless ($objectType eq 'year' || $objectType eq 'decade');
+	my $objectName;
+	if ($objectType eq 'year' || $objectType eq 'decade') {
+		$objectName = "".$obj;
+	} else {
+		$objectName = $obj->name;
+	}
+	my $curTrackRating = 0;
+
+	if (($objectType eq 'trackAlbum') || ($objectType eq 'trackArtist')) {
+		# check if remote track is part of online library
+		if ((Slim::Music::Info::isRemoteURL($url) == 1) && (!defined($obj->extid))) {
+			main::DEBUGLOG && $log->is_debug && $log->debug('Track is remote but not part of LMS library. Track URL: '.$url);
+			return;
+		}
+
+		# check for dead/moved local tracks
+		if ((Slim::Music::Info::isRemoteURL($url) != 1) && (!defined($obj->filesize))) {
+			main::DEBUGLOG && $log->is_debug && $log->debug('Track dead or moved??? Track URL: '.$url);
+			return;
+		}
+	}
+	my $menuItemTitlePrefixString;
+
+	if ($objectType eq 'trackAlbum') {
+		$objectType = 'album';
+		$trackID = $objectID;
+		if ($obj->album) {
+			$objectID = $obj->album->id;
+		} else {
+			main::DEBUGLOG && $log->is_debug && $log->debug('Track has no album. Cannot retrieve album id.');
+			return;
+		}
+		$objectName = $obj->album->name;
+		$curTrackRating = getRatingFromDB($obj);
+		$vfd = 1;
+	}
+
+	if ($objectType eq 'trackArtist') {
+		$objectType = 'artist';
+		$trackID = $objectID;
+		if ($obj->artist) {
+			$objectID = $obj->artist->id;
+		} else {
+			main::DEBUGLOG && $log->is_debug && $log->debug('Track has no artist. Cannot retrieve artist id.');
+			return;
+		}
+		$objectName = $obj->artist->name;
+		$curTrackRating = getRatingFromDB($obj);
+		$vfd = 1;
+	}
+	$objectName = trimStringLength($objectName, 70);
+
+	if ($objectType eq 'album') {
+		$menuItemTitlePrefixString = $curTrackRating > 0 ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM');
+	}
+	if ($objectType eq 'artist') {
+		$objectName = trimStringLength($objectName, 50);
+		$menuItemTitlePrefixString = $curTrackRating > 0 ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST');
+	}
+	if ($objectType eq 'genre') {
+		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINGENRE');
+	}
+	if ($objectType eq 'year') {
+		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMYEAR');
+		$objectID = $obj;
+	}
+	if ($objectType eq 'decade') {
+		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMDECADE');
+		$objectID = floor($obj/10) * 10 + 0;
+		$objectName = $objectID.'s';
+	}
+	if ($objectType eq 'playlist') {
+		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINPLAYLIST');
+	}
+
+	my $menuItemTitle = $menuItemTitlePrefixString.' '.$objectName;
+	my $trackCount = getRatedTracks(1, $client, $objectType, $objectID, $trackID, undef);
+
+	if ($trackCount > 0) {
+		if ($tags->{menuMode}) {
+			return {
+				type => 'redirect',
+				name => $menuItemTitle,
+				jive => {
+					actions => {
+						go => {
+							player => 0,
+							cmd => ['ratingslight', 'ratedtracksmenu', $trackID, $objectID, $objectType],
+						},
+					}
+				},
+				favorites => 0,
+			};
+		} else {
+			my $item = {
+				type => 'text',
+				name => $menuItemTitlePrefixString.' '.$objectName,
+				prefix => $menuItemTitlePrefixString,
+				objectname => $objectName,
+				objecttype => $objectType,
+				objectid => $objectID,
+				trackid => $trackID,
+				titlemore => ($curTrackRating > 0 ? 'more' : undef),
+				web => {
+					'type' => 'htmltemplate',
+					'value' => 'plugins/RatingsLight/html/showratedtracks.html'
+				},
+			};
+
+			if ($vfd == 1) {
+				delete $item->{type};
+				my @items = ();
+				my $ratedsongs = VFD_ratedtracks($client, $objectType, $objectID, $trackID);
+				$item->{items} = \@{$ratedsongs};
+			}
+			return $item;
+		}
+	} else {
+		return;
+	}
+}
+
+sub getRatedTracks {
+	my ($countOnly, $client, $objectType, $objectID, $currentTrackID, $listlimit) = @_;
+	main::DEBUGLOG && $log->is_debug && $log->debug('objectType = '.$objectType.' ## countOnly = '.$countOnly.' ## trackID = '.$currentTrackID.' ## thisID = '.$objectID);
+
+	my %validObjectTypes = map {$_ => 1} ('artist', 'album', 'genre', 'year', 'decade', 'playlist');
+
+	unless ($validObjectTypes{$objectType}) {
+		$log->warn('No valid objectType');
+		return 0;
+	}
+
+	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
+	my $currentLibrary = Slim::Music::VirtualLibraries->getLibraryIdForClient($client);
+	my $sqlstatement = ($countOnly == 1 ? "select count(*)" : "select tracks.id")." from tracks";
+
+	if ((defined $currentLibrary) && ($currentLibrary ne '')) {
+		$sqlstatement .= " join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\"";
+	}
+
+	$sqlstatement .= " join genre_track on genre_track.track = tracks.id and genre_track.genre = $objectID" if ($objectType eq 'genre');
+
+	$sqlstatement .= " join playlist_track on playlist_track.track = tracks.url and playlist_track.playlist = $objectID" if ($objectType eq 'playlist');
+
+	$sqlstatement .= " join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.audio = 1 and tracks.id != $currentTrackID";
+
+	$sqlstatement .= " and tracks.primary_artist = $objectID" if ($objectType eq 'artist');
+
+	$sqlstatement .= " and tracks.album = $objectID" if ($objectType eq 'album');
+
+	$sqlstatement .= " and tracks.year >= $objectID and tracks.year < ($objectID + 10)" if ($objectType eq 'decade');
+
+	$sqlstatement .= " and tracks.year = $objectID" if ($objectType eq 'year');
+
+	if ($countOnly == 0) {
+		$sqlstatement .= " limit $listlimit" if ($objectType eq 'artist' || $objectType eq 'album' || $objectType eq 'playlist');
+
+		$sqlstatement .= " order by random() limit $listlimit" if ($objectType eq 'genre' || $objectType eq 'year' || $objectType eq 'decade');
+	}
+
+	my @ratedtracks = ();
+	my $trackCount = 0;
+	my $dbh = getCurrentDBH();
+	eval{
+		my $sth = $dbh->prepare($sqlstatement);
+		$sth->execute() or do {$sqlstatement = undef;};
+
+		if ($countOnly == 1) {
+			$trackCount = $sth->fetchrow;
+		} else {
+			my ($trackID, $track);
+			$sth->bind_col(1,\$trackID);
+
+			while ($sth->fetch()) {
+				$track = Slim::Schema->resultset('Track')->single({'id' => $trackID});
+				push @ratedtracks, $track;
+			}
+		}
+		$sth->finish();
+	};
+	if ($@) {main::DEBUGLOG && $log->is_debug && $log->debug("error: $@");}
+
+	if ($countOnly == 1) {
+		main::DEBUGLOG && $log->is_debug && $log->debug('Pre-check found '.$trackCount.($trackCount == 1 ? ' rated track' : ' rated tracks')." for $objectType with ID: $objectID");
+		return $trackCount;
+	} else {
+		main::DEBUGLOG && $log->is_debug && $log->debug('Fetched '.scalar (@ratedtracks).(scalar (@ratedtracks) == 1 ? ' rated track' : ' rated tracks')." for $objectType with ID: $objectID");
+		return \@ratedtracks;
+	}
+}
+
+
 ### show rated tracks menus - WEB
 
 sub handleRatedWebTrackList {
@@ -1182,213 +1389,6 @@ sub VFD_execActions {
 }
 
 
-## common subs
-
-sub objectInfoHandler {
-	my ($objectType, $client, $url, $obj, $remoteMeta, $tags) = @_;
-	$tags ||= {};
-	main::DEBUGLOG && $log->is_debug && $log->debug('objectType = '.$objectType.' ## url = '.Data::Dump::dump($url));
-	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: not available until library scan is completed');
-		return;
-	}
-
-	my $trackID = 0;
-	my $vfd = 0;
-	my $objectID = $obj->id unless ($objectType eq 'year' || $objectType eq 'decade');
-	my $objectName;
-	if ($objectType eq 'year' || $objectType eq 'decade') {
-		$objectName = "".$obj;
-	} else {
-		$objectName = $obj->name;
-	}
-	my $curTrackRating = 0;
-
-	if (($objectType eq 'trackAlbum') || ($objectType eq 'trackArtist')) {
-		# check if remote track is part of online library
-		if ((Slim::Music::Info::isRemoteURL($url) == 1) && (!defined($obj->extid))) {
-			main::DEBUGLOG && $log->is_debug && $log->debug('Track is remote but not part of LMS library. Track URL: '.$url);
-			return;
-		}
-
-		# check for dead/moved local tracks
-		if ((Slim::Music::Info::isRemoteURL($url) != 1) && (!defined($obj->filesize))) {
-			main::DEBUGLOG && $log->is_debug && $log->debug('Track dead or moved??? Track URL: '.$url);
-			return;
-		}
-	}
-	my $menuItemTitlePrefixString;
-
-	if ($objectType eq 'trackAlbum') {
-		$objectType = 'album';
-		$trackID = $objectID;
-		if ($obj->album) {
-			$objectID = $obj->album->id;
-		} else {
-			main::DEBUGLOG && $log->is_debug && $log->debug('Track has no album. Cannot retrieve album id.');
-			return;
-		}
-		$objectName = $obj->album->name;
-		$curTrackRating = getRatingFromDB($obj);
-		$vfd = 1;
-	}
-
-	if ($objectType eq 'trackArtist') {
-		$objectType = 'artist';
-		$trackID = $objectID;
-		if ($obj->artist) {
-			$objectID = $obj->artist->id;
-		} else {
-			main::DEBUGLOG && $log->is_debug && $log->debug('Track has no artist. Cannot retrieve artist id.');
-			return;
-		}
-		$objectName = $obj->artist->name;
-		$curTrackRating = getRatingFromDB($obj);
-		$vfd = 1;
-	}
-	$objectName = trimStringLength($objectName, 70);
-
-	if ($objectType eq 'album') {
-		$menuItemTitlePrefixString = $curTrackRating > 0 ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM');
-	}
-	if ($objectType eq 'artist') {
-		$objectName = trimStringLength($objectName, 50);
-		$menuItemTitlePrefixString = $curTrackRating > 0 ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST');
-	}
-	if ($objectType eq 'genre') {
-		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINGENRE');
-	}
-	if ($objectType eq 'year') {
-		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMYEAR');
-		$objectID = $obj;
-	}
-	if ($objectType eq 'decade') {
-		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMDECADE');
-		$objectID = floor($obj/10) * 10 + 0;
-		$objectName = $objectID.'s';
-	}
-	if ($objectType eq 'playlist') {
-		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINPLAYLIST');
-	}
-
-	my $menuItemTitle = $menuItemTitlePrefixString.' '.$objectName;
-	my $trackCount = getRatedTracks(1, $client, $objectType, $objectID, $trackID, undef);
-
-	if ($trackCount > 0) {
-		if ($tags->{menuMode}) {
-			return {
-				type => 'redirect',
-				name => $menuItemTitle,
-				jive => {
-					actions => {
-						go => {
-							player => 0,
-							cmd => ['ratingslight', 'ratedtracksmenu', $trackID, $objectID, $objectType],
-						},
-					}
-				},
-				favorites => 0,
-			};
-		} else {
-			my $item = {
-				type => 'text',
-				name => $menuItemTitlePrefixString.' '.$objectName,
-				prefix => $menuItemTitlePrefixString,
-				objectname => $objectName,
-				objecttype => $objectType,
-				objectid => $objectID,
-				trackid => $trackID,
-				titlemore => ($curTrackRating > 0 ? 'more' : undef),
-				web => {
-					'type' => 'htmltemplate',
-					'value' => 'plugins/RatingsLight/html/showratedtracks.html'
-				},
-			};
-
-			if ($vfd == 1) {
-				delete $item->{type};
-				my @items = ();
-				my $ratedsongs = VFD_ratedtracks($client, $objectType, $objectID, $trackID);
-				$item->{items} = \@{$ratedsongs};
-			}
-			return $item;
-		}
-	} else {
-		return;
-	}
-}
-
-sub getRatedTracks {
-	my ($countOnly, $client, $objectType, $objectID, $currentTrackID, $listlimit) = @_;
-	main::DEBUGLOG && $log->is_debug && $log->debug('objectType = '.$objectType.' ## countOnly = '.$countOnly.' ## trackID = '.$currentTrackID.' ## thisID = '.$objectID);
-
-	my %validObjectTypes = map {$_ => 1} ('artist', 'album', 'genre', 'year', 'decade', 'playlist');
-
-	unless ($validObjectTypes{$objectType}) {
-		$log->warn('No valid objectType');
-		return 0;
-	}
-
-	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
-	my $currentLibrary = Slim::Music::VirtualLibraries->getLibraryIdForClient($client);
-	my $sqlstatement = ($countOnly == 1 ? "select count(*)" : "select tracks.id")." from tracks";
-
-	if ((defined $currentLibrary) && ($currentLibrary ne '')) {
-		$sqlstatement .= " join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\"";
-	}
-
-	$sqlstatement .= " join genre_track on genre_track.track = tracks.id and genre_track.genre = $objectID" if ($objectType eq 'genre');
-
-	$sqlstatement .= " join playlist_track on playlist_track.track = tracks.url and playlist_track.playlist = $objectID" if ($objectType eq 'playlist');
-
-	$sqlstatement .= " join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.audio = 1 and tracks.id != $currentTrackID";
-
-	$sqlstatement .= " and tracks.primary_artist = $objectID" if ($objectType eq 'artist');
-
-	$sqlstatement .= " and tracks.album = $objectID" if ($objectType eq 'album');
-
-	$sqlstatement .= " and tracks.year >= $objectID and tracks.year < ($objectID + 10)" if ($objectType eq 'decade');
-
-	$sqlstatement .= " and tracks.year = $objectID" if ($objectType eq 'year');
-
-	if ($countOnly == 0) {
-		$sqlstatement .= " limit $listlimit" if ($objectType eq 'artist' || $objectType eq 'album' || $objectType eq 'playlist');
-
-		$sqlstatement .= " order by random() limit $listlimit" if ($objectType eq 'genre' || $objectType eq 'year' || $objectType eq 'decade');
-	}
-
-	my @ratedtracks = ();
-	my $trackCount = 0;
-	my $dbh = getCurrentDBH();
-	eval{
-		my $sth = $dbh->prepare($sqlstatement);
-		$sth->execute() or do {$sqlstatement = undef;};
-
-		if ($countOnly == 1) {
-			$trackCount = $sth->fetchrow;
-		} else {
-			my ($trackID, $track);
-			$sth->bind_col(1,\$trackID);
-
-			while ($sth->fetch()) {
-				$track = Slim::Schema->resultset('Track')->single({'id' => $trackID});
-				push @ratedtracks, $track;
-			}
-		}
-		$sth->finish();
-	};
-	if ($@) {main::DEBUGLOG && $log->is_debug && $log->debug("error: $@");}
-
-	if ($countOnly == 1) {
-		main::DEBUGLOG && $log->is_debug && $log->debug('Pre-check found '.$trackCount.($trackCount == 1 ? ' rated track' : ' rated tracks')." for $objectType with ID: $objectID");
-		return $trackCount;
-	} else {
-		main::DEBUGLOG && $log->is_debug && $log->debug('Fetched '.scalar (@ratedtracks).(scalar (@ratedtracks) == 1 ? ' rated track' : ' rated tracks')." for $objectType with ID: $objectID");
-		return \@ratedtracks;
-	}
-}
-
-
 ## import, export
 
 sub importRatingsFromPlaylist {
@@ -1681,21 +1681,19 @@ sub initExportBaseFilePathMatrix {
 }
 
 sub setRefreshTimer {
-	my $isPostScan = shift;
 	main::DEBUGLOG && $log->is_debug && $log->debug('Killing existing timers for post-scan refresh to prevent multiple calls');
 	Slim::Utils::Timers::killOneTimer(undef, \&delayedPostScanRefresh);
 	main::DEBUGLOG && $log->is_debug && $log->debug('Scheduling a delayed post-scan refresh');
-	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + $prefs->get('postscanscheduledelay'), \&delayedPostScanRefresh, $isPostScan);
+	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + $prefs->get('postscanscheduledelay'), \&delayedPostScanRefresh);
 }
 
 sub delayedPostScanRefresh {
-	my $isPostScan = shift;
 	if (Slim::Music::Import->stillScanning) {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Scan in progress. Waiting for current scan to finish.');
-		setRefreshTimer($isPostScan);
+		setRefreshTimer();
 	} else {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Starting post-scan refresh');
-		refreshAll($isPostScan);
+		refreshAll();
 	}
 }
 
@@ -1949,7 +1947,7 @@ sub handleEndElement {
 sub initVirtualLibraries {
 	Slim::Music::VirtualLibraries->unregisterLibrary('RATINGSLIGHT_RATED');
 	Slim::Music::VirtualLibraries->unregisterLibrary('RATINGSLIGHT_TOPRATED');
-	for my $i (1..5) {
+	for (my $i = 10; $i <= 100; $i+=10) {
 		Slim::Music::VirtualLibraries->unregisterLibrary('RATINGSLIGHT_EXACTRATING'.$i);
 	}
 	Slim::Menu::BrowseLibrary->deregisterNode('RatingsLightRatedTracksMenuFolder');
@@ -1957,95 +1955,52 @@ sub initVirtualLibraries {
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 	if ($showratedtracksmenus > 0) {
 		my $started = time();
-		my $browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
-		main::DEBUGLOG && $log->is_debug && $log->debug('browsemenus_sourceVL_id = '.Data::Dump::dump($browsemenus_sourceVL_id));
 		my $topratedminrating = $prefs->get('topratedminrating');
 
-		my $libraries = Slim::Music::VirtualLibraries->getLibraries();
-		# check if source virtual library still exists, otherwise use complete library
-		if ((defined $browsemenus_sourceVL_id) && ($browsemenus_sourceVL_id ne '')) {
-			my $VLstillexists = 0;
-			foreach my $thisVLid (keys %{$libraries}) {
-				if ($thisVLid eq $browsemenus_sourceVL_id) {
-					$VLstillexists = 1;
-					main::DEBUGLOG && $log->is_debug && $log->debug('VL $browsemenus_sourceVL_id exists!');
-				}
-			}
-			if ($VLstillexists == 0) {
-				$prefs->set('browsemenus_sourceVL_id', undef);
-				$browsemenus_sourceVL_id = undef;
-			}
-		}
+		# check if there's a valid virtual library filter, otherwise use complete library
+		my $browsemenus_sourceVL_name = validateBrowsemenusSourceVL();
+		my $browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
 
-		$browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
-		my $browsemenus_sourceVL_name = '';
-		if ((defined $browsemenus_sourceVL_id) && ($browsemenus_sourceVL_id ne '')) {
-			$browsemenus_sourceVL_name = Slim::Music::VirtualLibraries->getNameForId($browsemenus_sourceVL_id);
-			$browsemenus_sourceVL_name = ' ('.string('PLUGIN_RATINGSLIGHT_LIBVIEW').': '.$browsemenus_sourceVL_name.')';
-		}
 		my @libraries = ();
 		if ($showratedtracksmenus < 3) {
-			if ((!defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
-				push @libraries,{
-					id => 'RATINGSLIGHT_RATED',
-					name => string('PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS'),
-					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 group by tracks.id},
-				};
-			} else {
-				push @libraries,{
-					id => 'RATINGSLIGHT_RATED',
-					name => string('PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS').$browsemenus_sourceVL_name,
-					sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id},
-				};
-			}
+			push @libraries,{
+				id => 'RATINGSLIGHT_RATED',
+				name => string('PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS').((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
+				sql => ((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 group by tracks.id} : qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}),
+				quickcount => ((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? qq{select count(tracks.id) from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 group by tracks.id} : qq{select count(tracks.id) from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id})
+			};
 
 			if ($showratedtracksmenus == 2) {
-				if ((!defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
-					push @libraries,{
-						id => 'RATINGSLIGHT_TOPRATED',
-						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS'),
-						sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating group by tracks.id}
-					};
-				} else {
-					push @libraries,{
-						id => 'RATINGSLIGHT_TOPRATED',
-						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS').$browsemenus_sourceVL_name,
-						sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}
-					};
-				}
+				push @libraries,{
+					id => 'RATINGSLIGHT_TOPRATED',
+					name => string('PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS').((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
+					sql => ((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating group by tracks.id} : qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}),
+					quickcount => ((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? qq{select count(tracks.id) from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating group by tracks.id} : qq{select count(tracks.id) from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $topratedminrating join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}),
+				};
 			}
 		}
-		# create VLs for exact rating values. Round half-stars: 60 includes >= 50 and < 70
+
+		# create VLs for exact rating values
 		if ($showratedtracksmenus == 3) {
-			for my $i (1..5) {
-				my $ratingTresholdLow = $i * 20 - 10;
-				my $ratingTresholdHigh = $i * 20 + 10;
-				if ((!defined $browsemenus_sourceVL_id) || ($browsemenus_sourceVL_id eq '')) {
-					push @libraries,{
+			my $usehalfstarratings = $prefs->get('usehalfstarratings');
+			for (my $i = 10; $i <= 100; $i += 10) {
+				next if (!$usehalfstarratings && $i % 20);
+				my $ratingMin = $i - ($usehalfstarratings ? 5 : 10);
+				my $ratingMax = $i + ($usehalfstarratings ? 5 : 10);
+				push @libraries,{
 						id => 'RATINGSLIGHT_EXACTRATING'.$i,
-						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.$i.' '.($i > 1 ? string('PLUGIN_RATINGSLIGHT_STARS') : string('PLUGIN_RATINGSLIGHT_STAR')),
-						sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingTresholdLow and tracks_persistent.rating < $ratingTresholdHigh group by tracks.id}
-					};
-				} else {
-					push @libraries,{
-						id => 'RATINGSLIGHT_EXACTRATING'.$i,
-						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.$i.' '.($i > 1 ? string('PLUGIN_RATINGSLIGHT_STARS') : string('PLUGIN_RATINGSLIGHT_STAR')).$browsemenus_sourceVL_name,
-						sql => qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingTresholdLow and tracks_persistent.rating < $ratingTresholdHigh join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}
-					};
-				}
+						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
+						sql => ((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingMin and tracks_persistent.rating < $ratingMax group by tracks.id} : qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingMin and tracks_persistent.rating < $ratingMax join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}),
+						quickcount => ((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? qq{select count(tracks.id) from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingMin and tracks_persistent.rating < $ratingMax group by tracks.id} : qq{select count(tracks.id) from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingMin and tracks_persistent.rating < $ratingMax join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id})
+				};
 			}
 		}
+
 		foreach my $library (@libraries) {
 			Slim::Music::VirtualLibraries->unregisterLibrary($library->{id});
-			Slim::Music::VirtualLibraries->registerLibrary($library);
-			Slim::Music::VirtualLibraries->rebuild($library->{id});
-
-			# unregister empty VLs
-			my $trackCount = Slim::Music::VirtualLibraries->getTrackCount($library->{id}) || 0;
-			main::DEBUGLOG && $log->is_debug && $log->debug("Track count for library '".$library->{name}."' = ".$trackCount);
-			if ($trackCount == 0) {
-				Slim::Music::VirtualLibraries->unregisterLibrary($library->{id});
-				main::DEBUGLOG && $log->is_debug && $log->debug("Unregistering vlib '".$library->{name}."' because it has 0 tracks.");
+			unless (quickCountSQL($library->{quickcount}) == 0) {
+				Slim::Music::VirtualLibraries->registerLibrary($library);
+				Slim::Music::VirtualLibraries->rebuild($library->{id});
 			}
 		}
 
@@ -2054,15 +2009,44 @@ sub initVirtualLibraries {
 	}
 }
 
-sub initVLmenus {
-	my $started = time();
-	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+sub validateBrowsemenusSourceVL {
 	my $browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
+	main::DEBUGLOG && $log->is_debug && $log->debug('browsemenus_sourceVL_id = '.Data::Dump::dump($browsemenus_sourceVL_id));
+
+	my $libraries = Slim::Music::VirtualLibraries->getLibraries();
+	# check if source virtual library still exists, otherwise use complete library
+	if ((defined $browsemenus_sourceVL_id) && ($browsemenus_sourceVL_id ne '')) {
+		my $VLstillexists = 0;
+		foreach my $thisVLid (keys %{$libraries}) {
+			if ($thisVLid eq $browsemenus_sourceVL_id) {
+				$VLstillexists = 1;
+				main::DEBUGLOG && $log->is_debug && $log->debug('VL $browsemenus_sourceVL_id exists!');
+			}
+		}
+		if ($VLstillexists == 0) {
+			$prefs->set('browsemenus_sourceVL_id', undef);
+			$browsemenus_sourceVL_id = undef;
+		}
+	}
 	my $browsemenus_sourceVL_name = '';
 	if ((defined $browsemenus_sourceVL_id) && ($browsemenus_sourceVL_id ne '')) {
 		$browsemenus_sourceVL_name = Slim::Music::VirtualLibraries->getNameForId($browsemenus_sourceVL_id);
 		$browsemenus_sourceVL_name = ' ('.string('PLUGIN_RATINGSLIGHT_LIBVIEW').': '.$browsemenus_sourceVL_name.')';
 	}
+	return $browsemenus_sourceVL_name;
+}
+
+sub initVLibsTimer {
+	main::DEBUGLOG && $log->is_debug && $log->debug('Killing existing timers to prevent multiple calls');
+	Slim::Utils::Timers::killTimers(undef, \&initVirtualLibraries);
+	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + 0.5, \&initVirtualLibraries);
+}
+
+sub initVLmenus {
+	my $started = time();
+	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
+	my $browsemenus_sourceVL_name = validateBrowsemenusSourceVL();
+	my $browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
 
 	Slim::Menu::BrowseLibrary->deregisterNode('RatingsLightRatedTracksMenuFolder');
 	Slim::Menu::BrowseLibrary->registerNode({
@@ -2105,7 +2089,7 @@ sub initVLmenus {
 						jiveIcon => 'html/images/genres.png',
 						id => 'RL_RATED_BROWSEMENU_GENRES',
 						condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-						weight => 213,
+						weight => 210,
 						cache => 1,
 						passthrough => [{
 							library_id => $pt->{'library_id'},
@@ -2126,7 +2110,7 @@ sub initVLmenus {
 						jiveIcon => 'html/images/playlists.png',
 						id => 'RL_RATED_BROWSEMENU_TRACKS',
 						condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-						weight => 220,
+						weight => 211,
 						cache => 1,
 						url => \&Slim::Menu::BrowseLibrary::_tracks,
 						passthrough => [{
@@ -2151,7 +2135,7 @@ sub initVLmenus {
 							jiveIcon => 'html/images/artists.png',
 							id => 'RL_TOPRATED_BROWSEMENU_ARTISTS',
 							condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-							weight => 210,
+							weight => 212,
 							cache => 1,
 							passthrough => [{
 								library_id => $pt->{'library_id'},
@@ -2170,7 +2154,7 @@ sub initVLmenus {
 							jiveIcon => 'html/images/genres.png',
 							id => 'RL_TOPRATED_BROWSEMENU_GENRES',
 							condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-							weight => 212,
+							weight => 213,
 							cache => 1,
 							passthrough => [{
 								library_id => $pt->{'library_id'},
@@ -2191,7 +2175,7 @@ sub initVLmenus {
 							jiveIcon => 'html/images/playlists.png',
 							id => 'RL_TOPRATED_BROWSEMENU_TRACKS',
 							condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-							weight => 220,
+							weight => 214,
 							cache => 1,
 							url => \&Slim::Menu::BrowseLibrary::_tracks,
 							passthrough => [{
@@ -2205,18 +2189,37 @@ sub initVLmenus {
 				}
 			}
 			if ($showratedtracksmenus == 3) {
-				for my $i (1..5) {
+				for (my $i = 10; $i <= 100; $i += 10) {
 					my $library_id_exactratingID = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_EXACTRATING'.$i);
 					if ($library_id_exactratingID) {
-						# Artists with tracks rated $i
+						# Artists with tracks rated $i/20
 						$pt = {library_id => $library_id_exactratingID};
 						push @items,{
 							type => 'link',
-							name => $i.' '.($i > 1 ? string('PLUGIN_RATINGSLIGHT_STARS') : string('PLUGIN_RATINGSLIGHT_STAR')).' '.string('PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_SUFFIX').$browsemenus_sourceVL_name,
+							name => ($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).' '.string('PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_SUFFIX').$browsemenus_sourceVL_name,
 							url => \&Slim::Menu::BrowseLibrary::_artists,
 							icon => 'html/images/artists.png',
 							jiveIcon => 'html/images/artists.png',
 							id => 'RL_EXACTRATING_BROWSEMENU_ARTISTS'.$i,
+							condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
+							weight => 210 + $i,
+							cache => 1,
+							passthrough => [{
+								library_id => $pt->{'library_id'},
+								searchTags => [
+									'library_id:'.$pt->{'library_id'}
+								],
+							}],
+						};
+
+						# Genres with tracks rated $i/20
+						push @items,{
+							type => 'link',
+							name => ($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).' '.string('PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_SUFFIX').$browsemenus_sourceVL_name,
+							url => \&Slim::Menu::BrowseLibrary::_genres,
+							icon => 'html/images/genres.png',
+							jiveIcon => 'html/images/genres.png',
+							id => 'RL_EXACTRATING_BROWSEMENU_GENRES'.$i,
 							condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
 							weight => 211 + $i,
 							cache => 1,
@@ -2228,37 +2231,18 @@ sub initVLmenus {
 							}],
 						};
 
-						# Genres with tracks rated $i
-						push @items,{
-							type => 'link',
-							name => $i.' '.($i > 1 ? string('PLUGIN_RATINGSLIGHT_STARS') : string('PLUGIN_RATINGSLIGHT_STAR')).' '.string('PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_SUFFIX').$browsemenus_sourceVL_name,
-							url => \&Slim::Menu::BrowseLibrary::_genres,
-							icon => 'html/images/genres.png',
-							jiveIcon => 'html/images/genres.png',
-							id => 'RL_EXACTRATING_BROWSEMENU_GENRES'.$i,
-							condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-							weight => 212 + $i,
-							cache => 1,
-							passthrough => [{
-								library_id => $pt->{'library_id'},
-								searchTags => [
-									'library_id:'.$pt->{'library_id'}
-								],
-							}],
-						};
-
-						# Tracks rated $i
+						# Tracks rated $i/20
 						$pt = {library_id => $library_id_exactratingID,
 								sort => 'track',
 								menuStyle => 'menuStyle:album'};
 						push @items,{
 							type => 'link',
-							name => $i.' '.($i > 1 ? string('PLUGIN_RATINGSLIGHT_STARS') : string('PLUGIN_RATINGSLIGHT_STAR')).' '.string('PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_SUFFIX').$browsemenus_sourceVL_name,
+							name => ($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).' '.string('PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_SUFFIX').$browsemenus_sourceVL_name,
 							icon => 'html/images/playlists.png',
 							jiveIcon => 'html/images/playlists.png',
 							id => 'RL_EXACTRATING_BROWSEMENU_TRACKS'.$i,
 							condition => \&Slim::Menu::BrowseLibrary::isEnabledNode,
-							weight => 220 + $i,
+							weight => 212 + $i,
 							cache => 1,
 							url => \&Slim::Menu::BrowseLibrary::_tracks,
 							passthrough => [{
@@ -2285,7 +2269,6 @@ sub initVLmenus {
 }
 
 sub refreshVirtualLibraries {
-	my $isPostScan = shift;
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 	if ($showratedtracksmenus > 0) {
 		my $started = time();
@@ -2302,16 +2285,49 @@ sub refreshVirtualLibraries {
 			}
 		}
 		if ($showratedtracksmenus == 3) {
-			for my $i (1..5) {
+			my $usehalfstarratings = $prefs->get('usehalfstarratings');
+			for (my $i = 10; $i <= 100; $i += 10) {
 				my $library_id = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_EXACTRATING'.$i);
 				if ($library_id) {
-					Slim::Music::VirtualLibraries->rebuild('RATINGSLIGHT_EXACTRATING'.$i);
+					Slim::Music::VirtualLibraries->rebuild($library_id) unless (!$usehalfstarratings && $i % 20);
+					my $trackCount = Slim::Music::VirtualLibraries->getTrackCount($library_id) || 0;
+					main::DEBUGLOG && $log->is_debug && $log->debug("Track count for library '".$library_id."' = ".$trackCount);
+					if ($trackCount == 0 || (!$usehalfstarratings && $i % 20)) {
+						Slim::Music::VirtualLibraries->unregisterLibrary($library_id);
+						main::DEBUGLOG && $log->is_debug && $log->debug("Unregistering vlib '".$library_id.($trackCount == 0 ? "' because it has 0 tracks." : ""));
+					}
+				} else {
+					next if (!$usehalfstarratings && $i % 20);
+
+					# VL does not exist, create unless track count = 0
+					my $browsemenus_sourceVL_name = validateBrowsemenusSourceVL();
+					my $browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
+					my $ratingMin = $i - ($usehalfstarratings ? 5 : 10);
+					my $ratingMax = $i + ($usehalfstarratings ? 5 : 10);
+					my $thisVL = {
+						id => 'RATINGSLIGHT_EXACTRATING'.$i,
+						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
+						sql => ((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingMin and tracks_persistent.rating < $ratingMax group by tracks.id} : qq{insert or ignore into library_track (library, track) select '%s', tracks.id from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingMin and tracks_persistent.rating < $ratingMax join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id}),
+						quickcount => ((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? qq{select count(tracks.id) from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingMin and tracks_persistent.rating < $ratingMax group by tracks.id} : qq{select count(tracks.id) from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating >= $ratingMin and tracks_persistent.rating < $ratingMax join library_track on library_track.track = tracks.id and library_track.library = "$browsemenus_sourceVL_id" group by tracks.id})
+					};
+					unless (quickCountSQL($thisVL->{quickcount}) == 0) {
+						Slim::Music::VirtualLibraries->registerLibrary($thisVL);
+						Slim::Music::VirtualLibraries->rebuild($thisVL->{id});
+					}
 				}
 			}
-		}
+
 		main::INFOLOG && $log->is_info && $log->info('Refreshing virtual libraries completed after '.(time() - $started).' seconds.');
-		initVLmenus() if $isPostScan;
+		initVLmenus();
+		}
 	}
+}
+
+sub refreshVLtimer {
+	main::DEBUGLOG && $log->is_debug && $log->debug('Killing existing timers for VL refresh to prevent multiple calls');
+	Slim::Utils::Timers::killOneTimer(undef, \&refreshVirtualLibraries);
+	main::DEBUGLOG && $log->is_debug && $log->debug('Scheduling a delayed VL refresh');
+	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + 3, \&refreshVirtualLibraries);
 }
 
 sub getVirtualLibraries {
@@ -2860,7 +2876,7 @@ sub addTitleFormat {
 sub refreshTitleFormats {
 	for my $client (Slim::Player::Client::clients()) {
 		next unless $client && $client->controller();
-		main::DEBUGLOG && $log->is_debug && $log->debug("Refreshing title formats on client '".$client->name."'");		
+		main::DEBUGLOG && $log->is_debug && $log->debug("Refreshing title formats on client '".$client->name."'");
 		$client->currentPlaylistUpdateTime(Time::HiRes::time());
 	}
 }
@@ -2870,18 +2886,22 @@ sub refreshTitleFormats {
 # misc
 
 sub refreshAll {
-	my $isPostScan = shift;
 	Slim::Music::Info::clearFormatDisplayCache();
 	refreshTitleFormats();
-	refreshVLtimer($isPostScan);
+	refreshVLtimer();
 }
 
-sub refreshVLtimer {
-	my $isPostScan = shift;
-	main::DEBUGLOG && $log->is_debug && $log->debug('Killing existing timers for VL refresh to prevent multiple calls');
-	Slim::Utils::Timers::killOneTimer(undef, \&refreshVirtualLibraries);
-	main::DEBUGLOG && $log->is_debug && $log->debug('Scheduling a delayed VL refresh');
-	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + 8, \&refreshVirtualLibraries, $isPostScan);
+sub quickCountSQL {
+	my $sqlstatement = shift;
+
+	my $dbh = getCurrentDBH();
+	my $trackCount = 0;
+	my $sth = $dbh->prepare($sqlstatement);
+	$sth->execute();
+	$trackCount = $sth->fetchrow || 0;
+	$sth->finish();
+	main::DEBUGLOG && $log->is_debug && $log->debug('Track count = '.$trackCount);
+	return $trackCount;
 }
 
 sub createRLfolder {
