@@ -443,7 +443,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS
 	EN	Show browse menus for rated tracks
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_DESC
-	EN	Browse your rated tracks by artist, genre or tracks.<br><br><b>Rated:</b> All rated tracks.<br><br><b>Rated + Top rated:</b> Adds artist, genre and tracks menus for <i>top</i> rated tracks. <i>Top</i> rated tracks have the minimum rating that you defined in the <i>Various Settings</i> section of this plugin's preferences.<br><br><b>Exact ratings:</b> Artist, genre and tracks menus for each (full-star) rating value (1 to 5). Half-star ratings are rounded up (to avoid creating 10 virtual libraries just for half-stars).
+	EN	Browse your rated tracks by artist, genre or tracks.<br><br><b>Rated:</b> All rated tracks.<br><br><b>Rated + Top rated:</b> Adds artist, genre and tracks menus for <i>top</i> rated tracks. <i>Top</i> rated tracks have the minimum rating that you defined in the <i>Various Settings</i> section of this plugin's preferences.<br><br><b>Exact ratings:</b> Artist, genre and tracks menus for each (full-star) rating value (1 to 5). <b>Half-star ratings are rounded up</b> (to avoid creating 5 extra virtual libraries and 15 extra browse menus for half-stars).<br><br><b>Exact ratings (incl. half-stars):</b> Artist, genre and tracks menus for each half-star rating value (0.5 to 5).
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_DISABLE
 	EN	Disable menus
@@ -456,6 +456,9 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_TOPRATED
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_EXACTRATING
 	EN	Exact ratings
+
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_EXACTRATING_HALFSTARS
+	EN	Exact ratings (incl. half-stars)
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SOURCE_VL
 	EN	Select virtual library<br>for browse menus
@@ -476,10 +479,10 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_STAR_2605
 	EN	★ - blackstar (unicode 2605)
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS
-	EN	Use half-star ratings
+	EN	Set half-star ratings
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS_DESC
-	EN	Use half-star ratings to rate your tracks.<br><br><b>Please note:</b> Even if you disable <b>setting</b> of half-star ratings, <i>Ratings Light</i> will still <b>display</b> the <b>exact</b> track rating incl. half-stars.
+	EN	Use half-star ratings to rate your tracks. This setting applies mainly to the LMS (Dark) <b>Default skin</b> and <b>context rating menus</b>. Material, for example, uses its own rating UI with Ratings Light.<br><br><b>Please note:</b> Even if you disable <b>setting</b> of half-star ratings, <i>Ratings Light</i> will still <b>display</b> the <b>exact</b> track rating value incl. half-stars.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING
 	EN	Enable iPeng rating workaround

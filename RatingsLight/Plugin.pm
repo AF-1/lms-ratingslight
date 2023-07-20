@@ -1981,12 +1981,11 @@ sub initVirtualLibraries {
 		}
 
 		# create VLs for exact rating values
-		if ($showratedtracksmenus == 3) {
-			my $usehalfstarratings = $prefs->get('usehalfstarratings');
+		if ($showratedtracksmenus >= 3) {
 			for (my $i = 10; $i <= 100; $i += 10) {
-				next if (!$usehalfstarratings && $i % 20);
-				my $ratingMin = $i - ($usehalfstarratings ? 5 : 10);
-				my $ratingMax = $i + ($usehalfstarratings ? 5 : 10);
+				next if ($showratedtracksmenus < 4 && $i % 20);
+				my $ratingMin = $i - ($showratedtracksmenus == 4 ? 5 : 10);
+				my $ratingMax = $i + ($showratedtracksmenus == 4 ? 5 : 10);
 				push @libraries,{
 						id => 'RATINGSLIGHT_EXACTRATING'.$i,
 						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
@@ -2188,7 +2187,7 @@ sub initVLmenus {
 					}
 				}
 			}
-			if ($showratedtracksmenus == 3) {
+			if ($showratedtracksmenus >= 3) {
 				for (my $i = 10; $i <= 100; $i += 10) {
 					my $library_id_exactratingID = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_EXACTRATING'.$i);
 					if ($library_id_exactratingID) {
@@ -2284,26 +2283,25 @@ sub refreshVirtualLibraries {
 				Slim::Music::VirtualLibraries->rebuild($library_id);
 			}
 		}
-		if ($showratedtracksmenus == 3) {
-			my $usehalfstarratings = $prefs->get('usehalfstarratings');
+		if ($showratedtracksmenus >= 3) {
 			for (my $i = 10; $i <= 100; $i += 10) {
 				my $library_id = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_EXACTRATING'.$i);
 				if ($library_id) {
-					Slim::Music::VirtualLibraries->rebuild($library_id) unless (!$usehalfstarratings && $i % 20);
+					Slim::Music::VirtualLibraries->rebuild($library_id) unless ($showratedtracksmenus < 4 && $i % 20);
 					my $trackCount = Slim::Music::VirtualLibraries->getTrackCount($library_id) || 0;
 					main::DEBUGLOG && $log->is_debug && $log->debug("Track count for library '".$library_id."' = ".$trackCount);
-					if ($trackCount == 0 || (!$usehalfstarratings && $i % 20)) {
+					if ($trackCount == 0 || ($showratedtracksmenus < 4 && $i % 20)) {
 						Slim::Music::VirtualLibraries->unregisterLibrary($library_id);
 						main::DEBUGLOG && $log->is_debug && $log->debug("Unregistering vlib '".$library_id.($trackCount == 0 ? "' because it has 0 tracks." : ""));
 					}
 				} else {
-					next if (!$usehalfstarratings && $i % 20);
+					next if ($showratedtracksmenus < 4 && $i % 20);
 
 					# VL does not exist, create unless track count = 0
 					my $browsemenus_sourceVL_name = validateBrowsemenusSourceVL();
 					my $browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
-					my $ratingMin = $i - ($usehalfstarratings ? 5 : 10);
-					my $ratingMax = $i + ($usehalfstarratings ? 5 : 10);
+					my $ratingMin = $i - ($showratedtracksmenus == 4 ? 5 : 10);
+					my $ratingMax = $i + ($showratedtracksmenus == 4 ? 5 : 10);
 					my $thisVL = {
 						id => 'RATINGSLIGHT_EXACTRATING'.$i,
 						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
