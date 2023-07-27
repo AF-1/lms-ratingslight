@@ -990,7 +990,7 @@ sub getRatedTracks {
 
 	my @ratedtracks = ();
 	my $trackCount = 0;
-	my $dbh = getCurrentDBH();
+	my $dbh = Slim::Schema->dbh;
 	eval{
 		my $sth = $dbh->prepare($sqlstatement);
 		$sth->execute() or do {$sqlstatement = undef;};
@@ -1480,7 +1480,7 @@ sub exportRatingsToPlaylistFiles {
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
 	my ($sql, $sth) = undef;
-	my $dbh = getCurrentDBH();
+	my $dbh = Slim::Schema->dbh;
 	my $exporttimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
 	my $exportVL_id = $prefs->get('exportVL_id');
@@ -2565,7 +2565,7 @@ sub clearAllRatings {
 
 	my $status_restoringfrombackup = $prefs->get('status_restoringfrombackup');
 	my $sqlunrateall = "update tracks_persistent set rating = null where tracks_persistent.rating > 0;";
-	my $dbh = getCurrentDBH();
+	my $dbh = Slim::Schema->dbh;
 	my $sth = $dbh->prepare($sqlunrateall);
 	eval {
 		$sth->execute();
@@ -2660,7 +2660,7 @@ sub getRatingFromDB {
 		my $url = $track->url;
 		my $urlmd5 = $track->urlmd5 || md5_hex($url);
 
-		my $dbh = getCurrentDBH();
+		my $dbh = Slim::Schema->dbh;
 		my $sqlstatement = "select tracks_persistent.rating from tracks_persistent where tracks_persistent.urlmd5 = \"$urlmd5\"";
 		eval{
 			my $sth = $dbh->prepare($sqlstatement);
@@ -2892,7 +2892,7 @@ sub refreshAll {
 sub quickCountSQL {
 	my $sqlstatement = shift;
 
-	my $dbh = getCurrentDBH();
+	my $dbh = Slim::Schema->dbh;
 	my $trackCount = 0;
 	my $sth = $dbh->prepare($sqlstatement);
 	$sth->execute();

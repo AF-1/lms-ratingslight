@@ -332,7 +332,7 @@ drop table randomweightedratingsunrated;
 drop table randomweightedratingscombined;";
 	}
 
-	my $dbh = getCurrentDBH();
+	my $dbh = Slim::Schema->dbh;
 	for my $sql (split(/[\n\r]/,$sqlstatement)) {
 		eval {
 			my $sth = $dbh->prepare($sql);

@@ -41,7 +41,7 @@ use Path::Class;
 
 use base 'Exporter';
 our %EXPORT_TAGS = (
-	all => [qw( getCurrentDBH commit rollback createBackup cleanupBackups importRatingsFromCommentsTags importRatingsFromBPMTags isTimeOrEmpty getMusicDirs parse_duration pathForItem)],
+	all => [qw(commit rollback createBackup cleanupBackups importRatingsFromCommentsTags importRatingsFromBPMTags isTimeOrEmpty getMusicDirs parse_duration pathForItem)],
 );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
 
@@ -59,7 +59,7 @@ sub createBackup {
 
 	my $backupDir = $prefs->get('rlfolderpath');
 	my ($sql, $sth) = undef;
-	my $dbh = getCurrentDBH();
+	my $dbh = Slim::Schema->dbh;
 	my ($trackURL, $trackURLmd5, $trackRating, $trackRemote, $trackExtid);
 	my $started = time();
 	my $backuptimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
@@ -175,7 +175,7 @@ sub importRatingsFromCommentsTags {
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
 	my $tagimport_dontunrate = $prefs->get('tagimport_dontunrate');
 
-	my $dbh = getCurrentDBH();
+	my $dbh = Slim::Schema->dbh;
 	if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 		$log->warn('Error: no rating keywords found.');
 		$prefs->set('status_importingfromcommentstags', 0);
@@ -258,7 +258,7 @@ sub importRatingsFromBPMTags {
 	my $started = time();
 	my $tagimport_dontunrate = $prefs->get('tagimport_dontunrate');
 
-	my $dbh = getCurrentDBH();
+	my $dbh = Slim::Schema->dbh;
 	my $sqlunrate = "update tracks_persistent
 		set rating = null
 		where (tracks_persistent.rating > 0
@@ -401,10 +401,6 @@ sub pathForItem {
 		return Slim::Utils::Misc::pathFromFileURL($path);
 	}
 	return $item;
-}
-
-sub getCurrentDBH {
-	return Slim::Schema->storage->dbh();
 }
 
 sub commit {
