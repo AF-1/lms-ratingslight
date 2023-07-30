@@ -15,6 +15,10 @@
 			<option [% IF prefs.showratedtracksmenus == option.key %]selected='selected' [% END %]value="[% option.key %]">[% option.value | string %]</option>
 		[%- END -%]
 	</select>
+	<br><br>
+	 <input name="pref_browsemenus_artists" id="browsemenus_artists" type="checkbox" [% IF prefs.browsemenus_artists %] checked [% END %]>&nbsp;&nbsp;[% "PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ARTISTS_MENU" | string %]<br><br>
+	 <input name="pref_browsemenus_genres" id="browsemenus_genres" type="checkbox" [% IF prefs.browsemenus_genres %] checked [% END %]>&nbsp;&nbsp;[% "PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_GENRES_MENU" | string %]<br><br>
+	<input name="pref_browsemenus_tracks" id="browsemenus_tracks" type="checkbox" [% IF prefs.browsemenus_tracks %] checked [% END %]>&nbsp;&nbsp;[% "PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_TRACKS_MENU" | string %]
 [% END %]
 [% IF prefs.showratedtracksmenus > 0 %]
 <br>
