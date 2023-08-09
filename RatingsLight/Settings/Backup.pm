@@ -44,7 +44,7 @@ sub new {
 }
 
 sub name {
-	return Slim::Web::HTTP::CSRF->protectName('PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP');
+	return Slim::Web::HTTP::CSRF->protectName('PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_RESTORE');
 }
 
 sub page {

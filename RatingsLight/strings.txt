@@ -72,7 +72,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_SUBPAGE_DESC
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS
 	EN	Various Settings
 
-PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP
+PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_RESTORE
 	EN	Backup / Restore
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT
@@ -360,7 +360,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE
 	EN	Select a backup file to restore from
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE_DESC
-	EN	Select a backup file (created with <i>Ratings Light</i>) to restore your ratings values from.
+	EN	Select a backup file (created with <i>Ratings Light</i>) to restore your ratings values from.<br><br><b>Please note:</b> Restoring from old <i>TrackStat</i> backup files will <b>only</b> work if the <b>URLs / file paths of the music files have not changed</b>.<br>Relative file path guessing is <b>only</b> supported for backups created with <i>Ratings Light</i>.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOW
 	EN	Restore from backup file now

@@ -221,13 +221,14 @@ sub initPrefs {
 	$prefs->set('ratethisplaylistid', '');
 	$prefs->set('ratethisplaylistrating', '');
 	$prefs->set('exportVL_id', '');
-	$prefs->set('status_exportingtoplaylistfiles', '0');
-	$prefs->set('status_importingfromcommentstags', '0');
-	$prefs->set('status_importingfromBPMtags', '0');
-	$prefs->set('status_batchratingplaylisttracks', '0');
-	$prefs->set('status_creatingbackup', '0');
-	$prefs->set('status_restoringfrombackup', '0');
-	$prefs->set('status_clearingallratings', '0');
+	$prefs->set('status_exportingtoplaylistfiles', 0);
+	$prefs->set('status_importingfromcommentstags', 0);
+	$prefs->set('status_importingfromBPMtags', 0);
+	$prefs->set('status_batchratingplaylisttracks', 0);
+	$prefs->set('status_creatingbackup', 0);
+	$prefs->set('status_restoringfrombackup', 0);
+	$prefs->set('isTSlegacyBackupFile', 0);
+	$prefs->set('status_clearingallratings', 0);
 
 	$prefs->setValidate({
 		validator => sub {
@@ -1856,10 +1857,11 @@ sub doneScanning {
 	close(BACKUPFILE);
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('Restore completed after '.(time() - $restorestarted).' seconds.');
-	sleep 0.5;
-	refreshAll(1);
+	sleep 1;
+	refreshAll();
 
 	$prefs->set('status_restoringfrombackup', 0);
+	$prefs->set('isTSlegacyBackupFile', 0);
 	Slim::Utils::Scheduler::remove_task(\&restoreScanFunction);
 	#$prefs->set('restorefile', '');
 }
@@ -1874,6 +1876,9 @@ sub handleStartElement {
 	if ($element eq 'track') {
 		$inTrack = 1;
 	}
+	if ($element eq 'TrackStat') {
+		$prefs->set('isTSlegacyBackupFile', 1);
+	}
 }
 
 sub handleCharElement {
@@ -1887,6 +1892,7 @@ sub handleCharElement {
 sub handleEndElement {
 	my ($p, $element) = @_;
 	$inValue = 0;
+	my $isTSlegacyBackupFile = $prefs->get('isTSlegacyBackupFile');
 	my $selectiverestore = $prefs->get('selectiverestore');
 
 	if ($inTrack && $element eq 'track') {
@@ -1895,54 +1901,56 @@ sub handleEndElement {
 		my $curTrack = \%restoreitem;
 		my $remote = $curTrack->{'remote'};
 
-		if (($selectiverestore == 0) || ($selectiverestore == 1 && $remote == 0) || ($selectiverestore == 2 && $remote == 1)) {
+		if (($selectiverestore == 0 || $isTSlegacyBackupFile) || ($selectiverestore == 1 && $remote == 0) || ($selectiverestore == 2 && $remote == 1)) {
 			my $trackURL = undef;
 			my $fullTrackURL = $curTrack->{'url'};
-			my $trackURLmd5 = $curTrack->{'urlmd5'};
-			my $relTrackURL = $curTrack->{'relurl'};
+			my $trackURLmd5 = $curTrack->{'urlmd5'} unless $isTSlegacyBackupFile;
+			my $relTrackURL = $curTrack->{'relurl'} unless $isTSlegacyBackupFile;
 			my $rating100ScaleValue = $curTrack->{'rating'};
 
-			# check if FULL file url is valid
-			# Otherwise, try RELATIVE file URL with current media dirs
-			$fullTrackURL = Encode::decode('utf8', unescape($fullTrackURL));
-			$relTrackURL = Encode::decode('utf8', unescape($relTrackURL));
+			if ($rating100ScaleValue) {
+				# check if FULL file url is valid
+				# Otherwise, try RELATIVE file URL with current media dirs
+				$fullTrackURL = Encode::decode('utf8', unescape($fullTrackURL));
+				$relTrackURL = Encode::decode('utf8', unescape($relTrackURL)) unless $isTSlegacyBackupFile;
 
-			my $fullTrackPath = pathForItem($fullTrackURL);
-			if (-f $fullTrackPath) {
-				main::DEBUGLOG && $log->is_debug && $log->debug("Found file at url \"$fullTrackPath\"");
-				$trackURL = $fullTrackURL;
-			} else {
-				main::DEBUGLOG && $log->is_debug && $log->debug("** Couldn't find file for FULL file url. Will try with RELATIVE file url and current LMS media folders.");
-				my $lmsmusicdirs = getMusicDirs();
-				main::DEBUGLOG && $log->is_debug && $log->debug('Valid LMS music dirs = '.Data::Dump::dump($lmsmusicdirs));
+				my $fullTrackPath = pathForItem($fullTrackURL);
+				if (-f $fullTrackPath) {
+					main::DEBUGLOG && $log->is_debug && $log->debug("Found file at url \"$fullTrackPath\"");
+					$trackURL = $fullTrackURL;
+				} elsif (!$isTSlegacyBackupFile) {
+					main::DEBUGLOG && $log->is_debug && $log->debug("** Couldn't find file for FULL file url. Will try with RELATIVE file url and current LMS media folders.");
+					my $lmsmusicdirs = getMusicDirs();
+					main::DEBUGLOG && $log->is_debug && $log->debug('Valid LMS music dirs = '.Data::Dump::dump($lmsmusicdirs));
 
-				foreach (@{$lmsmusicdirs}) {
-					my $dirSep = File::Spec->canonpath("/");
-					my $mediaDirURL = Slim::Utils::Misc::fileURLFromPath($_.$dirSep);
-					main::DEBUGLOG && $log->is_debug && $log->debug('Trying LMS music dir url: '.$mediaDirURL);
+					foreach (@{$lmsmusicdirs}) {
+						my $dirSep = File::Spec->canonpath("/");
+						my $mediaDirURL = Slim::Utils::Misc::fileURLFromPath($_.$dirSep);
+						main::DEBUGLOG && $log->is_debug && $log->debug('Trying LMS music dir url: '.$mediaDirURL);
 
-					my $newFullTrackURL = $mediaDirURL.$relTrackURL;
-					my $newFullTrackPath = pathForItem($newFullTrackURL);
-					main::DEBUGLOG && $log->is_debug && $log->debug('Trying with new full track path: '.$newFullTrackPath);
+						my $newFullTrackURL = $mediaDirURL.$relTrackURL;
+						my $newFullTrackPath = pathForItem($newFullTrackURL);
+						main::DEBUGLOG && $log->is_debug && $log->debug('Trying with new full track path: '.$newFullTrackPath);
 
-					if (-f $newFullTrackPath) {
-						$trackURL = Slim::Utils::Misc::fileURLFromPath($newFullTrackURL);
-						main::DEBUGLOG && $log->is_debug && $log->debug('Found file at new full file url: '.$trackURL);
-						main::DEBUGLOG && $log->is_debug && $log->debug('OLD full file url was: '.$fullTrackURL);
-						last;
+						if (-f $newFullTrackPath) {
+							$trackURL = Slim::Utils::Misc::fileURLFromPath($newFullTrackURL);
+							main::DEBUGLOG && $log->is_debug && $log->debug('Found file at new full file url: '.$trackURL);
+							main::DEBUGLOG && $log->is_debug && $log->debug('OLD full file url was: '.$fullTrackURL);
+							last;
+						}
 					}
 				}
-			}
-			if (!$trackURL && !$trackURLmd5) {
-				$log->warn("Neither track urlmd5 nor valid track url. Can't restore values for file with restore url \"$fullTrackURL\"");
-			} else {
-				writeRatingToDB(undef, $trackURL, $trackURLmd5, undef, $rating100ScaleValue, 1);
+				if (!$trackURL && !$trackURLmd5) {
+					$log->warn("Neither track urlmd5 nor valid track url. Can't restore values for file with restore url \"$fullTrackURL\"");
+				} else {
+					writeRatingToDB(undef, $trackURL, $trackURLmd5, undef, $rating100ScaleValue, 1);
+				}
 			}
 		}
 		%restoreitem = ();
 	}
 
-	if ($element eq 'RatingsLight') {
+	if ($element eq 'RatingsLight' || $element eq 'TrackStat') {
 		doneScanning();
 		return 0;
 	}
@@ -2604,7 +2612,7 @@ sub clearAllRatings {
 	my $started = time();
 
 	my $status_restoringfrombackup = $prefs->get('status_restoringfrombackup');
-	my $sqlunrateall = "update tracks_persistent set rating = null where tracks_persistent.rating > 0;";
+	my $sqlunrateall = "update tracks_persistent set rating = null where tracks_persistent.rating >= 0;";
 	my $dbh = Slim::Schema->dbh;
 	my $sth = $dbh->prepare($sqlunrateall);
 	eval {
