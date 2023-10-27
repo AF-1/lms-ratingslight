@@ -80,6 +80,11 @@ sub handler {
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
 		Plugins::RatingsLight::Plugin::clearAllRatings();
+	} elsif ($paramRef->{'adjustallratingsnow'}) {
+		if ($callHandler) {
+			$result = $class->SUPER::handler($client, $paramRef);
+		}
+		Plugins::RatingsLight::Plugin::adjustRatings();
 	} elsif ($callHandler) {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}

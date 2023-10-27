@@ -149,6 +149,18 @@ PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_NOW_BUTTON
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_INPROGRESS
 	EN	clearing...
 
+PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW
+	EN	Adjust odd ratings to LMS rating scale
+
+PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW_DESC
+	EN	LMS uses a rating scale with values ranging from zero (no stars) to 100 (5 stars) and 10 for every additional half-star (Examples: 20 = 1 star, 50 = 2.5 stars).<br><br>If your LMS database includes odd rating values (like 4 or 67), i.e. not evenly divisible by 10, you can use this button to <b>replace all odd rating values with rounded values that comply with the LMS standard rating scale</b> (evenly divisible by 10).<br>Example: 4 => 0 and 67 => 70.
+
+PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW_BUTTON
+	EN	Adjust ratings now
+
+PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_INPROGRESS
+	EN	adjusting...
+
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_POSTSCANSCHEDULEDELAY
 	EN	Post-Scan Delay
 
@@ -168,6 +180,12 @@ PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES_BUTTON
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_INPROGRESS
 	EN	exporting...
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_SINGLE_FILE
+	EN	Export all rated tracks<br>to a <i>single</i> playlist file
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_SINGLE_FILE_DESC
+	EN	By default, <i>Ratings Light</i> groups rated tracks by rating value into one playlist file per rating value. This settings allows you to export <b>all</b> rated tracks to a <b>single</b> playlist file.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_ONLY_DIFF
 	EN	Export only tracks with rating values different from file tag ratings

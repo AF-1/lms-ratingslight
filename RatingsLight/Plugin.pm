@@ -229,6 +229,7 @@ sub initPrefs {
 	$prefs->set('status_restoringfrombackup', 0);
 	$prefs->set('isTSlegacyBackupFile', 0);
 	$prefs->set('status_clearingallratings', 0);
+	$prefs->set('status_adjustingratings', 0);
 
 	$prefs->setValidate({
 		validator => sub {
@@ -1397,7 +1398,7 @@ sub VFD_execActions {
 }
 
 
-## import, export
+## import, export, adjust
 
 sub importRatingsFromPlaylist {
 	my $playlistimport_maxtracks = $prefs->get('playlistimport_maxtracks');
@@ -1495,9 +1496,16 @@ sub exportRatingsToPlaylistFiles {
 	main::DEBUGLOG && $log->is_debug && $log->debug('exportVL_id = '.$exportVL_id);
 	my $totaltrackcount = 0;
 	my $rating100ScaleValueCeil = 0;
+	my $rating100ScaleValueFloor = 0;
+	my $singleFile = $prefs->get('playlistexportsinglefile');
 
 	for (my $rating100ScaleValue = 10; $rating100ScaleValue <= 100; $rating100ScaleValue = $rating100ScaleValue + 10) {
-		$rating100ScaleValueCeil = $rating100ScaleValue + 9;
+		$rating100ScaleValueFloor = $rating100ScaleValue - 5;
+		$rating100ScaleValueCeil = $rating100ScaleValue + 4;
+		if ($singleFile) {
+			$rating100ScaleValueCeil = 100;
+			$rating100ScaleValueFloor = 1;
+		}
 		if (defined $onlyratingsnotmatchtags) {
 			# comments tags
 			if ($filetagtype == 1) {
@@ -1506,9 +1514,9 @@ sub exportRatingsToPlaylistFiles {
 					return
 				} else {
 					if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-							$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))";
+							$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValueFloor and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))";
 					} else {
-							$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null)))";
+							$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValueFloor and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null)))";
 					}
 					$sth = $dbh->prepare($sql);
 					my $ratingkeyword = "%%".$rating_keyword_prefix.($rating100ScaleValue/20).$rating_keyword_suffix."%%";
@@ -1517,17 +1525,17 @@ sub exportRatingsToPlaylistFiles {
 			# BPM tags
 			} elsif ($filetagtype == 0) {
 				if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-						$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != $rating100ScaleValue or tracks.bpm is null))";
+						$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValueFloor and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != $rating100ScaleValue or tracks.bpm is null))";
 				} else {
-						$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != $rating100ScaleValue or tracks.bpm is null)))";
+						$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValueFloor and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != $rating100ScaleValue or tracks.bpm is null)))";
 				}
 				$sth = $dbh->prepare($sql);
 			}
 		} else {
 			if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-				$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValue and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1";
+				$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValueFloor and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1";
 			} else {
-				$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValue and tracks_persistent.rating <= $rating100ScaleValueCeil)";
+				$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValueFloor and tracks_persistent.rating <= $rating100ScaleValueCeil)";
 			}
 			$sth = $dbh->prepare($sql);
 		}
@@ -1548,7 +1556,7 @@ sub exportRatingsToPlaylistFiles {
 
 		if ($trackcount > 0) {
 			my $PLfilename = (($rating100ScaleValue/20) == 1 ? 'RL_Export_'.$filename_timestamp.'__Rated_'.($rating100ScaleValue/20).'_star.m3u.txt' : 'RL_Export_'.$filename_timestamp.'__Rated_'.($rating100ScaleValue/20).'_stars.m3u.txt');
-
+			$PLfilename = 'RL_Export_'.$filename_timestamp.'__AllRatedTracks.m3u.txt' if $singleFile;
 			my $filename = catfile($exportDir, $PLfilename);
 			my $output = FileHandle->new($filename, '>:utf8') or do {
 				$log->error('Could not open '.$filename.' for writing. Does the RatingsLight folder exist? Does LMS have read/write permissions (755) for the (parent) folder?');
@@ -1561,7 +1569,11 @@ sub exportRatingsToPlaylistFiles {
 				my $exportVL_name = Slim::Music::VirtualLibraries->getNameForId($exportVL_id);
 				print $output '# tracks from library (view): '.$exportVL_name."\n";
 			}
-			print $output '# contains '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' rated '.(($rating100ScaleValue/20) == 1 ? ($rating100ScaleValue/20).' star' : ($rating100ScaleValue/20).' stars')."\n\n";
+			if ($singleFile) {
+				print $output '# contains '.$trackcount.($trackcount == 1 ? ' rated track' : ' rated tracks')."\n\n";
+			} else {
+				print $output '# contains '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' rated '.(($rating100ScaleValue/20) == 1 ? ($rating100ScaleValue/20).' star' : ($rating100ScaleValue/20).' stars')."\n\n";
+			}
 			if (defined $onlyratingsnotmatchtags) {
 				print $output "# *** This export only contains rated tracks whose ratings differ from the rating value derived from their comments tag keywords. ***\n";
 				print $output "# *** If you want to export ALL rated tracks change the preference on the Ratings Light settings page. ***\n\n";
@@ -1580,6 +1592,7 @@ sub exportRatingsToPlaylistFiles {
 			}
 			close $output;
 		}
+		last if $singleFile;
 	}
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('TOTAL number of tracks exported: '.$totaltrackcount);
@@ -1703,6 +1716,52 @@ sub delayedPostScanRefresh {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Starting post-scan refresh');
 		refreshAll();
 	}
+}
+
+sub adjustRatings {
+	my $status_adjustingratings = $prefs->get('status_adjustingratings');
+	if ($status_adjustingratings == 1) {
+		$log->warn('RL is already adjusting ratings, please wait for the process to finish');
+		return;
+	}
+	$prefs->set('status_adjustingratings', 1);
+	my $started = time();
+	my $dbh = Slim::Schema->dbh;
+
+	my $rating100ScaleValueCeil = 0;
+	my $rating100ScaleValueFloor = 0;
+	my $singleFile = $prefs->get('playlistexportsinglefile');
+	my @ratedTracks = ();
+
+	my $sql = "select tracks.id, tracks_persistent.rating from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where ifnull(tracks_persistent.rating, 0) > 0";
+	my $sth = $dbh->prepare($sql);
+	$sth->execute();
+
+	my ($trackID, $trackRating);
+	$sth->bind_col(1,\$trackID);
+	$sth->bind_col(2,\$trackRating);
+
+	while ($sth->fetch()) {
+		push (@ratedTracks, {'id' => $trackID, 'rating' => $trackRating});
+	}
+	$sth->finish();
+
+	my $adjustedCount = 0;
+	if (scalar (@ratedTracks) > 0) {
+		foreach my $thisTrack (@ratedTracks) {
+			my $thisRating = $thisTrack->{'rating'};
+			if (($thisRating % 10 != 0) || $thisRating > 100) { # rating is not LMS standard
+				$thisRating = ratingSanityCheck($thisRating);
+				$thisRating = adjustRating($thisRating);
+				writeRatingToDB($thisTrack->{'id'}, undef, undef, undef, $thisRating, 1);
+				$adjustedCount++;
+			}
+		}
+	}
+
+	$prefs->set('status_adjustingratings', 0);
+	main::INFOLOG && $log->is_info && $log->info('Adjusted ratings of '.$adjustedCount.($adjustedCount == 1 ? ' track.' : ' tracks.')) if $adjustedCount;
+	main::DEBUGLOG && $log->is_debug && $log->debug('Adjusting ratings completed after '.(time() - $started).' seconds.');
 }
 
 
@@ -2718,7 +2777,7 @@ sub getRatingFromDB {
 		};
 		if ($@) { main::DEBUGLOG && $log->is_debug && $log->debug("error: $@"); }
 		main::DEBUGLOG && $log->is_debug && $log->debug("Found rating $rating100ScaleValue for url: ".$url);
-		return adjustDisplayedRating($rating100ScaleValue);
+		return adjustRating($rating100ScaleValue);
 	}
 
 	# check for dead/moved local tracks
@@ -2729,7 +2788,7 @@ sub getRatingFromDB {
 
 	my $thisrating = $track->rating;
 	$rating100ScaleValue = $thisrating if $thisrating;
-	return adjustDisplayedRating($rating100ScaleValue);
+	return adjustRating($rating100ScaleValue);
 }
 
 sub getRatingTSLegacy {
@@ -2816,7 +2875,7 @@ sub getRatingTextLine {
 	return $text;
 }
 
-sub adjustDisplayedRating {
+sub adjustRating {
 	my $rating100ScaleValue = shift;
 	$rating100ScaleValue = int(($rating100ScaleValue + 5)/10) * 10;
 	return $rating100ScaleValue;

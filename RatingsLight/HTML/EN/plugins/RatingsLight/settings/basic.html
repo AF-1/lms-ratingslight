@@ -1,6 +1,6 @@
 <script TYPE="text/javascript">
-	function inprogressclearratings() {
-		document.getElementById("clearratingsstatus").className = "inprogress";
+	function inprogress(elementid) {
+		document.getElementById(elementid).className = "inprogress";
 	}
 </script>
 
@@ -48,8 +48,14 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_NOW" desc="PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_NOW_DESC" %]
-	<input style="margin-top:-1px;" name="clearallratingsnow" type="submit" class="stdclick" onClick="inprogressclearratings();" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_NOW_BUTTON" | string %]">
+	<input style="margin-top:-1px;" name="clearallratingsnow" type="submit" class="stdclick" onClick="inprogress('clearratingsstatus');" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_NOW_BUTTON" | string %]">
 	<span class='status' id='clearratingsstatus'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_INPROGRESS" | string %]</span>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW" desc="PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW_DESC" %]
+	<input style="margin-top:-1px;" name="adjustallratingsnow" type="submit" class="stdclick" onClick="inprogress('adjustratingsstatus');" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW_BUTTON" | string %]">
+	<span class='status' id='adjustratingsstatus'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_INPROGRESS" | string %]</span>
 [% END %]
 <br>
 

@@ -27,6 +27,11 @@
 [% END %]
 <br>
 
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_SINGLE_FILE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_SINGLE_FILE_DESC" %]
+	<input name="pref_playlistexportsinglefile" id="playlistexportsinglefile" type="checkbox" [% IF prefs.playlistexportsinglefile %] checked [% END %]>
+[% END %]
+<br>
+
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_ONLY_DIFF" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_ONLY_DIFF_DESC" %]
 	<input name="pref_onlyratingsnotmatchtags" id="onlyratingsnotmatchtags" type="checkbox" [% IF prefs.onlyratingsnotmatchtags %] checked [% END %]><span class="curselfiletag">[% "PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_SELFILETAG" | string %]: <span class="rlbold">[% IF curselfiletag == 0 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE_BPM" | string %][% ELSE %][% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE_COMMENT" | string %][% END %]</span>
 [% END %]
