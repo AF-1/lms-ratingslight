@@ -88,7 +88,7 @@ If you want to display the **black star** character on *players with jivelite* a
 
 ## Display ratings on the Now Playing screen of piCorePlayer, Squeezebox Touch or Radio
 
-If you've always wanted the **Now Playing** screen of your piCorePlayer, SB Touch, SB Radio or SqueezePlay to **display track ratings**, please read [**this**](https://github.com/AF-1/sobras/tree/main/lms-nowplaying_screen_with_ratings). Here's an example:
+You can install an [**applet**](https://github.com/AF-1#applets) on your piCorePlayer, SB Touch, SB Radio or SqueezePlay to **display track ratings** on the **Now Playing** screen. Here's an example:
 
 ![display ratings on the now playing screen of jivelite players](screenshots/ratings_jivelite_npscreen.jpg)
 <br><br><br><br><br>
