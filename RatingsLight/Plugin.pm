@@ -1733,7 +1733,7 @@ sub adjustRatings {
 	my $singleFile = $prefs->get('playlistexportsinglefile');
 	my @ratedTracks = ();
 
-	my $sql = "select tracks.id, tracks_persistent.rating from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where ifnull(tracks_persistent.rating, 0) > 0";
+	my $sql = "select tracks.id, tracks_persistent.rating from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where ifnull(tracks_persistent.rating, 0) != 0";
 	my $sth = $dbh->prepare($sql);
 	$sth->execute();
 
@@ -1750,7 +1750,7 @@ sub adjustRatings {
 	if (scalar (@ratedTracks) > 0) {
 		foreach my $thisTrack (@ratedTracks) {
 			my $thisRating = $thisTrack->{'rating'};
-			if (($thisRating % 10 != 0) || $thisRating > 100) { # rating is not LMS standard
+			if (($thisRating % 10 != 0) || $thisRating > 100 || $thisRating < 0) { # rating value is not LMS standard
 				$thisRating = ratingSanityCheck($thisRating);
 				$thisRating = adjustRating($thisRating);
 				writeRatingToDB($thisTrack->{'id'}, undef, undef, undef, $thisRating, 1);
@@ -1958,47 +1958,58 @@ sub handleEndElement {
 		$inTrack = 0;
 
 		my $curTrack = \%restoreitem;
-		my $remote = $curTrack->{'remote'};
+		my $isRemote = $curTrack->{'remote'};
 
-		if (($selectiverestore == 0 || $isTSlegacyBackupFile) || ($selectiverestore == 1 && $remote == 0) || ($selectiverestore == 2 && $remote == 1)) {
+		if (($selectiverestore == 0 || $isTSlegacyBackupFile) || ($selectiverestore == 1 && $isRemote == 0) || ($selectiverestore == 2 && $isRemote == 1)) {
 			my $trackURL = undef;
 			my $fullTrackURL = $curTrack->{'url'};
-			my $trackURLmd5 = $curTrack->{'urlmd5'} unless $isTSlegacyBackupFile;
 			my $relTrackURL = $curTrack->{'relurl'} unless $isTSlegacyBackupFile;
+			my $trackURLmd5 = undef;
+			my $backupTrackURLmd5 = $curTrack->{'urlmd5'} unless $isTSlegacyBackupFile;
 			my $rating100ScaleValue = $curTrack->{'rating'};
 
 			if ($rating100ScaleValue) {
 				# check if FULL file url is valid
 				# Otherwise, try RELATIVE file URL with current media dirs
 				$fullTrackURL = Encode::decode('utf8', unescape($fullTrackURL));
-				$relTrackURL = Encode::decode('utf8', unescape($relTrackURL)) unless $isTSlegacyBackupFile;
+				$relTrackURL = Encode::decode('utf8', unescape($relTrackURL)) if ($relTrackURL && !$isTSlegacyBackupFile);
 
-				my $fullTrackPath = pathForItem($fullTrackURL);
-				if (-f $fullTrackPath) {
-					main::DEBUGLOG && $log->is_debug && $log->debug("Found file at url \"$fullTrackPath\"");
+				if ($isRemote && $isRemote == 1) {
+					main::DEBUGLOG && $log->is_debug && $log->debug('is remote track');
 					$trackURL = $fullTrackURL;
-				} elsif (!$isTSlegacyBackupFile) {
-					main::DEBUGLOG && $log->is_debug && $log->debug("** Couldn't find file for FULL file url. Will try with RELATIVE file url and current LMS media folders.");
-					my $lmsmusicdirs = getMusicDirs();
-					main::DEBUGLOG && $log->is_debug && $log->debug('Valid LMS music dirs = '.Data::Dump::dump($lmsmusicdirs));
+					$trackURLmd5 = $backupTrackURLmd5;
+				} else {
+					main::DEBUGLOG && $log->is_debug && $log->debug('is local track');
+					my $fullTrackPath = pathForItem($fullTrackURL);
+					if (-f $fullTrackPath) {
+						main::DEBUGLOG && $log->is_debug && $log->debug("Found file at url \"$fullTrackPath\"");
+						$trackURL = $fullTrackURL;
+						$trackURLmd5 = $backupTrackURLmd5 unless $isTSlegacyBackupFile;
+					} elsif (!$isTSlegacyBackupFile) {
+						main::DEBUGLOG && $log->is_debug && $log->debug("** Couldn't find file for FULL file url. Will try with RELATIVE file url and current LMS media folders.");
+						my $lmsmusicdirs = getMusicDirs();
+						main::DEBUGLOG && $log->is_debug && $log->debug('Valid LMS music dirs = '.Data::Dump::dump($lmsmusicdirs));
 
-					foreach (@{$lmsmusicdirs}) {
-						my $dirSep = File::Spec->canonpath("/");
-						my $mediaDirURL = Slim::Utils::Misc::fileURLFromPath($_.$dirSep);
-						main::DEBUGLOG && $log->is_debug && $log->debug('Trying LMS music dir url: '.$mediaDirURL);
+						foreach (@{$lmsmusicdirs}) {
+							my $dirSep = File::Spec->canonpath("/");
+							my $mediaDirURL = Slim::Utils::Misc::fileURLFromPath($_.$dirSep);
+							main::DEBUGLOG && $log->is_debug && $log->debug('Trying LMS music dir url: '.$mediaDirURL);
 
-						my $newFullTrackURL = $mediaDirURL.$relTrackURL;
-						my $newFullTrackPath = pathForItem($newFullTrackURL);
-						main::DEBUGLOG && $log->is_debug && $log->debug('Trying with new full track path: '.$newFullTrackPath);
+							my $newFullTrackURL = $mediaDirURL.$relTrackURL;
+							my $newFullTrackPath = pathForItem($newFullTrackURL);
+							main::DEBUGLOG && $log->is_debug && $log->debug('Trying with new full track path: '.$newFullTrackPath);
 
-						if (-f $newFullTrackPath) {
-							$trackURL = Slim::Utils::Misc::fileURLFromPath($newFullTrackURL);
-							main::DEBUGLOG && $log->is_debug && $log->debug('Found file at new full file url: '.$trackURL);
-							main::DEBUGLOG && $log->is_debug && $log->debug('OLD full file url was: '.$fullTrackURL);
-							last;
+							if (-f $newFullTrackPath) {
+								$trackURL = Slim::Utils::Misc::fileURLFromPath($newFullTrackURL);
+								main::DEBUGLOG && $log->is_debug && $log->debug('Found file at new full file url: '.$trackURL);
+								main::DEBUGLOG && $log->is_debug && $log->debug('OLD full file url was: '.$fullTrackURL);
+								$trackURLmd5 = md5_hex($trackURL);
+								last;
+							}
 						}
 					}
 				}
+
 				if (!$trackURL && !$trackURLmd5) {
 					$log->warn("Neither track urlmd5 nor valid track url. Can't restore values for file with restore url \"$fullTrackURL\"");
 				} else {
@@ -2636,13 +2647,6 @@ sub logRatedTrack {
 		}
 	}
 
-	my $title = $track->title;
-	my $artist = $track->artist->name;
-	my $album = $track->album->title;
-
-	my $previousRating = $previousRating100ScaleValue/20;
-	my $newRating = $rating100ScaleValue/20;
-
 	# write log info to file
 	my $filename = catfile($logDir, $logFileName);
 	my $output = FileHandle->new($filename, '>>:utf8') or do {
@@ -2650,8 +2654,8 @@ sub logRatedTrack {
 		return;
 	};
 	print $output $ratingtimestamp."\n";
-	print $output "Title:\t ".$title."\nArtist:\t ".$artist."\nAlbum:\t ".$album."\n";
-	print $output 'Previous Rating: '.$previousRating.' --> New Rating: '.$newRating."\n\n";
+	print $output "Title:\t ".$track->title."\nArtist:\t ".$track->artist->name."\nAlbum:\t ".$track->album->title."\n";
+	print $output 'Previous Rating: '.($previousRating100ScaleValue/20).' ('.$previousRating100ScaleValue.') --> New Rating: '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")\n\n";
 	close $output;
 }
 
@@ -2724,7 +2728,7 @@ sub writeRatingToDB {
 		# confirm and log new rating value
 		my $newTrackRating = $track->rating;
 		if ($newTrackRating == $rating100ScaleValue) {
-			main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.$rating100ScaleValue/20);
+			main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.')');
 			unless (defined($dontlogthis)) {
 				my $userecentlyratedplaylist = $prefs->get('userecentlyratedplaylist');
 				my $uselogfile = $prefs->get('uselogfile');

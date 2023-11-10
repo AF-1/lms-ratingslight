@@ -98,18 +98,18 @@ sub createBackup {
 		print $output "<RatingsLight>\n";
 		for my $ratedTrack (@ratedTracks) {
 			my $BACKUPtrackURL = $ratedTrack->{'url'};
-			my $urlmd5 = $ratedTrack->{'urlmd5'};
-			if (($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) {
-				$log->warn('Warning: ignoring this track. Track is remote but not part of LMS library: '.$BACKUPtrackURL);
+			if ((($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) || !defined($ratedTrack->{'remote'})) {
+				$log->warn('Warning: ignoring this track. Track is remote but not part of LMS library: '.$BACKUPtrackURL) if $ratedTrack->{'remote'};
 				$trackcount--;
 				$ignoredtracks++;
 				next;
 			}
+			my $urlmd5 = $ratedTrack->{'urlmd5'};
 			my $rating100ScaleValue = $ratedTrack->{'rating'};
 			my $remote = $ratedTrack->{'remote'};
-			my $BACKUPrelFilePath = getRelFilePath($BACKUPtrackURL);
+			my $BACKUPrelFilePath = ($remote == 0 ? getRelFilePath($BACKUPtrackURL) : '');
 			$BACKUPtrackURL = escape($BACKUPtrackURL);
-			$BACKUPrelFilePath = escape($BACKUPrelFilePath);
+			$BACKUPrelFilePath = escape($BACKUPrelFilePath) if $BACKUPrelFilePath;
 			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<urlmd5>".$urlmd5."</urlmd5>\n\t\t<relurl>".$BACKUPrelFilePath."</relurl>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<remote>".$remote."</remote>\n\t</track>\n";
 		}
 		print $output "</RatingsLight>\n";
