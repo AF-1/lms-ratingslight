@@ -25,7 +25,7 @@ A plugin[^1] that takes care of rating tracks in your [Logitech Media Server](ht
 
 ## Requirements
 
-- LMS version >= 7.**9**
+- LMS version >= **8**.0
 - LMS database = **SQLite**
 
 <br>
