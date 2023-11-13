@@ -2049,7 +2049,7 @@ sub initVirtualLibraries {
 		my $sqlVLstart = "insert or ignore into library_track (library, track) select '%s', tracks.id ";
 		my $sqlVLquickCount = "select count(tracks.id) ";
 		my $sqlVLcommon = "from tracks join tracks_persistent tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating ";
-		my $sqlVLsourceVL = " join library_track on library_track.track = tracks.id and library_track.library = \"$browsemenus_sourceVL_id\" ";
+		my $sqlVLsourceVL = " join library_track on library_track.track = tracks.id and library_track.library = \"$browsemenus_sourceVL_id\" " if defined($browsemenus_sourceVL_id) && $browsemenus_sourceVL_id ne '';
 		my $sqlVLend = " group by tracks.id";
 
 		my @libraries = ();
