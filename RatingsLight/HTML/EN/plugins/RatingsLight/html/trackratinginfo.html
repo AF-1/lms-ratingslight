@@ -1,14 +1,14 @@
 <style>
 @charset "UTF-8";
 @font-face {
-	font-family: 'FontAwesome';
-	src: url('[% webroot %]plugins/RatingsLight/html/font/fontawesome-webfont.woff?v=4.7.0') format('woff');
+	font-family: 'fontawesome-light';
+	src: url('[% webroot %]plugins/RatingsLight/html/font/fontawesome-light.woff?hnb8y9') format('woff');
 	font-weight: normal;
 	font-style: normal;
 }
 .fa {
 	display: inline-block;
-	font: normal normal normal 11px/1 FontAwesome;
+	font: normal normal normal 11px/1 fontawesome-light;
 	font-size: inherit;
 	text-rendering: auto;
 	-webkit-font-smoothing: antialiased;
@@ -20,9 +20,7 @@
 .fa-star-o:before {
 	content: "\f006";
 }
-.fa-remove:before,
-.fa-close:before,
-.fa-times:before {
+.fa-remove:before {
 	content: "\f00d";
 }
 .fa-star-half:before {
@@ -132,7 +130,7 @@
 	</span>
 	<span id="unratebtn">
 		<input class="rating__input rating__input--none" name="trackrating" id="ratinghalfstars-0x" value="0" type="radio">
-		<label aria-label="Unrate" title="Unrate" class="rating__label" for="ratinghalfstars-0x"><i class="rating__icon rating__icon--none fa fa-times"></i></label>
+		<label aria-label="Unrate" title="Unrate" class="rating__label" for="ratinghalfstars-0x"><i class="rating__icon rating__icon--none fa fa-remove"></i></label>
 	</span>
 </div>
 <script type="text/javascript">
