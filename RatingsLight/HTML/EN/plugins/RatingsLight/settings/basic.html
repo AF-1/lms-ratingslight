@@ -14,7 +14,10 @@
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTEBUTTONS" desc="PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTEBUTTONS_DESC" %]
-	<input name="pref_enableIRremotebuttons" id="enableIRremotebuttons" type="checkbox" [% IF prefs.enableIRremotebuttons %] checked [% END %]>
+	<select class="stdedit" name="pref_enableIRremotebuttons" id="enableIRremotebuttons">
+		<option [% IF NOT prefs.enableIRremotebuttons %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.enableIRremotebuttons %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
 [% END %]
 <br>
 
@@ -28,7 +31,10 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USERECENTLYRATEDPLAYLIST" desc="PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USERECENTLYRATEDPLAYLIST_DESC" %]
-	<input name="pref_userecentlyratedplaylist" id="userecentlyratedplaylist" type="checkbox" [% IF prefs.userecentlyratedplaylist %] checked [% END %]>
+	<select class="stdedit" name="pref_userecentlyratedplaylist" id="userecentlyratedplaylist">
+		<option [% IF NOT prefs.userecentlyratedplaylist %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.userecentlyratedplaylist %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
 [% END %]
 <br>
 
@@ -38,7 +44,10 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USELOGFILE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USELOGFILE_DESC" %]
-	<input name="pref_uselogfile" id="uselogfile" type="checkbox" [% IF prefs.uselogfile %] checked [% END %]>
+	<select class="stdedit" name="pref_uselogfile" id="uselogfile">
+		<option [% IF NOT prefs.uselogfile %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.uselogfile %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
 [% END %]
 <br>
 

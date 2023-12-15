@@ -16,9 +16,23 @@
 		[%- END -%]
 	</select>
 	<br><br>
-	 <input name="pref_browsemenus_artists" id="browsemenus_artists" type="checkbox" [% IF prefs.browsemenus_artists %] checked [% END %]>&nbsp;&nbsp;[% "PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ARTISTS_MENU" | string %]<br><br>
-	 <input name="pref_browsemenus_genres" id="browsemenus_genres" type="checkbox" [% IF prefs.browsemenus_genres %] checked [% END %]>&nbsp;&nbsp;[% "PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_GENRES_MENU" | string %]<br><br>
-	<input name="pref_browsemenus_tracks" id="browsemenus_tracks" type="checkbox" [% IF prefs.browsemenus_tracks %] checked [% END %]>&nbsp;&nbsp;[% "PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_TRACKS_MENU" | string %]
+	[% "PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ARTISTS_MENU" | string %]&nbsp;&nbsp;
+	<select class="stdedit" name="pref_browsemenus_artists" id="browsemenus_artists">
+		<option [% IF NOT prefs.browsemenus_artists %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.browsemenus_artists %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
+	<br><br>
+	[% "PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_GENRES_MENU" | string %]&nbsp;&nbsp;
+	<select class="stdedit" name="pref_browsemenus_genres" id="browsemenus_genres">
+		<option [% IF NOT prefs.browsemenus_genres %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.browsemenus_genres %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
+	<br><br>
+	[% "PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_TRACKS_MENU" | string %]&nbsp;&nbsp;
+	<select class="stdedit" name="pref_browsemenus_tracks" id="browsemenus_tracks">
+		<option [% IF NOT prefs.browsemenus_tracks %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.browsemenus_tracks %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
 [% END %]
 [% IF prefs.showratedtracksmenus > 0 %]
 <br>
@@ -45,12 +59,18 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS" desc="PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS_DESC" %]
-	<input name="pref_usehalfstarratings" id="usehalfstarratings" type="checkbox" [% IF prefs.usehalfstarratings %] checked [% END %]>
+	<select class="stdedit" name="pref_usehalfstarratings" id="usehalfstarratings">
+		<option [% IF NOT prefs.usehalfstarratings %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.usehalfstarratings %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
 [% END %]
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING" desc="PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING_DESC" %]
-	<input name="pref_enableipengtslegacyrating" id="enableipengtslegacyrating" type="checkbox" [% IF prefs.enableipengtslegacyrating %] checked [% END %]>
+	<select class="stdedit" name="pref_enableipengtslegacyrating" id="enableipengtslegacyrating">
+		<option [% IF NOT prefs.enableipengtslegacyrating %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.enableipengtslegacyrating %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
 [% END %]
 <br><br>
 

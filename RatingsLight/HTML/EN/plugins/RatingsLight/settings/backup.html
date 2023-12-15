@@ -24,7 +24,10 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS_DESC" %]
-	<input name="pref_scheduledbackups" id="scheduledbackups" type="checkbox" [% IF prefs.scheduledbackups %] checked [% END %]>
+	<select class="stdedit" name="pref_scheduledbackups" id="scheduledbackups">
+		<option [% IF NOT prefs.scheduledbackups %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.scheduledbackups %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
 [% END %]
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME_DESC" %]
@@ -33,12 +36,19 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_PRESCANBACKUP" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_PRESCANBACKUP_DESC" %]
-	<input name="pref_prescanbackup" id="prescanbackup" type="checkbox" [% IF prefs.prescanbackup %] checked [% END %]>
+	<select class="stdedit" name="pref_prescanbackup" id="prescanbackup">
+		<option [% IF NOT prefs.prescanbackup %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.prescanbackup %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
 [% END %]
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS_DESC" %]
-	<input name="pref_autodeletebackups" id="autodeletebackups" type="checkbox" [% IF prefs.autodeletebackups %] checked [% END %]>[% IF prefs.scheduledbackups && !prefs.autodeletebackups %] <span class="recommended">[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS_WARNING" | string %]</span>[% END %]
+	<select class="stdedit" name="pref_autodeletebackups" id="autodeletebackups">
+		<option [% IF NOT prefs.autodeletebackups %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.autodeletebackups %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
+	[% IF prefs.scheduledbackups && !prefs.autodeletebackups %] <span class="recommended">[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS_WARNING" | string %]</span>[% END %]
 [% END %]
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPDAYSTOKEEP" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPDAYSTOKEEP_DESC" %]
@@ -74,7 +84,10 @@
 <br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_CLEARALLBEFORE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_CLEARALLBEFORE_DESC" %]
-	<input name="pref_clearallbeforerestore" id="clearallbeforerestore" type="checkbox" [% IF prefs.clearallbeforerestore %] checked [% END %]>
+	<select class="stdedit" name="pref_clearallbeforerestore" id="clearallbeforerestore">
+		<option [% IF NOT prefs.clearallbeforerestore %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.clearallbeforerestore %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
 [% END %]
 [% END %]
 

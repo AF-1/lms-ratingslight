@@ -1961,11 +1961,13 @@ sub handleEndElement {
 		my $isRemote = $curTrack->{'remote'};
 
 		if (($selectiverestore == 0 || $isTSlegacyBackupFile) || ($selectiverestore == 1 && $isRemote == 0) || ($selectiverestore == 2 && $isRemote == 1)) {
+			my $track = undef;
 			my $trackURL = undef;
 			my $fullTrackURL = $curTrack->{'url'};
 			my $relTrackURL = $curTrack->{'relurl'} unless $isTSlegacyBackupFile;
 			my $trackURLmd5 = undef;
 			my $backupTrackURLmd5 = $curTrack->{'urlmd5'} unless $isTSlegacyBackupFile;
+			my $backupTrackMBID = $isTSlegacyBackupFile ? $curTrack->{'musicbrainzId'} : $curTrack->{'musicbrainzid'};
 			my $rating100ScaleValue = $curTrack->{'rating'};
 
 			if ($rating100ScaleValue) {
@@ -1985,7 +1987,14 @@ sub handleEndElement {
 						main::DEBUGLOG && $log->is_debug && $log->debug("Found file at url \"$fullTrackPath\"");
 						$trackURL = $fullTrackURL;
 						$trackURLmd5 = $backupTrackURLmd5 unless $isTSlegacyBackupFile;
-					} elsif (!$isTSlegacyBackupFile) {
+					}
+
+					if (!$trackURL && !$trackURLmd5 && $backupTrackMBID) {
+						$track = Slim::Schema->search('Track', {'musicbrainz_id' => $backupTrackMBID })->first();
+						main::DEBUGLOG && $log->is_debug && $log->debug('Found file for musicbrainz id = '.$backupTrackMBID) if $track;
+					}
+
+					if (!$track && !$trackURL && !$trackURLmd5 && !$isTSlegacyBackupFile) {
 						main::DEBUGLOG && $log->is_debug && $log->debug("** Couldn't find file for FULL file url. Will try with RELATIVE file url and current LMS media folders.");
 						my $lmsmusicdirs = getMusicDirs();
 						main::DEBUGLOG && $log->is_debug && $log->debug('Valid LMS music dirs = '.Data::Dump::dump($lmsmusicdirs));
@@ -2010,10 +2019,10 @@ sub handleEndElement {
 					}
 				}
 
-				if (!$trackURL && !$trackURLmd5) {
-					$log->warn("Neither track urlmd5 nor valid track url. Can't restore values for file with restore url \"$fullTrackURL\"");
+				if (!$trackURL && !$trackURLmd5 && !$backupTrackMBID) {
+					$log->warn("No valid urlmd5, url or musicbrainz id for this track. Can't restore values for file with restore URL = ".Data::Dump::dump($fullTrackURL));
 				} else {
-					writeRatingToDB(undef, $trackURL, $trackURLmd5, undef, $rating100ScaleValue, 1);
+					writeRatingToDB(undef, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, 1);
 				}
 			}
 		}
@@ -2592,10 +2601,10 @@ sub addToRecentlyRatedPlaylist {
 	my $recentlymaxcount = $prefs->get('recentlymaxcount');
 	my $trackAlreadyInPL;
 
-	my $playlist = Slim::Schema->rs('Playlist')->single({'title' => $playlistname});
+	my $playlist = Slim::Schema->search('Playlist', {'title' => $playlistname })->first();
 	if (!$playlist) {
 		Slim::Control::Request::executeRequest(undef, ['playlists', 'new', 'name:'.$playlistname]);
-		$playlist = Slim::Schema->rs('Playlist')->single({'title' => $playlistname});
+		$playlist = Slim::Schema->search('Playlist', {'title' => $playlistname })->first();
 	}
 
 	my @PLtracks = $playlist->tracks;
@@ -2726,9 +2735,9 @@ sub writeRatingToDB {
 		$track->rating($rating100ScaleValue);
 
 		# confirm and log new rating value
-		my $newTrackRating = $track->rating;
-		if ($newTrackRating == $rating100ScaleValue) {
-			main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.')');
+		my $newTrackRating = $track->rating || 0;
+		if (defined $newTrackRating && $newTrackRating == $rating100ScaleValue) {
+			main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")\n");
 			unless (defined($dontlogthis)) {
 				my $userecentlyratedplaylist = $prefs->get('userecentlyratedplaylist');
 				my $uselogfile = $prefs->get('uselogfile');
@@ -2740,10 +2749,10 @@ sub writeRatingToDB {
 				}
 			}
 		} else {
-			main::DEBUGLOG && $log->is_debug && $log->debug("Couldn't confirm that the track was successfully rated. Won't add track to rating log file or recently rated playlist. Please check manually if the new track rating has been set.");
+			main::DEBUGLOG && $log->is_debug && $log->debug("Couldn't confirm that the track was successfully rated. Won't add track to rating log file or recently rated playlist. Please check manually if the new track rating has been set.\n");
 		}
 	} else {
-		$log->error("Couldn't find blessed track (local or remote). Rating failed.");
+		$log->error("Couldn't find blessed track (local or remote). Rating failed.\n");
 	}
 }
 

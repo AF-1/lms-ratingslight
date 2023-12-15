@@ -60,12 +60,12 @@ sub createBackup {
 	my $backupDir = $prefs->get('rlfolderpath');
 	my ($sql, $sth) = undef;
 	my $dbh = Slim::Schema->dbh;
-	my ($trackURL, $trackURLmd5, $trackRating, $trackRemote, $trackExtid);
+	my ($trackURL, $trackURLmd5, $trackRating, $trackRemote, $trackExtid, $trackMBID);
 	my $started = time();
 	my $backuptimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
 
-	$sql = "select tracks.url, tracks.urlmd5, tracks_persistent.rating, tracks.remote, tracks.extid from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where tracks_persistent.rating > 0";
+	$sql = "select tracks.url, tracks.urlmd5, tracks_persistent.rating, tracks.remote, tracks.extid, tracks_persistent.musicbrainz_id from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where tracks_persistent.rating > 0";
 	$sth = $dbh->prepare($sql);
 	$sth->execute();
 
@@ -74,10 +74,11 @@ sub createBackup {
 	$sth->bind_col(3,\$trackRating);
 	$sth->bind_col(4,\$trackRemote);
 	$sth->bind_col(5,\$trackExtid);
+	$sth->bind_col(6,\$trackMBID);
 
 	my @ratedTracks = ();
 	while ($sth->fetch()) {
-		push (@ratedTracks, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'remote' => $trackRemote, 'extid' => $trackExtid});
+		push (@ratedTracks, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'remote' => $trackRemote, 'extid' => $trackExtid, 'musicbrainzid' => $trackMBID});
 	}
 	$sth->finish();
 
@@ -110,7 +111,8 @@ sub createBackup {
 			my $BACKUPrelFilePath = ($remote == 0 ? getRelFilePath($BACKUPtrackURL) : '');
 			$BACKUPtrackURL = escape($BACKUPtrackURL);
 			$BACKUPrelFilePath = escape($BACKUPrelFilePath) if $BACKUPrelFilePath;
-			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<urlmd5>".$urlmd5."</urlmd5>\n\t\t<relurl>".$BACKUPrelFilePath."</relurl>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<remote>".$remote."</remote>\n\t</track>\n";
+			my $BACKUPtrackMBID = $ratedTrack->{'musicbrainzid'} || '';
+			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<urlmd5>".$urlmd5."</urlmd5>\n\t\t<relurl>".$BACKUPrelFilePath."</relurl>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<remote>".$remote."</remote>\n\t\t<musicbrainzid>".$BACKUPtrackMBID."</musicbrainzid>\n\t</track>\n";
 		}
 		print $output "</RatingsLight>\n";
 

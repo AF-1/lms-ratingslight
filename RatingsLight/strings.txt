@@ -282,7 +282,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_DONTUNRATE
 	EN	Don't unrate tracks
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_DONTUNRATE_DESC
-	EN	Importing ratings from file tags was designed to have the LMS database mirror all track ratings it finds in your file tags and unrate all other tracks (resulting in <b>synced track ratings</b>).<br>If you check this setting (<b>not recommended</b>), new and changed track ratings will show in the LMS database after import but <b><i>formerly</i> rated tracks which are no longer marked as rated in your file tags will <u>not</u> be unrated</b>.
+	EN	Importing ratings from file tags was designed to have the LMS database mirror all track ratings it finds in your file tags and unrate all other tracks (resulting in <b>synced track ratings</b>).<br>If you enable this (<b>not recommended</b>), new and changed track ratings will show in the LMS database after import but <b><i>formerly</i> rated tracks which are no longer marked as rated in your file tags will <u>not</u> be unrated</b>.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE
 	EN	Choose file tag for import
