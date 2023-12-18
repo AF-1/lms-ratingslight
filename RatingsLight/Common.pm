@@ -41,7 +41,7 @@ use Path::Class;
 
 use base 'Exporter';
 our %EXPORT_TAGS = (
-	all => [qw(commit rollback createBackup cleanupBackups importRatingsFromCommentsTags importRatingsFromBPMTags isTimeOrEmpty getMusicDirs parse_duration pathForItem)],
+	all => [qw(commit rollback createBackup cleanupBackups importRatingsFromCommentTags importRatingsFromBPMTags isTimeOrEmpty getMusicDirs parse_duration pathForItem)],
 );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
 
@@ -163,14 +163,14 @@ sub cleanupBackups {
 	}
 }
 
-sub importRatingsFromCommentsTags {
-	main::DEBUGLOG && $log->is_debug && $log->debug('starting ratings import from comments tags');
+sub importRatingsFromCommentTags {
+	main::DEBUGLOG && $log->is_debug && $log->debug('starting ratings import from comment tags');
 	my $class = shift;
-	if ($prefs->get('status_importingfromcommentstags') == 1) {
+	if ($prefs->get('status_importingfromcommenttags') == 1) {
 		$log->warn('Import is already in progress, please wait for the previous import to finish');
 		return;
 	}
-	$prefs->set('status_importingfromcommentstags', 1);
+	$prefs->set('status_importingfromcommenttags', 1);
 	my $started = time();
 
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
@@ -180,7 +180,7 @@ sub importRatingsFromCommentsTags {
 	my $dbh = Slim::Schema->dbh;
 	if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 		$log->warn('Error: no rating keywords found.');
-		$prefs->set('status_importingfromcommentstags', 0);
+		$prefs->set('status_importingfromcommenttags', 0);
 		return
 	} else {
 		my $sqlunrate = "UPDATE tracks_persistent
@@ -202,7 +202,7 @@ sub importRatingsFromCommentsTags {
 					WHERE comments.value LIKE ?
 			);";
 
-		# unrate previously rated tracks in LMS if comments tag does no longer contain keyword(s)
+		# unrate previously rated tracks in LMS if comment tag does no longer contain keyword(s)
 		if (!defined $tagimport_dontunrate) {
 			my $ratingkeyword_unrate = "%%".$rating_keyword_prefix."_".$rating_keyword_suffix."%%";
 
@@ -221,7 +221,7 @@ sub importRatingsFromCommentsTags {
 			$sth->finish();
 		}
 
-		# rate tracks according to comments tag keyword
+		# rate tracks according to comment tag keyword
 		my $rating = 1;
 
 		until ($rating > 5) {
@@ -246,7 +246,7 @@ sub importRatingsFromCommentsTags {
 	}
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('Import completed after '.(time() - $started).' seconds.');
-	$prefs->set('status_importingfromcommentstags', 0);
+	$prefs->set('status_importingfromcommenttags', 0);
 }
 
 sub importRatingsFromBPMTags {

@@ -222,7 +222,7 @@ sub initPrefs {
 	$prefs->set('ratethisplaylistrating', '');
 	$prefs->set('exportVL_id', '');
 	$prefs->set('status_exportingtoplaylistfiles', 0);
-	$prefs->set('status_importingfromcommentstags', 0);
+	$prefs->set('status_importingfromcommenttags', 0);
 	$prefs->set('status_importingfromBPMtags', 0);
 	$prefs->set('status_batchratingplaylisttracks', 0);
 	$prefs->set('status_creatingbackup', 0);
@@ -1507,7 +1507,7 @@ sub exportRatingsToPlaylistFiles {
 			$rating100ScaleValueFloor = 1;
 		}
 		if (defined $onlyratingsnotmatchtags) {
-			# comments tags
+			# comment tags
 			if ($filetagtype == 1) {
 				if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 					$log->warn('Error: no rating keywords found.');
@@ -1575,7 +1575,7 @@ sub exportRatingsToPlaylistFiles {
 				print $output '# contains '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' rated '.(($rating100ScaleValue/20) == 1 ? ($rating100ScaleValue/20).' star' : ($rating100ScaleValue/20).' stars')."\n\n";
 			}
 			if (defined $onlyratingsnotmatchtags) {
-				print $output "# *** This export only contains rated tracks whose ratings differ from the rating value derived from their comments tag keywords. ***\n";
+				print $output "# *** This export only contains rated tracks whose ratings differ from the rating value derived from their comment tag keywords. ***\n";
 				print $output "# *** If you want to export ALL rated tracks change the preference on the Ratings Light settings page. ***\n\n";
 			}
 			for my $ratedTrack (@ratedTracks) {

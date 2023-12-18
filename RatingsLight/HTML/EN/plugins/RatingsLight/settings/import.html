@@ -1,4 +1,4 @@
-<style>.commentstagsection{[% IF prefs.filetagtype == 0 %]display:none;[% END %]}</style>
+<style>.commenttagsection{[% IF prefs.filetagtype == 0 %]display:none;[% END %]}</style>
 <script TYPE="text/javascript">
 	function inprogress(elementid) {
 		document.getElementById(elementid).className = "inprogress";
@@ -68,7 +68,7 @@
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT" desc="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT_DESC" %]
 	<input style="margin-top:-1px;" name="manimport" type="submit" class="stdclick" onclick="inprogress('filetagimportstatus');" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT_BUTTON" | string %]">
 	<span class='status' id='filetagimportstatus'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT_INPROGRESS" | string %]</span>
-	<span class='[% IF missingkeywords %]error[% ELSE %]status[% END %]'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_MANUAL_IMPORT_MISSINGKEYWORDS" | string %]</span>
+	<span class='[% IF missingkeywords %]error[% ELSE %]status[% END %]'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_MANUAL_IMPORT_MISSINGKEYWORDS" | string %]</span>
 [% END %]
 <br>
 
@@ -100,16 +100,16 @@
 [% END %]
 <br>
 
-<div class="commentstagsection">
+<div class="commenttagsection">
 	[% WRAPPER setting title="" desc="" %]
-		[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_EXAMPLE" | string %]
+		[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_EXAMPLE" | string %]
 	[% END %]
 
-	[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_RATING_KEYWORD" desc="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_RATING_KEYWORD_DESC" %]
+	[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD" desc="PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD_DESC" %]
 	<table style="margin-left:5px;" size="50">
 		<tr>
-			<th style="text-align:center;">[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_RATING_KEYWORD_PREFIX" | string %]</th>
-			<th style="text-align:center;padding-left:8px;">[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTSTAGS_RATING_KEYWORD_SUFFIX" | string %]</th>
+			<th style="text-align:center;">[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD_PREFIX" | string %]</th>
+			<th style="text-align:center;padding-left:8px;">[% "PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD_SUFFIX" | string %]</th>
 		</tr>
 		<tr>
 			<th style="height:4px;" colspan="2"></th>

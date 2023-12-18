@@ -89,7 +89,7 @@ sub handler {
 				$paramRef->{'missingkeywords'} = 1;
 				$result = $class->SUPER::handler($client, $paramRef);
 			} else {
-				importRatingsFromCommentsTags();
+				importRatingsFromCommentTags();
 				Plugins::RatingsLight::Plugin::setRefreshTimer(1);
 			}
 		} elsif ($filetagtype == 0) {
