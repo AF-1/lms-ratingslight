@@ -44,7 +44,7 @@ A plugin[^1] that takes care of rating tracks in your [Logitech Media Server](ht
 
 * **import** track ratings
 	* batch rate all tracks in a playlist
-	* using keywords in comments tags (auto-import after scan is possible)
+	* using keywords in comment tags (auto-import after scan is possible)
 
 * **export** rated tracks to playlist files (as a backup or to import ratings in other apps)
 * **browse rated tracks by artist or genre**[^2] (with optional library view filter)
@@ -115,10 +115,10 @@ More information, instructions, and fonts <a href="https://github.com/AF-1/sobra
 <details><summary>»<b>How does <i>importing ratings from file tags</i> work?</b>«</summary><br><p><i>Ratings Light</i> does not scan files, it has no scanner module. LMS scans your music files and stores the data found in the file tags in the LMS database.<br>
 <i>Importing rating values from file tags</i> with RL therefore means that RL reads the file tag values stored in the LMS database, converts them to rating values and saves them to the LMS persistent database.<br>
 Unfortunately, there is no universal <i>rating tag</i> that is supported by <b<all</b> music file formats across different music players - and scanned/imported by LMS.<br>So in order to import your ratings into LMS, you'll have to use/repurpose a file tag that you don't use otherwise and, more importantly, one that is <b>scanned and imported by LMS</b>.<br><br>
-In <i>Ratings Light</i> you can choose between the <b>BPM</b> tag and the <b>comments</b> tag to import ratings values from.<br><br>
+In <i>Ratings Light</i> you can choose between the <b>BPM</b> tag and the <b>comment</b> tag to import ratings values from.<br><br>
 RL expects integer rating values on a 10-step rating scale from 0 to 100 in the <b>BPM</b> tag (corresponding to the internal LMS rating scale).<br>→ 0 or no value = unrated<br>→ 10 = 0.5 stars<br>→ 20 = 1 star<br>...<br>→ 100 = 5 stars<br><br>
-If you want to use the <b>comments</b> tag, choose at least one short keyword to prefix the rating value. You can also choose a keyword suffix. RL supports importing integer rating values (no half-star ratings) on a scale from 1 to 5.<br>
-<b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx".<br>If a comments tag contains "favstars<b>4</b>xx", RL will save the track rating value for <b>4</b> stars.
+If you want to use the <b>comment</b> tag, choose at least one short keyword to prefix the rating value. You can also choose a keyword suffix. RL supports importing integer rating values (no half-star ratings) on a scale from 1 to 5.<br>
+<b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx".<br>If a comment tag contains "favstars<b>4</b>xx", RL will save the track rating value for <b>4</b> stars.
 </p></details><br>
 
 <details><summary>»<b>When I create a backup, RL <i>does not write a backup file</i>.</b>«<br>&nbsp;&nbsp;&nbsp;&nbsp;»<b>When I <i>export rated tracks to playlist files</i>, RL does not write any playlist files.</b>«</summary><br><p>
