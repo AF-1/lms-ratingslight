@@ -45,7 +45,7 @@ sub initPlugin {
 
 sub toggleUseImporter {
 	my $enableautoscan = $prefs->get('autoscan');
-	if (defined $enableautoscan) {
+	if ($enableautoscan) {
 		main::DEBUGLOG && $log->is_debug && $log->debug('enabling importer');
 		Slim::Music::Import->addImporter('Plugins::RatingsLight::Importer', {
 			'type' => 'post',

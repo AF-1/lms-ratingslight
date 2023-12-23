@@ -131,9 +131,8 @@ sub createBackup {
 }
 
 sub cleanupBackups {
-	my $autodeletebackups = $prefs->get('autodeletebackups');
 	my $backupFilesMin = $prefs->get('backupfilesmin');
-	if (defined $autodeletebackups) {
+	if ($prefs->get('autodeletebackups')) {
 		my $backupDir = $prefs->get('rlfolderpath');
 		return unless (-d $backupDir);
 		my $backupsdaystokeep = $prefs->get('backupsdaystokeep');
@@ -203,7 +202,7 @@ sub importRatingsFromCommentTags {
 			);";
 
 		# unrate previously rated tracks in LMS if comment tag does no longer contain keyword(s)
-		if (!defined $tagimport_dontunrate) {
+		if (!$tagimport_dontunrate) {
 			my $ratingkeyword_unrate = "%%".$rating_keyword_prefix."_".$rating_keyword_suffix."%%";
 
 			my $sth = $dbh->prepare($sqlunrate);
@@ -281,7 +280,7 @@ sub importRatingsFromBPMTags {
 			);";
 
 	# unrate previously rated tracks in LMS if BPM tag value is zero or null
-	if (!defined $tagimport_dontunrate) {
+	if (!$tagimport_dontunrate) {
 		my $sth = $dbh->prepare($sqlunrate);
 		eval {
 			$sth->execute();

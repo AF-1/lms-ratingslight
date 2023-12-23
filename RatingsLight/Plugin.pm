@@ -523,12 +523,7 @@ sub rateAlbumTracks_web {
 	$params->{albumid} = $albumID;
 	$params->{albumname} = $albumName;
 
-	my @ratingValues = ();
-	if (defined $usehalfstarratings) {
-		@ratingValues = qw(100 90 80 70 60 50 40 30 20 10 0);
-	} else {
-		@ratingValues = qw(100 80 60 40 20 0);
-	}
+	my @ratingValues = $usehalfstarratings ? qw(100 90 80 70 60 50 40 30 20 10 0) : qw(100 80 60 40 20 0);
 	$params->{'ratingvalues'} = \@ratingValues;
 
 	my $ratingStrings = {};
@@ -765,12 +760,7 @@ sub getRatingMenu {
 
 	my $cnt = 0;
 
-	my @ratingValues = ();
-	if (defined $usehalfstarratings) {
-		@ratingValues = qw(100 90 80 70 60 50 40 30 20 10 0);
-	} else {
-		@ratingValues = qw(100 80 60 40 20 0);
-	}
+	my @ratingValues = $usehalfstarratings ? qw(100 90 80 70 60 50 40 30 20 10 0) : qw(100 80 60 40 20 0);
 
 	if ($isAlbum) {
 		my $windowTitle = string('PLUGIN_RATINGSLIGHT_RATEALBUM');
@@ -1506,7 +1496,7 @@ sub exportRatingsToPlaylistFiles {
 			$rating100ScaleValueCeil = 100;
 			$rating100ScaleValueFloor = 1;
 		}
-		if (defined $onlyratingsnotmatchtags) {
+		if ($onlyratingsnotmatchtags) {
 			# comment tags
 			if ($filetagtype == 1) {
 				if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
@@ -1574,7 +1564,7 @@ sub exportRatingsToPlaylistFiles {
 			} else {
 				print $output '# contains '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' rated '.(($rating100ScaleValue/20) == 1 ? ($rating100ScaleValue/20).' star' : ($rating100ScaleValue/20).' stars')."\n\n";
 			}
-			if (defined $onlyratingsnotmatchtags) {
+			if ($onlyratingsnotmatchtags) {
 				print $output "# *** This export only contains rated tracks whose ratings differ from the rating value derived from their comment tag keywords. ***\n";
 				print $output "# *** If you want to export ALL rated tracks change the preference on the Ratings Light settings page. ***\n\n";
 			}
@@ -1769,7 +1759,7 @@ sub adjustRatings {
 
 sub backupScheduler {
 	my $scheduledbackups = $prefs->get('scheduledbackups');
-	if (defined $scheduledbackups) {
+	if ($scheduledbackups) {
 		my $backuptime = $prefs->get('backuptime');
 		my $day = $prefs->get('backup_lastday');
 		if (!defined($day)) {
@@ -1830,7 +1820,7 @@ sub restoreFromBackup {
 	my $restorefile = $prefs->get('restorefile');
 
 	if ($restorefile) {
-		if (defined $clearallbeforerestore) {
+		if ($clearallbeforerestore) {
 			clearAllRatings(1);
 		}
 		initRestore();
@@ -2470,7 +2460,7 @@ sub getVirtualLibraries {
 sub initIR {
 	my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
 
-	if (defined $enableIRremotebuttons) {
+	if ($enableIRremotebuttons) {
 		Slim::Control::Request::subscribe(\&newPlayerCheck, [['client']],[['new']]);
 		Slim::Buttons::Common::addMode('PLUGIN.RatingsLight::Plugin', getFunctions(),\&Slim::Buttons::Input::Choice::setMode);
 	} else {
@@ -2738,13 +2728,13 @@ sub writeRatingToDB {
 		my $newTrackRating = $track->rating || 0;
 		if (defined $newTrackRating && $newTrackRating == $rating100ScaleValue) {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")\n");
-			unless (defined($dontlogthis)) {
+			unless (($dontlogthis)) {
 				my $userecentlyratedplaylist = $prefs->get('userecentlyratedplaylist');
 				my $uselogfile = $prefs->get('uselogfile');
-				if (defined $uselogfile) {
+				if ($uselogfile) {
 					logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue);
 				}
-				if (defined $userecentlyratedplaylist) {
+				if ($userecentlyratedplaylist) {
 					addToRecentlyRatedPlaylist($track);
 				}
 			}
@@ -2876,7 +2866,7 @@ sub getRatingTextLine {
 		}
 	}
 
-	if (defined $appended) {
+	if ($appended) {
 		if ($displayratingchar == 1) {
 			my $sepchar = HTML::Entities::decode_entities('&#x2022;'); # "bullet" - HTML Entity (hex): &#x2022;
 			$text = $nobreakspace.$sepchar.$nobreakspace.$text;
@@ -2963,7 +2953,7 @@ sub getTitleFormat_Rating {
 		my $rating100ScaleValue = 0;
 		$rating100ScaleValue = getRatingFromDB($track);
 		if ($rating100ScaleValue > 0) {
-			if (defined $appended) {
+			if ($appended) {
 				$ratingtext = getRatingTextLine($rating100ScaleValue, 'appended');
 			} else {
 				$ratingtext = getRatingTextLine($rating100ScaleValue);
