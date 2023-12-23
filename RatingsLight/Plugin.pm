@@ -227,9 +227,9 @@ sub initPrefs {
 	$prefs->set('status_batchratingplaylisttracks', 0);
 	$prefs->set('status_creatingbackup', 0);
 	$prefs->set('status_restoringfrombackup', 0);
-	$prefs->set('isTSlegacyBackupFile', 0);
 	$prefs->set('status_clearingallratings', 0);
 	$prefs->set('status_adjustingratings', 0);
+	$prefs->set('isTSlegacyBackupFile', 0);
 
 	$prefs->setValidate({
 		validator => sub {
@@ -1396,8 +1396,7 @@ sub importRatingsFromPlaylist {
 		$log->warn('Warning: access to rating values blocked until library scan is completed');
 		return;
 	}
-	my $status_batchratingplaylisttracks = $prefs->get('status_batchratingplaylisttracks');
-	if ($status_batchratingplaylisttracks == 1) {
+	if ($prefs->get('status_batchratingplaylisttracks') == 1) {
 		$log->warn('Import is already in progress, please wait for the previous import to finish');
 		return;
 	}
@@ -1464,8 +1463,7 @@ sub importRatingsFromPlaylist {
 }
 
 sub exportRatingsToPlaylistFiles {
-	my $status_exportingtoplaylistfiles = $prefs->get('status_exportingtoplaylistfiles');
-	if ($status_exportingtoplaylistfiles == 1) {
+	if ($prefs->get('status_exportingtoplaylistfiles') == 1) {
 		$log->warn('Export is already in progress, please wait for the previous export to finish');
 		return;
 	}
@@ -1709,8 +1707,7 @@ sub delayedPostScanRefresh {
 }
 
 sub adjustRatings {
-	my $status_adjustingratings = $prefs->get('status_adjustingratings');
-	if ($status_adjustingratings == 1) {
+	if ($prefs->get('status_adjustingratings') == 1) {
 		$log->warn('RL is already adjusting ratings, please wait for the process to finish');
 		return;
 	}
@@ -1807,10 +1804,7 @@ sub restoreFromBackup {
 		return;
 	}
 
-	my $status_restoringfrombackup = $prefs->get('status_restoringfrombackup');
-	my $clearallbeforerestore = $prefs->get('clearallbeforerestore');
-
-	if ($status_restoringfrombackup == 1) {
+	if ($prefs->get('status_restoringfrombackup') == 1) {
 		$log->warn('Restore is already in progress, please wait for the previous restore to finish');
 		return;
 	}
@@ -1820,9 +1814,7 @@ sub restoreFromBackup {
 	my $restorefile = $prefs->get('restorefile');
 
 	if ($restorefile) {
-		if ($clearallbeforerestore) {
-			clearAllRatings(1);
-		}
+		clearAllRatings(1) if $prefs->get('clearallbeforerestore');
 		initRestore();
 		Slim::Utils::Scheduler::add_task(\&restoreScanFunction);
 	} else {
@@ -2665,15 +2657,13 @@ sub clearAllRatings {
 		return;
 	}
 
-	my $status_clearingallratings = $prefs->get('status_clearingallratings');
-	if ($status_clearingallratings == 1) {
+	if ($prefs->get('status_clearingallratings') == 1) {
 		$log->warn('Clearing ratings is already in progress, please wait for the previous action to finish');
 		return;
 	}
 	$prefs->set('status_clearingallratings', 1);
 	my $started = time();
 
-	my $status_restoringfrombackup = $prefs->get('status_restoringfrombackup');
 	my $sqlunrateall = "update tracks_persistent set rating = null where tracks_persistent.rating >= 0;";
 	my $dbh = Slim::Schema->dbh;
 	my $sth = $dbh->prepare($sqlunrateall);
@@ -2728,15 +2718,9 @@ sub writeRatingToDB {
 		my $newTrackRating = $track->rating || 0;
 		if (defined $newTrackRating && $newTrackRating == $rating100ScaleValue) {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")\n");
-			unless (($dontlogthis)) {
-				my $userecentlyratedplaylist = $prefs->get('userecentlyratedplaylist');
-				my $uselogfile = $prefs->get('uselogfile');
-				if ($uselogfile) {
-					logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue);
-				}
-				if ($userecentlyratedplaylist) {
-					addToRecentlyRatedPlaylist($track);
-				}
+			unless ($dontlogthis) {
+				logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue) if $prefs->get('uselogfile');
+				addToRecentlyRatedPlaylist($track) if $prefs->get('userecentlyratedplaylist');
 			}
 		} else {
 			main::DEBUGLOG && $log->is_debug && $log->debug("Couldn't confirm that the track was successfully rated. Won't add track to rating log file or recently rated playlist. Please check manually if the new track rating has been set.\n");
