@@ -110,7 +110,7 @@ sub createBackup {
 			my $remote = $ratedTrack->{'remote'};
 			my $BACKUPrelFilePath = ($remote == 0 ? getRelFilePath($BACKUPtrackURL) : '');
 			$BACKUPtrackURL = escape($BACKUPtrackURL);
-			$BACKUPrelFilePath = escape($BACKUPrelFilePath) if $BACKUPrelFilePath;
+			$BACKUPrelFilePath = $BACKUPrelFilePath ? escape($BACKUPrelFilePath) : '';
 			my $BACKUPtrackMBID = $ratedTrack->{'musicbrainzid'} || '';
 			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<urlmd5>".$urlmd5."</urlmd5>\n\t\t<relurl>".$BACKUPrelFilePath."</relurl>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<remote>".$remote."</remote>\n\t\t<musicbrainzid>".$BACKUPtrackMBID."</musicbrainzid>\n\t</track>\n";
 		}
