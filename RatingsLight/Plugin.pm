@@ -1048,29 +1048,19 @@ sub handleRatedWebTrackList {
 
 	foreach my $ratedtrack (@{$ratedtracks}) {
 		my $track_id = $ratedtrack->id;
-		my $tracktitle = trimStringLength($ratedtrack->title, 70);
-		my $rating100ScaleValue = getRatingFromDB($ratedtrack);
-		my $ratingtext = getRatingTextLine($rating100ScaleValue, 'appended');
-		$tracktitle = $tracktitle.$ratingtext;
+		my $ratingtext = getRatingTextLine(getRatingFromDB($ratedtrack), 'appended');
+		my $tracktitle = trimStringLength($ratedtrack->title, 70).$ratingtext;
 		my $artworkID = $ratedtrack->album->artwork;
+		my $artistname = trimStringLength($ratedtrack->artist->name, 80);
+		my $artistID = $ratedtrack->artist->id;
+		my $albumname = trimStringLength($ratedtrack->album->name, 80);
+		my $albumID = $ratedtrack->album->id;
 
 		if ($objectType eq 'album') {
-			my $artistname = $ratedtrack->artist->name;
-			$artistname = trimStringLength($artistname, 80);
-			my $artistID = $ratedtrack->artist->id;
 			push (@ratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, artistname => $artistname, artistID => $artistID, artworkid => $artworkID});
 		} elsif ($objectType eq 'artist') {
-			my $albumname = $ratedtrack->album->name;
-			$albumname = trimStringLength($albumname, 80);
-			my $albumID = $ratedtrack->album->id;
 			push (@ratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, albumname => $albumname, albumID => $albumID, artworkid => $artworkID});
 		} elsif (($objectType eq 'genre') || ($objectType eq 'year') || ($objectType eq 'decade') || ($objectType eq 'playlist')) {
-			my $artistname = $ratedtrack->artist->name;
-			$artistname = trimStringLength($artistname, 80);
-			my $artistID = $ratedtrack->artist->id;
-			my $albumname = $ratedtrack->album->name;
-			$albumname = trimStringLength($albumname, 80);
-			my $albumID = $ratedtrack->album->id;
 			push (@ratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, artistname => $artistname, artistID => $artistID, albumname => $albumname, albumID => $albumID, artworkid => $artworkID});
 		}
 		push @alltrackids, $track_id;
