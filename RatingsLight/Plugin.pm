@@ -1462,7 +1462,6 @@ sub exportRatingsToPlaylistFiles {
 	my $exportDir = $prefs->get('rlfolderpath');
 	my $started = time();
 
-	my $filetagtype = $prefs->get('filetagtype');
 	my $onlyratingsnotmatchtags = $prefs->get('onlyratingsnotmatchtags');
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
@@ -1486,7 +1485,7 @@ sub exportRatingsToPlaylistFiles {
 		}
 		if ($onlyratingsnotmatchtags) {
 			# comment tags
-			if ($filetagtype == 1) {
+			if ($prefs->get('filetagtype')) {
 				if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 					$log->warn('Error: no rating keywords found.');
 					return
@@ -1501,7 +1500,7 @@ sub exportRatingsToPlaylistFiles {
 					$sth->bind_param(1, $ratingkeyword);
 				}
 			# BPM tags
-			} elsif ($filetagtype == 0) {
+			} else {
 				if ((defined $exportVL_id) && ($exportVL_id ne '')) {
 						$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValueFloor and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != $rating100ScaleValue or tracks.bpm is null))";
 				} else {
@@ -1704,10 +1703,6 @@ sub adjustRatings {
 	$prefs->set('status_adjustingratings', 1);
 	my $started = time();
 	my $dbh = Slim::Schema->dbh;
-
-	my $rating100ScaleValueCeil = 0;
-	my $rating100ScaleValueFloor = 0;
-	my $singleFile = $prefs->get('playlistexportsinglefile');
 	my @ratedTracks = ();
 
 	my $sql = "select tracks.id, tracks_persistent.rating from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where ifnull(tracks_persistent.rating, 0) != 0";
@@ -1745,8 +1740,7 @@ sub adjustRatings {
 ## backup, restore
 
 sub backupScheduler {
-	my $scheduledbackups = $prefs->get('scheduledbackups');
-	if ($scheduledbackups) {
+	if ($prefs->get('scheduledbackups')) {
 		my $backuptime = $prefs->get('backuptime');
 		my $day = $prefs->get('backup_lastday');
 		if (!defined($day)) {
@@ -2019,7 +2013,7 @@ sub initVirtualLibraries {
 	Slim::Menu::BrowseLibrary->deregisterNode('RatingsLightRatedTracksMenuFolder');
 
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
-	if ($showratedtracksmenus > 0) {
+	if ($showratedtracksmenus && $showratedtracksmenus > 0) {
 		my $started = time();
 		my $topratedminrating = $prefs->get('topratedminrating');
 
@@ -2368,7 +2362,7 @@ sub initVLmenus {
 
 sub refreshVirtualLibraries {
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
-	if ($showratedtracksmenus > 0) {
+	if ($showratedtracksmenus && $showratedtracksmenus > 0) {
 		my $started = time();
 		if ($showratedtracksmenus < 3) {
 			my $library_id = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_RATED');
@@ -2440,9 +2434,7 @@ sub getVirtualLibraries {
 ## IR remote rating
 
 sub initIR {
-	my $enableIRremotebuttons = $prefs->get('enableIRremotebuttons');
-
-	if ($enableIRremotebuttons) {
+	if ($prefs->get('enableIRremotebuttons')) {
 		Slim::Control::Request::subscribe(\&newPlayerCheck, [['client']],[['new']]);
 		Slim::Buttons::Common::addMode('PLUGIN.RatingsLight::Plugin', getFunctions(),\&Slim::Buttons::Input::Choice::setMode);
 	} else {

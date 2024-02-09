@@ -35,8 +35,7 @@ my $serverPrefs = preferences('server');
 
 sub initPlugin {
 	main::DEBUGLOG && $log->is_debug && $log->debug('importer module init');
-	my $preScanBackup = $prefs->get('prescanbackup');
-	if ($preScanBackup) {
+	if ($prefs->get('prescanbackup')) {
 		main::DEBUGLOG && $log->is_debug && $log->debug('creating pre-scan backup before scan process starts');
 		createBackup();
 	}
@@ -44,8 +43,7 @@ sub initPlugin {
 }
 
 sub toggleUseImporter {
-	my $enableautoscan = $prefs->get('autoscan');
-	if ($enableautoscan) {
+	if ($prefs->get('autoscan')) {
 		main::DEBUGLOG && $log->is_debug && $log->debug('enabling importer');
 		Slim::Music::Import->addImporter('Plugins::RatingsLight::Importer', {
 			'type' => 'post',
@@ -61,9 +59,9 @@ sub toggleUseImporter {
 sub startScan {
 	main::DEBUGLOG && $log->is_debug && $log->debug('starting importer');
 	my $filetagtype = $prefs->get('filetagtype');
-	if ($filetagtype == 1) {
+	if ($prefs->get('filetagtype')) {
 		importRatingsFromCommentTags();
-	} elsif ($filetagtype == 0) {
+	} else {
 		importRatingsFromBPMTags();
 	}
 	Slim::Music::Import->endImporter(__PACKAGE__);

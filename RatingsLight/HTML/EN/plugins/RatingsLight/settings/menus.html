@@ -34,7 +34,7 @@
 		<option [% IF prefs.browsemenus_tracks %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
 	</select>
 [% END %]
-[% IF prefs.showratedtracksmenus > 0 %]
+[% IF prefs.showratedtracksmenus && prefs.showratedtracksmenus > 0 %]
 <br>
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SOURCE_VL" desc="PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SOURCE_VL_DESC" %]
 	<select name="pref_browsemenus_sourceVL_id" id="browsemenus_sourceVL_id">
