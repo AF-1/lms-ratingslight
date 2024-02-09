@@ -2812,21 +2812,15 @@ sub getRatingTextLine {
 	my $rating100ScaleValue = shift;
 	my $appended = shift;
 	my $nobreakspace = HTML::Entities::decode_entities('&#xa0;'); # "NO-BREAK SPACE" - HTML Entity (hex): &#xa0;
-	my $displayratingchar = $prefs->get('displayratingchar'); # 0 = common text star *, 1 = blackstar 2605
-	my $ratingchar = ' *';
+	my $displayratingchar = $prefs->get('displayratingchar'); # 0 = common text star *, 1 = "blackstar" - HTML Entity (hex): &#x2605
+	my $ratingchar = ($displayratingchar == 1) ? HTML::Entities::decode_entities('&#x2605;') : ' *';
 	my $fractionchar = HTML::Entities::decode_entities('&#xbd;'); # "vulgar fraction one half" - HTML Entity (hex): &#xbd;
-
-	if ($displayratingchar == 1) {
-		$ratingchar = HTML::Entities::decode_entities('&#x2605;'); # "blackstar" - HTML Entity (hex): &#x2605;
-	}
-	my $text = string('PLUGIN_RATINGSLIGHT_LANGSTRING_UNRATED');
+	my $text = '';
 
 	if ($rating100ScaleValue > 0) {
 		my $detecthalfstars = ($rating100ScaleValue/2)%2;
 		my $ratingstars = $rating100ScaleValue/20;
 		my $spacechar = ' ';
-		my $maxlength = 22;
-		my $spacescount = 0;
 
 		if ($detecthalfstars == 1) {
 			$ratingstars = floor($ratingstars);
@@ -2838,17 +2832,16 @@ sub getRatingTextLine {
 		} else {
 			$text = ($ratingchar x $ratingstars);
 		}
-	}
 
-	if ($appended) {
-		if ($displayratingchar == 1) {
-			my $sepchar = HTML::Entities::decode_entities('&#x2022;'); # "bullet" - HTML Entity (hex): &#x2022;
-			$text = $nobreakspace.$sepchar.$nobreakspace.$text;
-		} else {
-			$text = $nobreakspace.'('.$text.$nobreakspace.')';
+		if ($appended) {
+			if ($displayratingchar == 1) {
+				my $sepchar = HTML::Entities::decode_entities('&#x2022;'); # "bullet" - HTML Entity (hex): &#x2022;
+				$text = $nobreakspace.$sepchar.$nobreakspace.$text;
+			} else {
+				$text = $nobreakspace.'('.$text.$nobreakspace.')';
+			}
 		}
 	}
-
 	return $text;
 }
 
@@ -2926,7 +2919,7 @@ sub getTitleFormat_Rating {
 	if ($track) {
 		my $rating100ScaleValue = 0;
 		$rating100ScaleValue = getRatingFromDB($track);
-		if ($rating100ScaleValue > 0) {
+		if ($rating100ScaleValue > 4) {
 			if ($appended) {
 				$ratingtext = getRatingTextLine($rating100ScaleValue, 'appended');
 			} else {
