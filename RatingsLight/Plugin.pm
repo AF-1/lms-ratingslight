@@ -2813,7 +2813,7 @@ sub getRatingTextLine {
 	my $appended = shift;
 	my $nobreakspace = HTML::Entities::decode_entities('&#xa0;'); # "NO-BREAK SPACE" - HTML Entity (hex): &#xa0;
 	my $displayratingchar = $prefs->get('displayratingchar'); # 0 = common text star *, 1 = "blackstar" - HTML Entity (hex): &#x2605
-	my $ratingchar = ($displayratingchar == 1) ? HTML::Entities::decode_entities('&#x2605;') : ' *';
+	my $ratingchar = $displayratingchar ? HTML::Entities::decode_entities('&#x2605;') : ' *';
 	my $fractionchar = HTML::Entities::decode_entities('&#xbd;'); # "vulgar fraction one half" - HTML Entity (hex): &#xbd;
 	my $text = '';
 
@@ -2824,7 +2824,7 @@ sub getRatingTextLine {
 
 		if ($detecthalfstars == 1) {
 			$ratingstars = floor($ratingstars);
-			if ($displayratingchar == 1) {
+			if ($displayratingchar) {
 				$text = ($ratingchar x $ratingstars).$fractionchar;
 			} else {
 				$text = ($ratingchar x $ratingstars).' '.$fractionchar;
@@ -2834,7 +2834,7 @@ sub getRatingTextLine {
 		}
 
 		if ($appended) {
-			if ($displayratingchar == 1) {
+			if ($displayratingchar) {
 				my $sepchar = HTML::Entities::decode_entities('&#x2022;'); # "bullet" - HTML Entity (hex): &#x2022;
 				$text = $nobreakspace.$sepchar.$nobreakspace.$text;
 			} else {
