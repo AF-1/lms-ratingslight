@@ -2807,7 +2807,7 @@ sub getRatingTextLine {
 	my $displayratingchar = $prefs->get('displayratingchar'); # 0 = common text star *, 1 = "blackstar" - HTML Entity (hex): &#x2605
 	my $ratingchar = $displayratingchar ? HTML::Entities::decode_entities('&#x2605;') : ' *';
 	my $fractionchar = HTML::Entities::decode_entities('&#xbd;'); # "vulgar fraction one half" - HTML Entity (hex): &#xbd;
-	my $text = '';
+	my $text = string('PLUGIN_RATINGSLIGHT_LANGSTRING_UNRATED');
 
 	if ($rating100ScaleValue > 0) {
 		my $detecthalfstars = ($rating100ScaleValue/2)%2;
