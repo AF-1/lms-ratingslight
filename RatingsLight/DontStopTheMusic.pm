@@ -87,7 +87,7 @@ sub dontStopTheMusic {
 	# track min duration
 	my $shared_completelib_sql = " where audio=1 and tracks.secs >= $dstm_minTrackDuration";
 	# excluded genres
-	my $excludegenre_sql = " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.name in ($excludedgenrelist))";
+	my $excludegenre_sql = " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.namesearch in ($excludedgenrelist))";
 
 	### Mix sql
 	# Mix: Rated
