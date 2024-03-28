@@ -1,7 +1,7 @@
 Ratings Light
 ====
 
-**Ratings Light**[^1] takes care of rating tracks in your LMS library.<br>
+**Ratings Light**[^1] takes care of rating tracks in your LMS library. See [**features**](https://github.com/AF-1/lms-ratingslight#features) section for details.<br>
 
 #### LMS web ui view:
 ![LMS web UI](screenshots/lms_webui.jpg)
