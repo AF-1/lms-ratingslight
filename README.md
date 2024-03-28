@@ -1,7 +1,7 @@
 Ratings Light
 ====
 
-A plugin[^1] that takes care of rating tracks in your [Logitech Media Server](https://github.com/Logitech/slimserver) library.<br>
+**Ratings Light**[^1] takes care of rating tracks in your LMS library.<br>
 
 #### LMS web ui view:
 ![LMS web UI](screenshots/lms_webui.jpg)
