@@ -1,7 +1,11 @@
 Ratings Light
 ====
 
-**Ratings Light**[^1] takes care of rating tracks in your LMS library. See [**features**](https://github.com/AF-1/lms-ratingslight#features) section for details.<br>
+**Ratings Light**[^1] takes care of rating tracks in your LMS library. See [**features**](https://github.com/AF-1/lms-ratingslight#features) section for details.
+<br><br><br>
+
+
+## Screenshots[^3]
 
 #### LMS web ui view:
 ![LMS web UI](screenshots/lms_webui.jpg)
@@ -56,9 +60,6 @@ Ratings Light
 * most features should work with **online library tracks** (see [**FAQ**](https://github.com/AF-1/lms-ratingslight#faq))
 
 **Some features are not enabled by default.** Please go to the plugin's settings page to enable them.
-
-[^1]: If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.
-[^2]: Browse menus are provided by LMS. Under certain circumstances you may see (empty) albums or artists in some menus that shouldn't be there. There's nothing I can do about it because LMS creates and provides these menus.<br>Just go down one level: click to *show all tracks* or *show all albums*.<br>In case this LMS issue ever gets resolved, I'll update this page.
 
 <br><br><br><br>
 
@@ -146,4 +147,9 @@ The <b>recently rated playlist</b> keeps a record of all tracks with changed rat
 - <b>Un</b>rating a track (rating = 0) will not delete this track from the playlist because unrating is a rating change too.<br>
 
 If you want to keep detailed track of your rating actions and don't need a playable list, I suggest you use the <b>log file</b>.</p></details><br>
-<br><br>
+<br><br><br>
+
+[^1]: If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.
+[^2]: Browse menus are provided by LMS. Under certain circumstances you may see (empty) albums or artists in some menus that shouldn't be there. There's nothing I can do about it because LMS creates and provides these menus.<br>Just go down one level: click to *show all tracks* or *show all albums*.<br>In case this LMS issue ever gets resolved, I'll update this page.
+[^3]: The screenshots might not correspond to the current UI in every detail.
+
