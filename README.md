@@ -9,23 +9,24 @@ Ratings Light
 
 #### LMS web ui view:
 ![LMS web UI](screenshots/lms_webui.jpg)
-<br><hr><br>
+<br><br><br>
 #### piCorePlayer - *Show more rated tracks by artist* view
 ![piCorePlayer - Show more rated tracks](screenshots/picoreplayer_show_more_rated_tracks.jpg)
-<br><hr><br>
+<br><br><br>
 #### Boom - ratings display, rating menu, *show more rated tracks by artist* view
 ![Boom - ratings menus](screenshots/boom.jpg)
-<br><hr><br>
+<br><br><br>
 #### *Rated Tracks* browse menus
 ![Rated Tracks - Home Menu](screenshots/ratedtracksmenu.jpg)
-<br><hr><br>
+<br><br><br>
 #### *Rated Tracks* context menu
 ![Rated Tracks - Context Menu](screenshots/contextmenu_years.jpg)<br><br>
 (available for artist, album, genre, year and playlist)
-<br><hr><br><br>
+<br><br><br><br>
 #### Ratings Light *Settings* pages
 ![Rated Tracks - Home Menu](screenshots/rl_settings_preview.gif)
-<hr><br>
+<br><br><br>
+
 
 ## Requirements
 
