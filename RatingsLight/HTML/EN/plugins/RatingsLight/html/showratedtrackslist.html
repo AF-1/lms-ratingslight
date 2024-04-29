@@ -23,8 +23,8 @@
 @charset "UTF-8";
 .rlwrapper {
 	display: flex;
-	align-items : center;
-	justify-content : flex-start;
+	align-items: center;
+	justify-content: flex-start;
 }
 .tracktitle {
 	font-size: [% IF systemSkin != 'Classic' %]12[% ELSE %]11[% END %]px;
@@ -37,7 +37,7 @@
 	padding-left: 20px;
 	vertical-align: center;
 }
-.underline-on-hover:hover {text-decoration: underline;}
+.underline-on-hover:hover {text-decoration: underline;}.selectorMarker,.mouseOver{cursor:default !important;}
 </style>
 [% WRAPPER contentcontainer %]
 	[% odd = 1 %]
@@ -53,7 +53,7 @@
 		<span class="rlwrapper">
 			<span class="flexitem"><img src="[% webroot %]plugins/RatingsLight/html/images/allsongs.png" width="35" height="35"></span>
 			<span class="flexitem rltextwrapper">
-				<span class="tracktitle underline-on-hover">[% "PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_ALLSONGS" | string %] ([% trackcount %])</span>
+				<span class="tracktitle">[% "PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_ALLSONGS" | string %] ([% trackcount %])</span>
 		</span>
 		[% END %]
 		[% odd = (not odd) %]

@@ -72,7 +72,7 @@ sub initPlugin {
 	Slim::Control::Request::addDispatch(['ratingslight', 'setratingpercent', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbumoptions', '_albumid'], [1, 1, 1, \&rateAlbumTracksOptions_jive]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratingmenu', '_trackid', '_isalbum', '_unratedonly'], [0, 1, 1, \&getRatingMenu]);
-	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbum', '_albumid', '_rating', '_unratedonly'], [1, 1, 1, \&rateAlbumTracks_jive]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbum', '_albumid', '_rating', '_unratedonly'], [1, 1, 1, \&_rateAlbumTracks]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratedtracksmenu', '_trackid', '_thisid', '_objecttype'], [0, 1, 1, \&getRatedTracksMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'actionsmenu'], [0, 1, 1, \&getActionsMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'], [0, 0, 0, undef]);
@@ -516,12 +516,12 @@ sub rateAlbumTracks_web {
 	my ($client, $params, $callback, $httpClient, $response) = @_;
 
 	my $usehalfstarratings = $prefs->get('usehalfstarratings');
-	my $albumID = $params->{albumid};
-	my $albumName = $params->{albumname};
-	main::DEBUGLOG && $log->is_debug && $log->debug('albumID = '.$albumID.' ## albumName = '.Data::Dump::dump($albumName));
+	my $host = $params->{host} || (Slim::Utils::Network::serverAddr() . ':' . preferences('server')->get('httpport'));
+	$params->{'squeezebox_server_jsondatareq'} = 'http://' . $host . '/jsonrpc.js';
 
+	my $albumID = $params->{albumid};
 	$params->{albumid} = $albumID;
-	$params->{albumname} = $albumName;
+	main::DEBUGLOG && $log->is_debug && $log->debug('albumID = '.$albumID);
 
 	my @ratingValues = $usehalfstarratings ? qw(100 90 80 70 60 50 40 30 20 10 0) : qw(100 80 60 40 20 0);
 	$params->{'ratingvalues'} = \@ratingValues;
@@ -532,11 +532,38 @@ sub rateAlbumTracks_web {
 	}
 	$params->{'ratingstrings'} = $ratingStrings;
 
+	# get album tracks
+	my $album = Slim::Schema->resultset('Album')->single({'id' => $albumID});
+	my $albumName = $album->title;
+	my @albumTracks = $album->tracks;
+	my @albumtracks_webpage = ();
+	my $unratedTrackCount = 0;
+
+	if (scalar @albumTracks > 0) {
+		foreach my $albumtrack (@albumTracks) {
+			my $track_id = $albumtrack->id;
+			my $rating = $albumtrack->rating || 0;
+			$unratedTrackCount++ if !$rating;
+			my $tracktitle = trimStringLength($albumtrack->title, 70);
+			my $artworkID = $albumtrack->album->artwork;
+			my $artistname = trimStringLength($albumtrack->artist->name, 80);
+			my $artistID = $albumtrack->artist->id;
+
+			push (@albumtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, artistname => $artistname, artistID => $artistID, artworkid => $artworkID, rating => $rating});
+		}
+	}
+	$params->{'usehalfstars'} = $usehalfstarratings;
+	$params->{'albumname'} = $albumName;
+	$params->{'trackcount'} = scalar(@albumtracks_webpage);
+	$params->{'unratedtrackcount'} = $unratedTrackCount;
+	$params->{'albumtracks'} = \@albumtracks_webpage;
+
+	# batch rate album tracks
 	my $albumRatingValue = $params->{'albumratingvalue'};
 	if (defined($albumRatingValue)) {
 		my $unratedOnly = $params->{'unratedonly'};
 		main::DEBUGLOG && $log->is_debug && $log->debug('albumRatingValue = '.$albumRatingValue.' ## unratedOnly = '.Data::Dump::dump($unratedOnly));
-		my $ratingSuccess = rateAlbum($albumID, $albumRatingValue, $unratedOnly);
+		my $ratingSuccess = _rateAlbum($albumID, $albumRatingValue, $unratedOnly);
 		if (!$ratingSuccess) {
 			$params->{'failed'} = 1;
 		} else {
@@ -589,7 +616,7 @@ sub rateAlbumTracksOptions_jive {
 	$request->setStatusDone();
 }
 
-sub rateAlbumTracks_jive {
+sub _rateAlbumTracks {
 	my $request = shift;
 	my $client = $request->client();
 
@@ -606,10 +633,10 @@ sub rateAlbumTracks_jive {
 	my $albumID = $request->getParam('_albumid');
 	my $albumRatingValue = $request->getParam('_rating');
 	main::DEBUGLOG && $log->is_debug && $log->debug('albumID = '.$albumID.' ## albumRatingValue = '.$albumRatingValue);
-	return unless $albumID && $albumRatingValue;
+	return unless $albumID && defined($albumRatingValue);
 	my $unratedOnly = $request->getParam('_unratedonly');
 
-	my $ratingSuccess = rateAlbum($albumID, $albumRatingValue, $unratedOnly);
+	my $ratingSuccess = _rateAlbum($albumID, $albumRatingValue, $unratedOnly);
 	my $message = '';
 	if ($ratingSuccess) {
 		$message = string('PLUGIN_RATINGSLIGHT_RATEALBUM_SUCCESS');
@@ -626,7 +653,7 @@ sub rateAlbumTracks_jive {
 	$request->setStatusDone();
 }
 
-sub rateAlbum {
+sub _rateAlbum {
 	my ($albumID, $albumRatingValue, $unratedOnly) = @_;
 
 	my $album = Slim::Schema->resultset('Album')->single({'id' => $albumID});
@@ -1084,7 +1111,6 @@ sub handleRatedWebTrackList {
 
 	$listheadername = trimStringLength($listheadername, 50);
 	$params->{listheadername} = $listheadername;
-
 	$params->{trackcount} = scalar(@ratedtracks_webpage);
 	$params->{alltrackids} = $listalltrackids;
 	$params->{ratedtracks} = \@ratedtracks_webpage;

@@ -1,50 +1,512 @@
 [% thisname = 'PLUGIN_RATINGSLIGHT_RATEALBUM' | string %]
-[% pagetitle = 'PLUGIN_RATINGSLIGHT_WEB_ALBUMRATE_INFOPREFIX' | string; pagetitle = pagetitle _ " (" _ albumname _ ") > " _ thisname %]
+[% pagetitle = 'PLUGIN_RATINGSLIGHT_WEB_ALBUMRATE_INFOPREFIX' | string; pagetitle = pagetitle _ " (" _ albumname _ ") ";IF systemSkin == 'Classic';pagetitle = pagetitle _ "/ ";ELSE;pagetitle = pagetitle _ "> ";END;pagetitle = pagetitle _ thisname %]
 [% pwd_list = [ pagetitle ] %]
 [% PROCESS pageheader.html %]
-<style>.wrapper{padding:5px;}.titlebold{font-weight:bold;}.inputbtn{padding:2px;}.filler{height:15px;}.warning{color:red;}</style>
-<br>
-<div class="wrapper">
-	<span class="titlebold">[% "PLUGIN_RATINGSLIGHT_RATEALBUM_HEADER" | string %] [% albumname %]</span>
-</div>
-<form action="[% webroot %]plugins/RatingsLight/html/ratealbumtracksoptions.html" name="rateAlbumTracksForm" method="post">
-	<div class="wrapper">
-		<table>
-			<tr>
-				<td>
-					<input type="checkbox" name="unratedonly" value="1" onclick="changeNumSelected(this)">&nbsp;&nbsp;[% "PLUGIN_RATINGSLIGHT_RATEALBUM_ONLYUNRATED" | string %]
-				</td>
-			</tr>
-			<tr class="filler">&nbsp;</tr>
-			<tr>
-				<td>
-					<select name="albumratingvalue">
-						[% FOREACH ratingval IN ratingvalues %]
-						<option value="[% ratingval %]">[% ratingstrings.$ratingval %]</option>
-						[% END %]
-					</select>
-				</td>
-			</tr>
-			<tr class="filler">&nbsp;</tr>
-			<input type="hidden" name="albumid" value="[% albumid %]">
-			<input type="hidden" name="albumname" value="[% albumname %]">
-			<tr>
-				<td>
-					<input class="inputbtn" type="submit" value="[% "PLUGIN_RATINGSLIGHT_RATEALBUM_BUTTON" | string %]">
-				</td>
-			</tr>
-		</table>
-	</div>
-</form>
-<br><br><br>
-<div class="wrapper warning">
-	[% IF failed %][% "PLUGIN_RATINGSLIGHT_RATEALBUM_FAILED" | string %][% END %]
-</div>
+<style>.wrapper{padding:5px;}.titlebold{font-weight:bold;}.inputbtn{padding:2px;}.filler{height:15px;}.warning{color:red;}.rlwrapper{display: flex;align-items: center;justify-content: flex-start;}.tracktitle{font-size:[% IF systemSkin != 'Classic' %]12[% ELSE %]11[% END %]px;}.secondline{margin-top: 2px;font-size:[% IF systemSkin != 'Classic' %]11[% ELSE %]10[% END %]px;}.rltextwrapper{padding-left: 20px;vertical-align: center;}.underline-on-hover:hover{text-decoration: underline;}.selectorMarker,.mouseOver{cursor:default !important;}
+@font-face {
+	font-family: 'fontawesome-light';
+	src: url('[% webroot %]plugins/RatingsLight/html/font/fontawesome-light.woff?hnb8y9') format('woff');
+	font-weight: normal;
+	font-style: normal;
+}
+.fa {
+	display: inline-block;
+	font: normal normal normal 11px/1 fontawesome-light;
+	font-size: inherit;
+	text-rendering: auto;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+.fa-star:before {
+	content: "\f005";
+}
+.fa-star-o:before {
+	content: "\f006";
+}
+.fa-remove:before {
+	content: "\f00d";
+}
+.fa-star-half:before {
+	content: "\f089";
+}
+.fa-star-half-empty:before,
+.fa-star-half-full:before,
+.fa-star-half-o:before {
+	content: "\f123";
+}
 
-[% IF albumrated %]
-<script type="text/javascript">
-		setTimeout(location.href = "[% webroot %]clixmlbrowser/clicmd=browselibrary+items&linktitle=BROWSE_BY_ALBUM&mode=albums/index.html?mode=albums&player=[% playerURI %]", 500);
-</script>
+/* Thanks to Andrea Crawford for her pen: https://codepen.io/andreacrawford/pen/NvqJXW */
+.ratingtitle {
+}
+.rating-group {
+	display: inline-flex;
+}
+.rating__icon {
+	pointer-events: none;
+}
+.rating__input {
+	position: absolute !important;
+	left: -9999px !important;
+}
+.rating__label {
+	cursor: pointer;
+	/* if you change the left/right padding, update the margin-right property of .rating__label--half as well. */
+	padding: 0 3px;
+	font-size: 11px;
+}
+@supports not (-moz-appearance:none) {
+	.rating__label {
+		align-self: center;
+		margin: 0 auto;
+	}
+}
+.rating__label--half {
+	padding-right: 0;
+	margin-right: -8px;
+	z-index: 2;
+}
+.rating__icon--star {
+	color: [% IF systemSkin == "DarkDefault" %]#ddd[% ELSE %]black[% END %];
+}
+.rating__icon--none {
+	color: [% IF systemSkin == "DarkDefault" %]#ddd[% ELSE %]black[% END %];
+}
+.rating__input:checked ~ .rating__label .rating__icon--star {
+	color: [% IF systemSkin == "DarkDefault" %]black[% ELSE %]#ddd[% END %];
+}
+.rating-group:hover .rating__label .rating__icon--star,
+.rating-group:hover .rating__label--half .rating__icon--star {
+	color: [% IF systemSkin == "DarkDefault" %]#ddd[% ELSE %]black[% END %];
+}
+.rating__input:hover ~ .rating__label .rating__icon--star,
+.rating__input:hover ~ .rating__label--half .rating__icon--star {
+	color: [% IF systemSkin == "DarkDefault" %]black[% ELSE %]#ddd[% END %];
+}
+.rating-group:hover .rating__input--none:not(:hover) + .rating__label .rating__icon--none {
+	color: [% IF systemSkin == "DarkDefault" %]#ddd[% ELSE %]black[% END %];
+}
+.rating__input--none:hover + .rating__label .rating__icon--none {
+	color: red;
+}
+.greystars {
+	color: [% IF systemSkin == "DarkDefault" %]black[% ELSE %]#ddd[% END %] !important;
+}
+.invisible, .label__allunrated {
+	visibility: hidden;
+}
+.unratebtn .rating__label .rating__icon--none {
+	font-size: 11px !important;
+}
+[% IF systemSkin == "Classic" %]
+.rating__icon--none {
+	margin-top: -12px !important;
+}
 [% END %]
+.browsedbControls {visibility:visible;}
+</style>
+<br>
+[% IF systemSkin == "DarkDefault" || systemSkin == "Default" || systemSkin == "Classic" %]
+	[% WRAPPER contentcontainer %]
+		[% odd = 1 %]
+		[% IF trackcount > 1 %]
+			[% BLOCK controls_allsongs %]
+		<div id="rating-group-all" class="ratingwrapper">
+			<span class="rating-group">
+				<input class="rating__input rating__input--none" name="trackrating-all" id="all-ratinghalfstars-0" value="0" type="radio" checked>
+				<label aria-label="0 stars" class="rating__label" for="all-ratinghalfstars-0">&nbsp;</label>
+				<label aria-label="0.5 stars" title="0.5 stars" class="rating__label rating__label--half" for="all-ratinghalfstars-10"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-all" id="all-ratinghalfstars-10" value="10" type="radio">
+				<label aria-label="1 star" title="1 star" class="rating__label" for="all-ratinghalfstars-20"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-all" id="all-ratinghalfstars-20" value="20" type="radio">
+				<label aria-label="1.5 stars" title="1.5 stars" class="rating__label rating__label--half" for="all-ratinghalfstars-30"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-all" id="all-ratinghalfstars-30" value="30" type="radio">
+				<label aria-label="2 stars" title="2 stars" class="rating__label" for="all-ratinghalfstars-40"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-all" id="all-ratinghalfstars-40" value="40" type="radio">
+				<label aria-label="2.5 stars" title="2.5 stars" class="rating__label rating__label--half" for="all-ratinghalfstars-50"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-all" id="all-ratinghalfstars-50" value="50" type="radio">
+				<label aria-label="3 stars" title="3 stars" class="rating__label" for="all-ratinghalfstars-60"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-all" id="all-ratinghalfstars-60" value="60" type="radio">
+				<label aria-label="3.5 stars" title="3.5 stars" class="rating__label rating__label--half" for="all-ratinghalfstars-70"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-all" id="all-ratinghalfstars-70" value="70" type="radio">
+				<label aria-label="4 stars" title="4 stars" class="rating__label" for="all-ratinghalfstars-80"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-all" id="all-ratinghalfstars-80" value="80" type="radio">
+				<label aria-label="4.5 stars" title="4.5 stars" class="rating__label rating__label--half" for="all-ratinghalfstars-90"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-all" id="all-ratinghalfstars-90" value="90" type="radio">
+				<label aria-label="5 stars" title="5 stars" class="rating__label" for="all-ratinghalfstars-100"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-all" id="all-ratinghalfstars-100" value="100" type="radio">
+				&nbsp;
+			</span>
+			<span id="unratebtn-all" class="unratebtn">
+				<input class="rating__input rating__input--none" name="trackrating-all" id="all-ratinghalfstars-0x" value="0" type="radio">
+				<label aria-label="Unrate" title="Unrate all album tracks" class="rating__label" for="all-ratinghalfstars-0x"><i class="rating__icon rating__icon--none fa fa-remove"></i></label>
+			</span>
+		</div>
+			[% END %]
+			[%- WRAPPER contentitem controls='controls_allsongs' %]
+			<span[% IF systemSkin != "Classic" %] class="rlwrapper"[% END %]>
+				[% IF systemSkin != "Classic" %]
+				<span class="flexitem"><img src="[% webroot %]plugins/RatingsLight/html/images/allsongs.png" width="35" height="35"></span>
+				[% END %]
+				<span[% IF systemSkin != "Classic" %] class="flexitem rltextwrapper"[% END %]>
+					<span class="tracktitle">[% "PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS_ALL" | string %]</span>
+			</span>
+			[% END %]
+			[% odd = (not odd) %]
+			[% IF unratedtrackcount > 1 && unratedtrackcount != trackcount %]
+				[% BLOCK controls_allunratedsongs %]
+		<div id="rating-group-allunrated" class="ratingwrapper">
+			<span class="rating-group">
+				<input class="rating__input rating__input--none" name="trackrating-allunrated" id="allunrated-ratinghalfstars-0" value="0" type="radio" checked>
+				<label aria-label="0 stars" class="rating__label" for="allunrated-ratinghalfstars-0">&nbsp;</label>
+				<label aria-label="0.5 stars" title="0.5 stars" class="rating__label rating__label--half" for="allunrated-ratinghalfstars-10"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-allunrated" id="allunrated-ratinghalfstars-10" value="10" type="radio">
+				<label aria-label="1 star" title="1 star" class="rating__label" for="allunrated-ratinghalfstars-20"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-allunrated" id="allunrated-ratinghalfstars-20" value="20" type="radio">
+				<label aria-label="1.5 stars" title="1.5 stars" class="rating__label rating__label--half" for="allunrated-ratinghalfstars-30"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-allunrated" id="allunrated-ratinghalfstars-30" value="30" type="radio">
+				<label aria-label="2 stars" title="2 stars" class="rating__label" for="allunrated-ratinghalfstars-40"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-allunrated" id="allunrated-ratinghalfstars-40" value="40" type="radio">
+				<label aria-label="2.5 stars" title="2.5 stars" class="rating__label rating__label--half" for="allunrated-ratinghalfstars-50"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-allunrated" id="allunrated-ratinghalfstars-50" value="50" type="radio">
+				<label aria-label="3 stars" title="3 stars" class="rating__label" for="allunrated-ratinghalfstars-60"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-allunrated" id="allunrated-ratinghalfstars-60" value="60" type="radio">
+				<label aria-label="3.5 stars" title="3.5 stars" class="rating__label rating__label--half" for="allunrated-ratinghalfstars-70"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-allunrated" id="allunrated-ratinghalfstars-70" value="70" type="radio">
+				<label aria-label="4 stars" title="4 stars" class="rating__label" for="allunrated-ratinghalfstars-80"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-allunrated" id="allunrated-ratinghalfstars-80" value="80" type="radio">
+				<label aria-label="4.5 stars" title="4.5 stars" class="rating__label rating__label--half" for="allunrated-ratinghalfstars-90"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-allunrated" id="allunrated-ratinghalfstars-90" value="90" type="radio">
+				<label aria-label="5 stars" title="5 stars" class="rating__label" for="allunrated-ratinghalfstars-100"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-allunrated" id="allunrated-ratinghalfstars-100" value="100" type="radio">
+				&nbsp;
+			</span>
+			<span id="unratebtn-allunrated" class="unratebtn">
+				<label aria-label="Unrate" title="Unrate all album tracks" class="rating__label invisible"><i class="rating__icon rating__icon--none fa fa-remove"></i></label>
+			</span>
+		</div>
+				[% END %]
+				[%- WRAPPER contentitem controls='controls_allunratedsongs' %]
+				<span[% IF systemSkin != "Classic" %] class="rlwrapper"[% END %]>
+					[% IF systemSkin != "Classic" %]
+					<span class="flexitem"><img src="[% webroot %]plugins/RatingsLight/html/images/allsongs.png" width="35" height="35"></span>
+					[% END %]
+					<span[% IF systemSkin != "Classic" %] class="flexitem rltextwrapper"[% END %]>
+						<span class="tracktitle">[% "PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS_UNRATED_ALL" | string %]</span>
+				</span>
+				[% END %]
+				[% odd = (not odd) %]
+			[% END %]
+		[% END %]
 
+		[% FOREACH albumtrack IN albumtracks %]
+			[% BLOCK controls %]
+		<div id="rating-group-[% albumtrack.trackid %]" class="ratingwrapper">
+			<span class="rating-group">
+				<input class="rating__input rating__input--none" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-0" value="0" type="radio"[% IF albumtrack.rating == 0 %] checked[% END %]>
+				<label aria-label="0 stars" class="rating__label" for="[% albumtrack.trackid %]-ratinghalfstars-0">&nbsp;</label>
+				<label aria-label="0.5 stars"[% IF usehalfstars %] title="0.5 stars"[% END %] class="rating__label rating__label--half" for="[% albumtrack.trackid %]-ratinghalfstars-10"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-10" value="10" type="radio"[% IF albumtrack.rating == 10 %] checked[% END %][% UNLESS usehalfstars %] disabled[% END %]>
+				<label aria-label="1 star" title="1 star" class="rating__label" for="[% albumtrack.trackid %]-ratinghalfstars-20"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-20" value="20" type="radio"[% IF albumtrack.rating == 20 %] checked[% END %]>
+				<label aria-label="1.5 stars"[% IF usehalfstars %] title="1.5 stars"[% END %] class="rating__label rating__label--half" for="[% albumtrack.trackid %]-ratinghalfstars-30"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-30" value="30" type="radio"[% IF albumtrack.rating == 30 %] checked[% END %][% UNLESS usehalfstars %] disabled[% END %]>
+				<label aria-label="2 stars" title="2 stars" class="rating__label" for="[% albumtrack.trackid %]-ratinghalfstars-40"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-40" value="40" type="radio"[% IF albumtrack.rating == 40 %] checked[% END %]>
+				<label aria-label="2.5 stars"[% IF usehalfstars %] title="2.5 stars"[% END %] class="rating__label rating__label--half" for="[% albumtrack.trackid %]-ratinghalfstars-50"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-50" value="50" type="radio"[% IF albumtrack.rating == 50 %] checked[% END %][% UNLESS usehalfstars %] disabled[% END %]>
+				<label aria-label="3 stars" title="3 stars" class="rating__label" for="[% albumtrack.trackid %]-ratinghalfstars-60"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-60" value="60" type="radio"[% IF albumtrack.rating == 60 %] checked[% END %]>
+				<label aria-label="3.5 stars"[% IF usehalfstars %] title="3.5 stars"[% END %] class="rating__label rating__label--half" for="[% albumtrack.trackid %]-ratinghalfstars-70"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-70" value="70" type="radio"[% IF albumtrack.rating == 70 %] checked[% END %][% UNLESS usehalfstars %] disabled[% END %]>
+				<label aria-label="4 stars" title="4 stars" class="rating__label" for="[% albumtrack.trackid %]-ratinghalfstars-80"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-80" value="80" type="radio"[% IF albumtrack.rating == 80 %] checked[% END %]>
+				<label aria-label="4.5 stars"[% IF usehalfstars %] title="4.5 stars"[% END %] class="rating__label rating__label--half" for="[% albumtrack.trackid %]-ratinghalfstars-90"><i class="rating__icon rating__icon--star fa fa-star-half"></i></label>
+				<input class="rating__input" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-90" value="90" type="radio"[% IF albumtrack.rating == 90 %] checked[% END %][% UNLESS usehalfstars %] disabled[% END %]>
+				<label aria-label="5 stars" title="5 stars" class="rating__label" for="[% albumtrack.trackid %]-ratinghalfstars-100"><i class="rating__icon rating__icon--star fa fa-star"></i></label>
+				<input class="rating__input" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-100" value="100" type="radio"[% IF albumtrack.rating == 100 %] checked[% END %]>
+				&nbsp;
+		</span>
+		<span id="unratebtn-[% albumtrack.trackid %]" class="unratebtn[% IF !albumtrack.rating %] invisible[% END %]">
+			<input class="rating__input rating__input--none" name="trackrating-[% albumtrack.trackid %]" id="[% albumtrack.trackid %]-ratinghalfstars-0x" value="0" type="radio">
+			<label aria-label="Unrate" title="Unrate" class="rating__label" for="[% albumtrack.trackid %]-ratinghalfstars-0x"><i class="rating__icon rating__icon--none fa fa-remove"></i></label>
+		</span>
+	</div>
+
+			[% END %]
+			[%- WRAPPER contentitem controls='controls' %]
+			<span class="rlwrapper">
+				[% IF systemSkin == "Classic" %]
+				<span>
+					<a class="tracktitle underline-on-hover" href="[% webroot %]songinfo.html?item=[% albumtrack.trackid %]&amp;player=[% playerURI %]">[% albumtrack.tracktitle %]</a>&nbsp;&nbsp;<i>by</i>&nbsp;
+					<a class="artistname underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=artists&artist_id=[% albumtrack.artistID %]&linktitle=[% pagetitle %]&player=[% playerURI %]/index.html?index=0">[% albumtrack.artistname %]</a>
+				</span>
+				[% ELSE %]
+				<span class="flexitem playlistcover">
+					<img [% IF albumtrack.artworkid %]src="/music/[% albumtrack.artworkid %]/cover_350x35_o" srcset="/music/[% albumtrack.artworkid %]/cover_100x100_o 2x"[% ELSE %]src="[% webroot %]plugins/RatingsLight/html/images/coverplaceholder.png"[% END %] width="35" height="35" onload="resize(this, 35)">
+				</span>
+				<span[% IF systemSkin != "Classic" %] class="flexitem rltextwrapper"[% END %]>
+					<a class="tracktitle underline-on-hover" href="[% webroot %]songinfo.html?item=[% albumtrack.trackid %]&amp;player=[% playerURI %]">[% albumtrack.tracktitle %]</a>
+					<br>
+					<a class="artistname underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=artists&artist_id=[% albumtrack.artistID %]&linktitle=[% pagetitle %]&player=[% playerURI %]/index.html?index=0">[% albumtrack.artistname %]</a>
+				</span>
+				[% END %]
+			</span>
+			[% END %]
+		[% odd = (not odd) %]
+		[% END %]
+	[% END %]
+
+	<script type="text/javascript">
+		function refreshPage() {
+			location.href = "[% webroot %]plugins/RatingsLight/html/ratealbumtracksselect.html?albumid=[% albumid %]&player=[% playerURI %]";
+		}
+
+		function setRating(playerid, cmd, id, value, reload, onlyunrated) {
+			const serverjsonurl = "[% squeezebox_server_jsondatareq %]";
+			const vsBody = JSON.stringify({
+				id: 1,
+				method: 'slim.request',
+				params: [playerid, ['ratingslight', cmd, id, value, onlyunrated]]
+			});
+
+			async function sendPrefChange() {
+				var vspref = new XMLHttpRequest();
+				vspref.open("POST", serverjsonurl);
+				vspref.setRequestHeader("Content-type", "application/json");
+				vspref.onreadystatechange = function () {
+				//console.log(vspref.responseText);
+				};
+				let response = await vspref.send(vsBody);
+			}
+
+			sendPrefChange().then(() => {
+				if (reload) {
+					setTimeout(refreshPage, 1000);
+				}
+			}).catch(function(error) {
+				console.log(error);
+			});
+		}
+
+		let albumtracks = {};
+		albumtracks = new Map();
+
+		[% FOREACH albumtrack IN albumtracks %]
+		albumtracks.set([% albumtrack.trackid %],[% albumtrack.rating %]);
+		[% END %]
+		//console.log('albumtracks = ',albumtracks);
+		let trackids = [...albumtracks.keys()];
+
+		let unratedtrackcount = [% unratedtrackcount %];
+
+
+		//////// single tracks
+		trackids.forEach((trackid) => {
+			let ratingGroupContainer = document.getElementById('rating-group-'+trackid);
+
+			[% UNLESS usehalfstars %]
+			ratingGroupContainer.addEventListener('mouseover', function() {
+				var halfstars = ratingGroupContainer.querySelectorAll(':scope .fa-star-half');
+				for (var i = 0; i < halfstars.length; i++) {
+					halfstars[i].classList.add("invisible");
+				}
+			});
+			ratingGroupContainer.addEventListener('mouseout', function() {
+				var halfstars = ratingGroupContainer.querySelectorAll(':scope .fa-star-half');
+				for (var i = 0; i < halfstars.length; i++) {
+					halfstars[i].classList.remove("invisible");
+				}
+			});
+			[% END %]
+
+			var ratings = ratingGroupContainer.querySelectorAll(":scope input[name=trackrating-"+trackid+"]");
+			for (var i = 0; i < ratings.length; i++) {
+				ratings[i].addEventListener('click', function() {
+					ratings.forEach((trackrating) => {
+						let currentRating = albumtracks.get(trackid);
+						//console.log('current rating: ',currentRating);
+						if (trackrating.checked && trackrating.value != currentRating) {
+							//console.log('new rating '+trackrating.value+' != current rating '+currentRating);
+							let thisreload = 0;
+							if (trackrating.value == 0) {
+								ratings.forEach((trackrating) => {
+									if (trackrating.value == 0) {
+										trackrating.checked = false;
+									}
+								});
+								document.getElementById(trackid+'-ratinghalfstars-0').checked = true;
+								document.getElementById('unratebtn-'+trackid).style.visibility = 'hidden';
+								if ((unratedtrackcount == 1) || (unratedtrackcount == ([% trackcount %] - 1))) {thisreload = 1;}
+								unratedtrackcount++;
+								//console.log('0 rating: unratedtrackcount: ',unratedtrackcount);
+							} else {
+								document.getElementById('unratebtn-'+trackid).style.visibility = 'visible';
+								if ((unratedtrackcount == 2) || (unratedtrackcount == [% trackcount %])) {thisreload = 1;}
+								if (currentRating == 0 && unratedtrackcount > 0) {unratedtrackcount--;}
+								//console.log('non-0 rating: unratedtrackcount: ',unratedtrackcount);
+							}
+							albumtracks.set(trackid, trackrating.value);
+							//console.log('updated rating: ',albumtracks.get(trackid));
+
+							setRating(playerid, "setratingpercent", trackid, trackrating.value, thisreload);
+						}
+					});
+				});
+			};
+
+			let unrateBtn = document.getElementById('unratebtn-'+trackid);
+			unrateBtn.addEventListener('mouseover', function() {
+				var stars = ratingGroupContainer.querySelectorAll(':scope .rating-group .rating__label .rating__icon--star, .rating-group .rating__label--half .rating__icon--star');
+				for (var i = 0; i < stars.length; i++) {
+					stars[i].classList.add("greystars");
+				}
+			});
+
+			unrateBtn.addEventListener('mouseout', function() {
+				var stars = ratingGroupContainer.querySelectorAll(':scope .rating-group .rating__label .rating__icon--star, .rating-group .rating__label--half .rating__icon--star');
+				for (var i = 0; i < stars.length; i++) {
+					stars[i].classList.remove("greystars");
+				}
+			});
+		});
+
+
+		//////// rate ALL tracks
+	[% IF trackcount > 1 %]
+		let ratingAllGroupContainer = document.getElementById('rating-group-all');
+		//console.log(ratingGroupContainer);
+
+		[% UNLESS usehalfstars %]
+		ratingAllGroupContainer.addEventListener('mouseover', function() {
+			var halfstars = ratingAllGroupContainer.querySelectorAll(':scope .fa-star-half');
+			for (var i = 0; i < halfstars.length; i++) {
+				halfstars[i].classList.add("invisible");
+			}
+		});
+		ratingAllGroupContainer.addEventListener('mouseout', function() {
+			var halfstars = ratingAllGroupContainer.querySelectorAll(':scope .fa-star-half');
+			for (var i = 0; i < halfstars.length; i++) {
+				halfstars[i].classList.remove("invisible");
+			}
+		});
+		[% END %]
+
+		var ratingsall = ratingAllGroupContainer.querySelectorAll(":scope input[name=trackrating-all]");
+		for (var i = 0; i < ratingsall.length; i++) {
+			ratingsall[i].addEventListener('click', function() {
+				ratingsall.forEach((trackrating) => {
+					if (trackrating.checked) {
+						//console.log('new rating '+trackrating.value);
+						if (trackrating.value == 0) {
+							ratingsall.forEach((trackrating) => {
+								if (trackrating.value == 0) {
+									trackrating.checked = false;
+								}
+							});
+							document.getElementById('all-ratinghalfstars-0').checked = true;
+							document.getElementById('unratebtn-all').style.visibility = 'hidden';
+						} else {
+							document.getElementById('unratebtn-all').style.visibility = 'visible';
+						}
+
+						setRating(playerid, "ratealbum", [% albumid %], trackrating.value, 1);
+					}
+				});
+			});
+		};
+
+		let unrateBtn = document.getElementById('unratebtn-all');
+		unrateBtn.addEventListener('mouseover', function() {
+			var stars = ratingAllGroupContainer.querySelectorAll(':scope .rating-group .rating__label .rating__icon--star, .rating-group .rating__label--half .rating__icon--star');
+			for (var i = 0; i < stars.length; i++) {
+				stars[i].classList.add("greystars");
+			}
+		});
+
+		unrateBtn.addEventListener('mouseout', function() {
+			var stars = ratingAllGroupContainer.querySelectorAll(':scope .rating-group .rating__label .rating__icon--star, .rating-group .rating__label--half .rating__icon--star');
+			for (var i = 0; i < stars.length; i++) {
+				stars[i].classList.remove("greystars");
+			}
+		});
+	[% END %]
+
+		//////// rate ALL unrated tracks
+	[% IF unratedtrackcount > 1 && unratedtrackcount != trackcount %]
+		let ratingAllUnratedGroupContainer = document.getElementById('rating-group-allunrated');
+		//console.log(ratingGroupContainer);
+
+
+		[% UNLESS usehalfstars %]
+		ratingAllUnratedGroupContainer.addEventListener('mouseover', function() {
+			var halfstars = ratingAllUnratedGroupContainer.querySelectorAll(':scope .fa-star-half');
+			for (var i = 0; i < halfstars.length; i++) {
+				halfstars[i].classList.add("invisible");
+			}
+		});
+		ratingAllUnratedGroupContainer.addEventListener('mouseout', function() {
+			var halfstars = ratingAllUnratedGroupContainer.querySelectorAll(':scope .fa-star-half');
+			for (var i = 0; i < halfstars.length; i++) {
+				halfstars[i].classList.remove("invisible");
+			}
+		});
+		[% END %]
+
+		var ratingsallunrated = ratingAllUnratedGroupContainer.querySelectorAll(":scope input[name=trackrating-allunrated]");
+		for (var i = 0; i < ratingsallunrated.length; i++) {
+			ratingsallunrated[i].addEventListener('click', function() {
+				ratingsallunrated.forEach((trackrating) => {
+					if (trackrating.checked) {
+						//console.log('new rating '+trackrating.value);
+						setRating(playerid, "ratealbum", [% albumid %], trackrating.value, 1, 1);
+					}
+				});
+			});
+		};
+	[% END %]
+	</script>
+[% ELSE %]
+	<div class="wrapper">
+		<span class="titlebold">[% "PLUGIN_RATINGSLIGHT_RATEALBUM_HEADER" | string %] [% albumname %]</span>
+	</div>
+	<form action="[% webroot %]plugins/RatingsLight/html/ratealbumtracksoptions.html" name="rateAlbumTracksForm" method="post">
+		<div class="wrapper">
+			<table>
+				<tr>
+					<td>
+						<input type="checkbox" name="unratedonly" value="1">&nbsp;&nbsp;[% "PLUGIN_RATINGSLIGHT_RATEALBUM_ONLYUNRATED" | string %]
+					</td>
+				</tr>
+				<tr class="filler">&nbsp;</tr>
+				<tr>
+					<td>
+						<select name="albumratingvalue">
+							[% FOREACH ratingval IN ratingvalues %]
+							<option value="[% ratingval %]">[% ratingstrings.$ratingval %]</option>
+							[% END %]
+						</select>
+					</td>
+				</tr>
+				<tr class="filler">&nbsp;</tr>
+				<input type="hidden" name="albumid" value="[% albumid %]">
+				<tr>
+					<td>
+						<input class="inputbtn" type="submit" value="[% "PLUGIN_RATINGSLIGHT_RATEALBUM_BUTTON" | string %]">
+					</td>
+				</tr>
+			</table>
+		</div>
+	</form>
+	<br>
+	[% IF failed %]<br><br>
+	<div class="wrapper warning">
+		[% "PLUGIN_RATINGSLIGHT_RATEALBUM_FAILED" | string %]
+	</div>
+	[% END %]
+	[% IF albumrated %]
+	<script type="text/javascript">
+		setTimeout(location.href = "[% webroot %]clixmlbrowser/clicmd=albuminfo+items&album_id=[% albumid %]&linktitle=Information%20([% albumname %])/index.html?player=[% playerURI %]", 500);
+	</script>
+	[% END %]
+[% END %]
 [% PROCESS pagefooter.html %]
