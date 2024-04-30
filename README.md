@@ -2,6 +2,8 @@ Ratings Light
 ====
 
 **Ratings Light**[^1] takes care of rating tracks in your LMS library. See [**features**](https://github.com/AF-1/lms-ratingslight#features) section for details.
+<br><br>
+<a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
 <br><br><br>
 
 
@@ -25,17 +27,6 @@ Ratings Light
 <br><br><br><br>
 #### Ratings Light *Settings* pages
 ![Rated Tracks - Home Menu](screenshots/rl_settings_preview.gif)
-<br><br><br>
-
-
-## Requirements
-
-- LMS version >= **8**.0
-- LMS database = **SQLite**
-
-<br>
-<a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
-
 <br><br><br>
 
 
@@ -69,13 +60,22 @@ Ratings Light
 <br><br><br><br>
 
 
+## Requirements
+
+- LMS version >= **8**.0
+- LMS database = **SQLite**
+
+<br>
+<a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
+
+<br><br><br>
+
+
 ## Installation
 
-You should be able to install *Ratings Light* from *LMS* > *Settings* > *Plugins*.
+*Ratings Light* is available from the LMS plugin library: **LMS > Settings > Manage Plugins**.<br>
 
 If you want to test a new patch that hasn't made it into a release version yet, you'll have to [install the plugin manually](https://github.com/AF-1/sobras/wiki/Manual-installation-of-LMS-plugins).
-
-It usually takes a few hours for a *new* release to be listed on the LMS plugin page.
 <br><br><br><br>
 
 
