@@ -30,7 +30,7 @@ Ratings Light
 <br><br><br>
 
 
-## Features:
+## Features
 
 * **set** track ratings
 	* in your browser using web skins like *(Dark) Default* or *Material*
@@ -53,7 +53,7 @@ Ratings Light
 * **show rated songs** for any *artist, album, genre, year* or *playlist* from the **context menu**
 * includes mixes for the **Don't Stop The Music** plugin
 * *display track ratings* in *LMS menus* (web UI and text) or on older devices using the *Now Playing screensaver* or the *Music Information Screen* plugin
-* most features should work with **online library tracks** (see [**FAQ**](https://github.com/AF-1/lms-ratingslight#faq))
+* most features should work with **online library tracks** (see [FAQ](#faq))
 
 **Some features are not enabled by default.** Please go to the plugin's settings page to enable them.
 
