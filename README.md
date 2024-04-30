@@ -41,22 +41,26 @@ Ratings Light
 
 ## Features:
 
-* **set** track ratings (supports **incremental** rating changes)
-	* in your browser using the *default LMS* or the *Material* skin web UI
+* **set** track ratings
+	* in your browser using web skins like *(Dark) Default* or *Material*
 	* on your Logitech devices or piCorePlayer (context menu)
 	* using the IR remote of your (Logitech) device
 	* in supported apps and plugins
+	* supports **incremental** rating changes
 
 * **import** track ratings
 	* batch rate all tracks in a playlist
-	* using keywords in comment tags (auto-import after scan is possible)
+	* from file tags
+	   * using keywords in *comments* tags (auto-import after scan is possible)
+	   * using the *BPM* tag
+	   * auto-import after a (re)scan is possible
 
 * **export** rated tracks to playlist files (as a backup or to import ratings in other apps)
-* **browse rated tracks by artist or genre**[^2] (with optional library view filter)
+* create **virtual libraries for (top) rated tacks** with *browse menus*[^2]
 * *create* (scheduled) **backups** of your ratings and *restore* your ratings from backups
 * keep track of your **recently rated songs** with a dedicated *playlist* or a plain text *log file*
-* **show rated songs** for any *artist, album, genre, year* or *playlist* using the respective **context menu** (i.e. song details/**more** page if you're using the LMS *default* skin or *Material* skin)
-* provides mixes for **Don't Stop The Music** plugin
+* **show rated songs** for any *artist, album, genre, year* or *playlist* from the **context menu**
+* includes mixes for the **Don't Stop The Music** plugin
 * *display track ratings* in *LMS menus* (web UI and text) or on older devices using the *Now Playing screensaver* or the *Music Information Screen* plugin
 * most features should work with **online library tracks** (see [**FAQ**](https://github.com/AF-1/lms-ratingslight#faq))
 
@@ -152,5 +156,5 @@ If you want to keep detailed track of your rating actions and don't need a playa
 
 [^1]: If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.
 [^2]: Browse menus are provided by LMS. Under certain circumstances you may see (empty) albums or artists in some menus that shouldn't be there. There's nothing I can do about it because LMS creates and provides these menus.<br>Just go down one level: click to *show all tracks* or *show all albums*.<br>In case this LMS issue ever gets resolved, I'll update this page.
-[^3]: The screenshots might not correspond to the current UI in every detail.
+[^3]: The screenshots might not correspond to the UI of the latest release in every detail.
 
