@@ -1,7 +1,7 @@
 Ratings Light
 ====
 
-**Ratings Light**[^1] takes care of rating tracks in your LMS library. See [**features**](https://github.com/AF-1/lms-ratingslight#features) section for details.
+**Ratings Light**[^1] takes care of rating tracks in your LMS library. See [**features**](#features) section for details.
 <br><br>
 <a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
 <br><br><br>
