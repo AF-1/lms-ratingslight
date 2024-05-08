@@ -3,7 +3,7 @@
 	<id>afc9f784-9381-2021-5477-479eca380cf5</id>
 	<name>PLUGIN_RATINGSLIGHT</name>
 	<module>Plugins::RatingsLight::Plugin</module>
-	<version>2.7.0</version>
+	<version>2.7.1</version>
 	<description>PLUGIN_RATINGSLIGHT_DESC</description>
 	<creator>AF</creator>
 	<importmodule>Plugins::RatingsLight::Importer</importmodule>
