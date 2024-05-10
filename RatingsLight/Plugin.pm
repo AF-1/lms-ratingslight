@@ -473,13 +473,14 @@ sub VFD_deviceRating {
 
 # rate album tracks
 sub rateAlbumContextMenu {
-	my ($client, $url, $obj, $remoteMeta, $tags) = @_;
+	my ($client, $url, $obj, $remoteMeta, $tags, $filter) = @_;
 	$tags ||= {};
 
 	if (Slim::Music::Import->stillScanning) {
 		$log->warn('Warning: not available until library scan is completed');
 		return;
 	}
+	return undef if defined($filter->{'work_id'}); # no context menu for works
 
 	my $albumID = $obj->id;
 	my $albumName = $obj->name;
