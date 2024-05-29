@@ -5,7 +5,7 @@ Ratings Light
 <br><br>
 <a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
 <br><br>
-**Use the** &nbsp;![menu icon](https://github.com/AF-1/sobras/blob/main/repos/common/menuicon.svg) &nbsp;**icon** (top right) to **jump directly to a specific section.**
+**Use the** &nbsp;<img src="https://github.com/AF-1/sobras/blob/main/repos/common/menuicon.svg"> &nbsp;**icon** (top right) to **jump directly to a specific section.**
 
 <br><br>
 
