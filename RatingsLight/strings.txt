@@ -2,7 +2,7 @@ PLUGIN_RATINGSLIGHT
 	EN	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
-	EN	Set, import, export, log, backup and restore track ratings. Create virtual libraries for (top) rated tracks with browse menus. More information and FAQ on the GitHub page.
+	EN	Set, import, export, log, backup and restore track ratings. Create virtual libraries for (top) rated tracks with browse menus.
 
 PLUGIN_RATINGSLIGHT_LOG_DESC
 	EN	Log of plugin RatingsLight
