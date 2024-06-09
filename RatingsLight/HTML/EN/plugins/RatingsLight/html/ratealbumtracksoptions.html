@@ -66,30 +66,30 @@
 	z-index: 2;
 }
 .rating__icon--star {
-	color: [% IF systemSkin == "DarkDefault" %]#ddd[% ELSE %]black[% END %];
+	color: [% IF systemSkin == "DarkDefault" || systemSkin == "DarkLogic" %]#ddd[% ELSE %]black[% END %];
 }
 .rating__icon--none {
-	color: [% IF systemSkin == "DarkDefault" %]#ddd[% ELSE %]black[% END %];
+	color: [% IF systemSkin == "DarkDefault" || systemSkin == "DarkLogic" %]#ddd[% ELSE %]black[% END %];
 }
 .rating__input:checked ~ .rating__label .rating__icon--star {
-	color: [% IF systemSkin == "DarkDefault" %]black[% ELSE %]#ddd[% END %];
+	color: [% IF systemSkin == "DarkDefault" || systemSkin == "DarkLogic" %]black[% ELSE %]#ddd[% END %];
 }
 .rating-group:hover .rating__label .rating__icon--star,
 .rating-group:hover .rating__label--half .rating__icon--star {
-	color: [% IF systemSkin == "DarkDefault" %]#ddd[% ELSE %]black[% END %];
+	color: [% IF systemSkin == "DarkDefault" || systemSkin == "DarkLogic" %]#ddd[% ELSE %]black[% END %];
 }
 .rating__input:hover ~ .rating__label .rating__icon--star,
 .rating__input:hover ~ .rating__label--half .rating__icon--star {
-	color: [% IF systemSkin == "DarkDefault" %]black[% ELSE %]#ddd[% END %];
+	color: [% IF systemSkin == "DarkDefault" || systemSkin == "DarkLogic" %]black[% ELSE %]#ddd[% END %];
 }
 .rating-group:hover .rating__input--none:not(:hover) + .rating__label .rating__icon--none {
-	color: [% IF systemSkin == "DarkDefault" %]#ddd[% ELSE %]black[% END %];
+	color: [% IF systemSkin == "DarkDefault" || systemSkin == "DarkLogic" %]#ddd[% ELSE %]black[% END %];
 }
 .rating__input--none:hover + .rating__label .rating__icon--none {
 	color: red;
 }
 .greystars {
-	color: [% IF systemSkin == "DarkDefault" %]black[% ELSE %]#ddd[% END %] !important;
+	color: [% IF systemSkin == "DarkDefault" || systemSkin == "DarkLogic" %]black[% ELSE %]#ddd[% END %] !important;
 }
 .invisible, .label__allunrated {
 	visibility: hidden;
@@ -105,7 +105,7 @@
 .browsedbControls {visibility:visible;}
 </style>
 <br>
-[% IF systemSkin == "DarkDefault" || systemSkin == "Default" || systemSkin == "Logic" || systemSkin == "Classic" %]
+[% IF systemSkin == "DarkDefault" || systemSkin == "DarkLogic" || systemSkin == "Default" || systemSkin == "Logic" || systemSkin == "Classic" %]
 	[% WRAPPER contentcontainer %]
 		[% odd = 1 %]
 		[% IF trackcount > 1 %]
