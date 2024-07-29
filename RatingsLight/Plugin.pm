@@ -2657,10 +2657,9 @@ sub logRatedTrack {
 
 	my $trackDetails = "Title:\t ".$track->title if $track->title;
 	$trackDetails .= "\nArtist:\t ".$track->artist->name if $track->artist;
- 	$trackDetails .= "\nAlbum Artist:\t ".$track->album->contributor->name if $track->album->contributor;
+	$trackDetails .= "\nAlbum Artist:\t ".$track->album->contributor->name if $track->album->contributor;
 	$trackDetails .= "\nAlbum:\t ".$track->album->title."\n" if $track->album;
 	print $output $trackDetails;
-	
 	print $output 'Previous Rating: '.($previousRating100ScaleValue/20).' ('.$previousRating100ScaleValue.') --> New Rating: '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")\n\n";
 	close $output;
 }

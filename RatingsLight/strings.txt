@@ -90,10 +90,10 @@ PLUGIN_RATINGSLIGHT_SETTINGS_DSTM
 	EN	Don't Stop the Music
 
 PLUGIN_RATINGSLIGHT_SETTINGS_FAQ_LINK_TEXT
-	EN	Click here to read the FAQ.
+	EN	Click here for more information (incl. FAQ).
 
 PLUGIN_RATINGSLIGHT_SETTINGS_FAQ_LINK
-	EN	https://github.com/AF-1/lms-ratingslight#faq
+	EN	https://github.com/AF-1/#-ratings-light
 
 
 
