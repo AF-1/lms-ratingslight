@@ -912,4 +912,4 @@ PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED
 
 PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED_GENRE
 	EN	Ratings Light - unrated tracks (unplayed, similar genres, with % of rated)
-	DE	atings Light - unbewertete Titel (nie gespielt, ähnliche Stilrichtungen, mit Anteil bewerteter)
+	DE	Ratings Light - unbewertete Titel (nie gespielt, ähnliche Stilrichtungen, mit Anteil bewerteter)
