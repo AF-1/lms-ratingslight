@@ -376,6 +376,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_DONTUNRATE
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_DONTUNRATE_DESC
 	EN	Importing ratings from file tags was designed to have the LMS database mirror all track ratings it finds in your file tags and unrate all other tracks (resulting in <b>synced track ratings</b>).<br>If you enable this (<b>not recommended</b>), new and changed track ratings will show in the LMS database after import but <b><i>formerly</i> rated tracks which are no longer marked as rated in your file tags will <u>not</u> be unrated</b>.
+	DE	Der Import von Bewertungen aus Datei-Tags wurde so konzipiert, dass die LMS-Datenbank alle Titelbewertungen, die sie in Ihren Datei-Tags findet, übernimmt und alle anderen Titel unbewertet lässt (was zu <b>synchronisierten Titelbewertungen</b> führt).<br>Wenn Sie dies aktivieren ((<b>nicht empfohlen(</b>), werden neue und geänderte Titelbewertungen nach dem Import in die LMS-Datenbank übernommen, aber <b><i>zuvor</i> bewertete Titel, die in Ihren Datei-Tags nicht mehr als bewertet gekennzeichnet sind, werden <u>nicht</u> entwertet</b>.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE
 	EN	Choose file tag for import
@@ -619,7 +620,11 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_RATED_ONLY
 	EN	Rated
 	DE	Bewertet
 
-PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_TOPRATED
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_TOPRATED_ONLY
+	EN	Top Rated
+	DE	TOP-bewertet
+
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_RATEDANDTOPRATED
 	EN	Rated + Top Rated
 	DE	Bewertet + TOP-bewertet
 
@@ -659,7 +664,6 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_DESC
 	EN	Choose the displayed rating character for menus and titelformats.<br><br><b>*** IMPORTANT, please read ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> and other players running jivelite <b>do not support displaying the unicode blackstar character out of the box</b>.<br>This character is not part of their <i>default</i> font. If you want to display this character on these devices you'll have to <b>replace the default font</b> on these devices with a font that contains this character.<br><br><a href="https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font" target="_blank" rel="noopener noreferrer">Click here for more information, instructions and fonts.</a>
 	DE	Wähle das anzuzeigende Bewertungs-Zeichen für Menüs und Titelformate aus.<br><br><b>*** WICHTIG, bitte lesen ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> und andere Player, die Jivelite verwenden, <b>unterstützen die Anzeige des Unicode Blackstar Zeichen nicht von Haus aus</b>.<br>Dieses Zeichen ist nicht in deren <i>Standard</i> Zeichensatz enthalten. Wenn du dieses Zeichen auf diesen Geräten verwenden möchtest, musst du den Standard-Zeichensatz <b>ersetzen</b> durch einen, der dieses Zeichen enthält.<br><br><a href="https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font" target="_blank" rel="noopener noreferrer">Klicke hier für mehr Information, Anleitung und Zeichensatz.</a>
 
-
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_STAR_TEXT
 	EN	* - common text star
 	DE	* - normaler Text-Stern
@@ -675,6 +679,22 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS_DESC
 	EN	Use half-star ratings to rate your tracks. This setting applies mainly to the LMS (Dark) <b>Default skin</b> and <b>context rating menus</b>. Material, for example, uses its own rating UI with Ratings Light.<br><br><b>Please note:</b> Even if you disable <b>setting</b> of half-star ratings, <i>Ratings Light</i> will still <b>display</b> the <b>exact</b> track rating value incl. half-stars.
 	DE	Bewertung mit halben Sternen zulassen. Diese Einstellung betrifft hauptsächlich die LMS Default Benutzeroberfläche und Kontextmenüs. Material, z.B., hat eine eigene Benutzeroberfläche für die Bewertung. Auch wenn diese Einstellung deaktiviert ist, zeigt Ratings Light immer ndie exakte Bewertung inklusiver halber Sterne an.
+
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_CONTEXTMENUPOS
+	EN	Rating context menu position
+	DE	Position der Titelbewertung im Kontextmmenu
+
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_CONTEXTMENUPOS_DESC
+	EN	Select where you want to see the track rating (menu) displayed in a track's context menu: higher or default menu position. How notable the effect is depends on the web skin.<br><br><i>Example:</i><br>If you use piCorePlayer as a controller a lot, you might want to move it up for easier access, i.e. no more scrolling down to access the menu.
+	DE	Wählen Sie aus, wo (das Menü für) die Trackbewertung im Kontextmenü eines Tracks angezeigt werden soll (weiter oben oder Standardposition).<br><br><i>Beispiel:</i><br>Wenn Sie piCorePlayer häufig verwenden, möchten Sie es vielleicht nach oben verschieben, um den Zugriff zu erleichtern, d. h. Sie müssen nicht nach unten scrollen, um das Menü aufzurufen.
+
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_CONTEXTMENUPOS_DEFAULT
+	EN	Default menu position
+	DE	Standard
+
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_CONTEXTMENUPOS_HIGHER
+	EN	Higher menu position
+	DE	Weiter oben
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING
 	EN	Enable iPeng rating workaround
@@ -723,6 +743,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_NUMSEEDTRACKS
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_NUMSEEDTRACKS_DESC
 	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.
+	DE	Legt die Anzahl der Start-Tracks fest, aus denen DSTM eine Genreliste für seinen Mix zusammenstellt.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PLAYEDTRACKSTOKEEP
 	EN	Number of played tracks in playlist

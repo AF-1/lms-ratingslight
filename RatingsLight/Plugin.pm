@@ -107,10 +107,8 @@ sub initPlugin {
 		Slim::Web::Pages->addPageFunction('ratealbumtracksoptions.html', \&rateAlbumTracks_web);
 	}
 
-	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightrating => (
-		before => 'artwork',
-		func => \&trackInfoHandlerRating,
-	));
+	regTrackInfoHandlerRating();
+
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbyartist => (
 		after => 'ratingslightrating',
 		before => 'ratingslightmoreratedtracksinalbum',
@@ -282,6 +280,7 @@ sub initPrefs {
 			Slim::Music::Info::clearFormatDisplayCache();
 			refreshTitleFormats();
 		}, 'displayratingchar');
+	$prefs->setChange(sub {regTrackInfoHandlerRating(1);}, 'ratingcontextmenupos');
 }
 
 sub postinitPlugin {
@@ -841,6 +840,21 @@ sub getRatingMenu {
 
 
 ### common subs
+
+sub regTrackInfoHandlerRating {
+	my $refresh = shift;
+	Slim::Menu::TrackInfo->deregisterInfoProvider('ratingslightrating') if $refresh;
+
+	my $contextmenupos = ["before => 'artwork'", "after => 'favorites'"]; # 0 = artwork, 1 = fav
+	my $selPos = $prefs->get('ratingcontextmenupos') || 0;
+	my $thisPos = @{$contextmenupos}[$selPos];
+	main::DEBUGLOG && $log->is_debug && $log->error('changing contextmenu position to: '.Data::Dump::dump($thisPos)) if $refresh;
+
+	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightrating => (
+		eval($thisPos),
+		func => \&trackInfoHandlerRating,
+	));
+}
 
 sub objectInfoHandler {
 	my ($objectType, $client, $url, $obj, $remoteMeta, $tags) = @_;
@@ -2055,15 +2069,16 @@ sub initVirtualLibraries {
 		my $sqlVLend = " group by tracks.id";
 
 		my @libraries = ();
-		if ($showratedtracksmenus < 3) {
-			push @libraries,{
-				id => 'RATINGSLIGHT_RATED',
-				name => string('PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS').((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
-				sql => $sqlVLstart.$sqlVLcommon."> 0".((defined($browsemenus_sourceVL_id) && $browsemenus_sourceVL_id ne '') ? $sqlVLsourceVL : "").$sqlVLend,
-				quickcount => $sqlVLquickCount.$sqlVLcommon."> 0".((defined($browsemenus_sourceVL_id) && $browsemenus_sourceVL_id ne '') ? $sqlVLsourceVL : "").$sqlVLend,
-			};
-
-			if ($showratedtracksmenus == 2) {
+		if ($showratedtracksmenus < 4) {
+			if ($showratedtracksmenus == 1 || $showratedtracksmenus == 3) {
+				push @libraries,{
+					id => 'RATINGSLIGHT_RATED',
+					name => string('PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS').((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
+					sql => $sqlVLstart.$sqlVLcommon."> 0".((defined($browsemenus_sourceVL_id) && $browsemenus_sourceVL_id ne '') ? $sqlVLsourceVL : "").$sqlVLend,
+					quickcount => $sqlVLquickCount.$sqlVLcommon."> 0".((defined($browsemenus_sourceVL_id) && $browsemenus_sourceVL_id ne '') ? $sqlVLsourceVL : "").$sqlVLend,
+				};
+			}
+			if ($showratedtracksmenus >= 2) {
 				push @libraries,{
 					id => 'RATINGSLIGHT_TOPRATED',
 					name => string('PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS').((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
@@ -2074,16 +2089,16 @@ sub initVirtualLibraries {
 		}
 
 		# create VLs for exact rating values
-		if ($showratedtracksmenus >= 3) {
+		if ($showratedtracksmenus >= 4) {
 			for (my $i = 10; $i <= 100; $i += 10) {
-				next if ($showratedtracksmenus < 4 && $i % 20);
-				my $ratingMin = $i - ($showratedtracksmenus == 4 ? 5 : 10);
-				my $ratingMax = $i + ($showratedtracksmenus == 4 ? 5 : 10);
+				next if ($showratedtracksmenus < 5 && $i % 20);
+				my $ratingMin = $i - ($showratedtracksmenus == 5 ? 5 : 10);
+				my $ratingMax = $i + ($showratedtracksmenus == 5 ? 5 : 10);
 				push @libraries,{
-						id => 'RATINGSLIGHT_EXACTRATING'.$i,
-						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
-						sql => $sqlVLstart.$sqlVLcommon.">= $ratingMin and tracks_persistent.rating < $ratingMax".((defined($browsemenus_sourceVL_id) && $browsemenus_sourceVL_id ne '') ? $sqlVLsourceVL : "").$sqlVLend,
-						quickcount => $sqlVLquickCount.$sqlVLcommon.">= $ratingMin and tracks_persistent.rating < $ratingMax".((defined($browsemenus_sourceVL_id) && $browsemenus_sourceVL_id ne '') ? $sqlVLsourceVL : "").$sqlVLend,
+					id => 'RATINGSLIGHT_EXACTRATING'.$i,
+					name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
+					sql => $sqlVLstart.$sqlVLcommon.">= $ratingMin and tracks_persistent.rating < $ratingMax".((defined($browsemenus_sourceVL_id) && $browsemenus_sourceVL_id ne '') ? $sqlVLsourceVL : "").$sqlVLend,
+					quickcount => $sqlVLquickCount.$sqlVLcommon.">= $ratingMin and tracks_persistent.rating < $ratingMax".((defined($browsemenus_sourceVL_id) && $browsemenus_sourceVL_id ne '') ? $sqlVLsourceVL : "").$sqlVLend,
 				};
 			}
 		}
@@ -2194,65 +2209,69 @@ sub initVLmenus {
 				my ($client, $cb, $args, $pt) = @_;
 				my @items = ();
 
-				if ($showratedtracksmenus < 3) {
-					my $library_id_rated = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_RATED');
-					if ($library_id_rated) {
-						# Artists with rated tracks
-						$pt = {library_id => $library_id_rated};
-						if ($prefs->get('browsemenus_artists')) {
-							push @items, $menuGenerator->(
-								'artists',
-								undef,
-								'PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATED',
-								'RL_RATED_BROWSEMENU_ARTISTS',
-								0,
-								{
-									library_id => $pt->{'library_id'},
-									searchTags => [
-										'library_id:'.$pt->{'library_id'},
-									],
-								}
-							);
-						}
-
-						# Genres with rated tracks
-						if ($prefs->get('browsemenus_genres')) {
-							push @items, $menuGenerator->(
-								'genres',
-								undef,
-								'PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATED',
-								'RL_RATED_BROWSEMENU_GENRES',
-								1,
-								{
-									library_id => $pt->{'library_id'},
-									searchTags => [
-										'library_id:'.$pt->{'library_id'},
-									],
-								}
-							);
-						}
-
-						# Rated tracks
-						if ($prefs->get('browsemenus_tracks')) {
-							$pt->{'sort'} = 'track';
-							$pt->{'menuStyle'} = 'menuStyle:album';
-							push @items, $menuGenerator->(
-								'tracks',
-								undef,
-								'PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_RATED',
-								'RL_RATED_BROWSEMENU_TRACKS',
-								2,
-								{
-									library_id => $pt->{'library_id'},
-									searchTags => [
-										'library_id:'.$pt->{'library_id'},
-									],
-								}
-							);
+				if ($showratedtracksmenus < 4) {
+					# Rated tracks menus
+					if ($showratedtracksmenus == 1 || $showratedtracksmenus == 3) {
+						my $library_id_rated = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_RATED');
+						if ($library_id_rated) {
+							# Artists with rated tracks
+							$pt = {library_id => $library_id_rated};
+							if ($prefs->get('browsemenus_artists')) {
+								push @items, $menuGenerator->(
+									'artists',
+									undef,
+									'PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATED',
+									'RL_RATED_BROWSEMENU_ARTISTS',
+									0,
+									{
+										library_id => $pt->{'library_id'},
+										searchTags => [
+											'library_id:'.$pt->{'library_id'},
+										],
+									}
+								);
+							}
+	
+							# Genres with rated tracks
+							if ($prefs->get('browsemenus_genres')) {
+								push @items, $menuGenerator->(
+									'genres',
+									undef,
+									'PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATED',
+									'RL_RATED_BROWSEMENU_GENRES',
+									1,
+									{
+										library_id => $pt->{'library_id'},
+										searchTags => [
+											'library_id:'.$pt->{'library_id'},
+										],
+									}
+								);
+							}
+	
+							# Rated tracks
+							if ($prefs->get('browsemenus_tracks')) {
+								$pt->{'sort'} = 'track';
+								$pt->{'menuStyle'} = 'menuStyle:album';
+								push @items, $menuGenerator->(
+									'tracks',
+									undef,
+									'PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_RATED',
+									'RL_RATED_BROWSEMENU_TRACKS',
+									2,
+									{
+										library_id => $pt->{'library_id'},
+										searchTags => [
+											'library_id:'.$pt->{'library_id'},
+										],
+									}
+								);
+							}
 						}
 					}
 
-					if ($showratedtracksmenus == 2) {
+					# Top rated tracks menus
+					if ($showratedtracksmenus >= 2) {
 						my $library_id_toprated = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_TOPRATED');
 						if ($library_id_toprated) {
 							# Artists with top rated tracks
@@ -2312,7 +2331,7 @@ sub initVLmenus {
 					}
 				}
 
-				if ($showratedtracksmenus >= 3) {
+				if ($showratedtracksmenus >= 4) {
 					for (my $i = 10; $i <= 100; $i += 10) {
 						my $library_id_exactratingID = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_EXACTRATING'.$i);
 						if ($library_id_exactratingID) {
@@ -2391,37 +2410,37 @@ sub refreshVirtualLibraries {
 	my $showratedtracksmenus = $prefs->get('showratedtracksmenus');
 	if ($showratedtracksmenus && $showratedtracksmenus > 0) {
 		my $started = time();
-		if ($showratedtracksmenus < 3) {
+		if ($showratedtracksmenus == 1 || $showratedtracksmenus == 3) {
 			my $library_id = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_RATED');
 			if ($library_id) {
 				Slim::Music::VirtualLibraries->rebuild($library_id);
 			}
 		}
-		if ($showratedtracksmenus == 2) {
+		if ($showratedtracksmenus >= 2) {
 			my $library_id = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_TOPRATED');
 			if ($library_id) {
 				Slim::Music::VirtualLibraries->rebuild($library_id);
 			}
 		}
-		if ($showratedtracksmenus >= 3) {
+		if ($showratedtracksmenus >= 4) {
 			for (my $i = 10; $i <= 100; $i += 10) {
 				my $library_id = Slim::Music::VirtualLibraries->getRealId('RATINGSLIGHT_EXACTRATING'.$i);
 				if ($library_id) {
-					Slim::Music::VirtualLibraries->rebuild($library_id) unless ($showratedtracksmenus < 4 && $i % 20);
+					Slim::Music::VirtualLibraries->rebuild($library_id) unless ($showratedtracksmenus < 5 && $i % 20);
 					my $trackCount = Slim::Music::VirtualLibraries->getTrackCount($library_id) || 0;
 					main::DEBUGLOG && $log->is_debug && $log->debug("Track count for library '".$library_id."' = ".$trackCount);
-					if ($trackCount == 0 || ($showratedtracksmenus < 4 && $i % 20)) {
+					if ($trackCount == 0 || ($showratedtracksmenus < 5 && $i % 20)) {
 						Slim::Music::VirtualLibraries->unregisterLibrary($library_id);
 						main::DEBUGLOG && $log->is_debug && $log->debug("Unregistering vlib '".$library_id.($trackCount == 0 ? "' because it has 0 tracks." : ""));
 					}
 				} else {
-					next if ($showratedtracksmenus < 4 && $i % 20);
+					next if ($showratedtracksmenus < 5 && $i % 20);
 
 					# VL does not exist, create unless track count = 0
 					my $browsemenus_sourceVL_name = validateBrowsemenusSourceVL();
 					my $browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
-					my $ratingMin = $i - ($showratedtracksmenus == 4 ? 5 : 10);
-					my $ratingMax = $i + ($showratedtracksmenus == 4 ? 5 : 10);
+					my $ratingMin = $i - ($showratedtracksmenus == 5 ? 5 : 10);
+					my $ratingMax = $i + ($showratedtracksmenus == 5 ? 5 : 10);
 					my $thisVL = {
 						id => 'RATINGSLIGHT_EXACTRATING'.$i,
 						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
