@@ -1,698 +1,915 @@
 PLUGIN_RATINGSLIGHT
 	EN	Ratings Light
+	DE	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
 	EN	Set, import, export, log, backup and restore track ratings. Create virtual libraries for (top) rated tracks with browse menus.
+	DE	Setzt, importiert, exportiert, logt, sichert und stellt Titelbewertungen wieder her. Erstellt virtuelle Bibliotheken für (TOP) bewertete Titel mit Menüs.
 
 PLUGIN_RATINGSLIGHT_LOG_DESC
 	EN	Log of plugin RatingsLight
+	DE	Logdatei des RatingsLight-Plugins.
 
 PLUGIN_RATINGSLIGHT_BLOCKED
 	EN	waiting for library scan to complete
+	DE	warte auf das Ende des Durchsuchens der Musiksammlungen
 
 PLUGIN_RATINGSLIGHT_TRACK_RATED
 	EN	Track rated
+	DE	Titel bewertet
 
 PLUGIN_RATINGSLIGHT_RATING
 	EN	Rating:
+	DE	Bewertung:
 
 PLUGIN_RATINGSLIGHT_UNRATEACTION
 	EN	Unrate
+	DE	Bewertung löschen
 
 PLUGIN_RATINGSLIGHT_LANGSTRING_UNRATED
 	EN	unrated
+	DE	unbewertet
 
 PLUGIN_RATINGSLIGHT_LANGSTRING_TRACK
 	EN	track
+	DE	Titel
 
 PLUGIN_RATINGSLIGHT_LANGSTRING_TRACKS
 	EN	tracks
+	DE	Titel
 
 PLUGIN_RATINGSLIGHT_LANGSTRING_COMPLETELIB
 	EN	Complete Library (Default)
+	DE	Komplette Sammlung (Standard)
 
 PLUGIN_RATINGSLIGHT_RATEALBUM
 	EN	Rate album tracks
+	DE	Bewerte Album Titel
 
 PLUGIN_RATINGSLIGHT_WEB_ALBUMRATE_INFOPREFIX
 	EN	Information
+	DE	Information
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_HEADER
 	EN	Set rating stars for tracks of album:
+	DE	Setze Bewertungssterne für Titel des Albums:
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_ONLYUNRATED
 	EN	Rate only <b>un</b>rated tracks in album
+	DE	Bewerte nur unbewertete Titel des Albums
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_BUTTON
 	EN	Rate tracks now
+	DE	Bewerte die Titel jetzt
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_FAILED
 	EN	Rating album tracks failed
+	DE	Bewerung der Albumtitel fehlgeschlagen
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_SUCCESS
 	EN	Finished rating album tracks
+	DE	Bewertung der Albumtitel abgeschlossen
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS
 	EN	Rate album tracks
+	DE	Bewerte Alum Titel
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS_ALL
 	EN	Rate all album tracks
+	DE	Bewerte alle Album Titel
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS_UNRATED
 	EN	Rate only unrated album tracks
+	DE	Bewerte nur unbewertete Album Titel
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS_UNRATED_ALL
 	EN	Rate all <b>un</b>rated album tracks
+	DE	Bewerte alle <b>un</b>bewertete Titel
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_SUBPAGE
 	EN	Settings Section
+	DE	Einstellungs-Bereich
 
 PLUGIN_RATINGSLIGHT_SETTINGS_SUBPAGE_DESC
 	EN	Select a settings section
+	DE	Wähle einen Einstellungs-Bereich
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS
 	EN	Various Settings
+	DE	Verschiedene Einstellungen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_RESTORE
 	EN	Backup / Restore
+	DE	Backup / Restore
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT
 	EN	Import
+	DE	Import
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT
 	EN	Export
+	DE	Export
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS
 	EN	Menus
+	DE	Menus
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM
 	EN	Don't Stop the Music
+	DE	Don't Stop The Music
 
 PLUGIN_RATINGSLIGHT_SETTINGS_FAQ_LINK_TEXT
 	EN	Click here for more information (incl. FAQ).
+	DE	Klicke hier für mehr Informationen (incl. FAQ in Englisch).
 
 PLUGIN_RATINGSLIGHT_SETTINGS_FAQ_LINK
 	EN	https://github.com/AF-1/#-ratings-light
-
+	DE	https://github.com/AF-1/#-ratings-light
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTEBUTTONS
 	EN	Quick rating with IR remote buttons
+	DE	Schnelle Bewertung mit IR-Fernbedienungstasten
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTEBUTTONS_DESC
 	EN	<br>Changing this setting will only take effect <b>after an LMS restart.</b><br><br>Rate the track that is currently playing on your device by <b>holding down</b> a button on your Logitech IR remote<br>(devices with a VFD display like Squeezebox, Boom, Transporter).<br><br>Press and <b>hold</b> the key until you see the new track rating on your display or a message confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5 = 1 to 5 stars<br>0 = unrate<br>6 = subtract 1 star from current rating<br>7 = add 1 star to current rating<br>8 = subtract 0.5 stars from current rating<br>9 = add 0.5 stars to current rating<br><br><b>Boom (mini remote) only:</b><br><br>arrow up = add 1 star to current rating<br>arrow down = subtract 1 star from current rating
+	DE	Änderungen an dieser Einstellung werden erst nach einem LMS Neustart wirksam. Bewrte den Titel, der gerade abgespielt wird, durch einen langen  Tastendruck auf der Logitech IR Fernbedienung. Drücke und halte die Taste, bis die neue Bewertung auf dem Display angezeigt wird. Tasten 1-5: 1-5 Sterne, 0: unbewertet, 6: einen Stern abziehen, 7: einen Stern hinzufügen, 8: einen halben Stern abziehen, 9: einen halben Stern hizufügen.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTERATINGCONFIRMMSG
 	EN	Show confirmation message<br>for IR remote rating
+	DE	Zeige Bestätigungsnachricht für IR-Fernbedienungs-Bewertung
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTERATINGCONFIRMMSG_DESC
 	EN	Shows a brief message on the VFD display of your Logitech device confirming the new rating value if you rate a song <i>using IR remote rating</i>.
+	DE	Zeigt eine kurze Nachricht auf dem Display als Bestätigung, dass die Bewertung mit der IR-Fernbedienung angepasst wurde.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_TOPRATED_MINRATING
 	EN	Minimum rating for <b>top</b> rated tracks
+	DE	Mindestbewertung für TOP bewertete Titel
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_TOPRATED_MINRATING_DESC
 	EN	Set the <b>minimum rating</b> for tracks to be considered <b>top rated</b>.<br> This is a <b>global</b> setting for browse menus and DSTM mixes.
+	DE	Bestimmt die Mindestbewertung für Titel, die als TOP bewertet gelten sollen. Dies ist eine globale Einstellung für die Anwendung und DSTM-Mixe.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USERECENTLYRATEDPLAYLIST
 	EN	Recently rated playlist
+	DE	Wiedergabeliste mit zuletzt bewerteten Titeln
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USERECENTLYRATEDPLAYLIST_DESC
 	EN	Keeps a playlist of recently rated tracks.<br>Ignores batch rating actions like imports or restores from backup.
+	DE	Enthät eine Wiedergabeliste der zuletzt bewerteten Titel. Massenänderungen wie Importe oder Wiederherstellungen werden nicht berücksichtigt.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USERECENTLYRATEDPLAYLIST_MAXCOUNT
 	EN	Max. number of tracks<br>in Recently Rated playlist
+	DE	Maximale Anzahl zuletzt bewerteter Titel in Wiedergabeliste
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USERECENTLYRATEDPLAYLIST_MAXCOUNT_DESC
 	EN	Limits the number of tracks in the <i>Recently Rated playlist</i>
+	DE	Begrenzt die Anzahl der zuletzt bewerteten Titel in der Wiedergabeliste.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USELOGFILE
 	EN	Log changed ratings
+	DE	Veränderte Bewertungen protokollieren
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USELOGFILE_DESC
 	EN	Keep track of your recently rated songs with a plain text log file.
+	DE	Protkolliert die veränderten Bewertungen in einer Textdatei.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_RATINGSLIGHT_PARENTFOLDERPATH
 	EN	Location of the Ratings Light folder
+	DE	Übergeordneter Dateipfad des 'Ratings Light' Ordners
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_RATINGSLIGHT_PARENTFOLDERPATH_DESC
 	EN	Choose a location (<b>parent</b> folder) for the <i>Ratings Light</i> folder where this plugin stores exported playlist files, (scheduled) backups, and rating logs.
+	DE	Wähle einen Dateipfad zum übergeordneten Verzeichnis des 'Ratings Light'-Ordners. Dort werden exportierte Wiedergabelisten, Sicherungen und Protokolle gespeichert.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_NOW
 	EN	Clear all ratings
+	DE	Alle Bewertungen löschen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_NOW_DESC
 	EN	This will clear <b>all</b> ratings in your database!
+	DE	Dadurch werden <b>ALLE</b> Bewertungen aus der Datenbank gelöscht
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_NOW_BUTTON
 	EN	Clear ratings now
+	DE	Bewertungen jetzt löschen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_INPROGRESS
 	EN	clearing...
+	DE	löscht...
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW
 	EN	Adjust odd ratings to LMS rating scale
+	DE	Bewertungen an LMS Bewertungsskala anpassen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW_DESC
 	EN	LMS uses a rating scale with values ranging from zero (no stars) to 100 (5 stars) and 10 for every additional half-star (Examples: 20 = 1 star, 50 = 2.5 stars).<br><br>If your LMS database includes odd rating values (like 4 or 67), i.e. not evenly divisible by 10, you can use this button to <b>replace all odd rating values with rounded values that comply with the LMS standard rating scale</b> (evenly divisible by 10).<br>Example: 4 => 0 and 67 => 70.
+	DE	LMS benutzt eine Bewertungsskala von 0 (kein Stern) bis 100 (5 Sterne) und 10 für jeden halben Stern. Beispiele: 20 = 1 Stern, 50 = 2,5 Sterne.
+		Wenn die Datenbak abweichende Werte für die Bewertung nutzt (wie 4 oder 67), also unteilbar durch 10, kann man mit dieser Funktion die unpassenden Bewertungen durch gerundete Werte ersetzen (Bsp: 4->0; 67 -> 70).
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW_BUTTON
 	EN	Adjust ratings now
+	DE	Bewertungen jetzt anpassen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_INPROGRESS
 	EN	adjusting...
+	DE	Anpassung läuft...
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_POSTSCANSCHEDULEDELAY
 	EN	Post-Scan Delay
+	DE	Verzögerung nach Durchsuchen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_POSTSCANSCHEDULEDELAY_DESC
 	EN	Time to wait after a rescan before refreshing VLs and browse menus
-
+	DE	Wartezeit nach einer Durchsuchung, bevor die virtuellen Sammlungen und Menüs angepasst werden
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES
 	EN	Export rated tracks<br>from this library (view)<br>to playlist files
+	DE	Bewertete Titel dieser Sammlung in Wiedergabelisten exportieren
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES_DESC
 	EN	Choose a library (view) and export its rated tracks to playlist files, e.g. for import of LMS rated tracks into other apps.<br>Files are exported to the <i>Ratings Light</i> folder and have a m3u.txt-extension so they won't get picked up by LMS scans.
+	DE	Wähle eine Sammlung und exportiere die bewerteten Titel in Wiedergabelisten, z.B. für andere Apps. Die Dateien werden im 'Ratings-Light'-Ordner abgelegt (m3u.txt-Dateiendung) und somit beim Durchsuchen nicht berücksichtigt.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES_BUTTON
 	EN	Export now
+	DE	Jetzt exportieren
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_INPROGRESS
 	EN	exporting...
+	DE	Export läuft...
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_SINGLE_FILE
 	EN	Export all rated tracks<br>to a <i>single</i> playlist file
+	DE	Alle bewerteten Titel in eine einzige Wiedergabeliste exportieren
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_SINGLE_FILE_DESC
 	EN	By default, <i>Ratings Light</i> groups rated tracks by rating value into one playlist file per rating value. This settings allows you to export <b>all</b> rated tracks to a <b>single</b> playlist file.
+	DE	Normalerweise gruppiert 'Ratings Light' die bewerteten Titel nach Bewertung(eine Wiedergabeliste je Bewertung). Diese Einstellung erlaubt es, alle bewerteten Titel in eine einzige Wiedergabeliste zu exportieren.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_ONLY_DIFF
 	EN	Export only tracks with rating values different from file tag ratings
+	DE	Exportiere nur Titel mit Bewertungen, die sich von den Datei-Tag-Bewertungen unterscheiden
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_ONLY_DIFF_DESC
 	EN	This will export only those tracks whose LMS rating differs from the rating value derived from the file tag (BPM, comment tag) that you've selected in the <i>RL <b>import</b> section</i>.<br> So if you've marked a track as 2-star rated in your file tag and its rating hasn't changed, it won't be part of the exported playlists.
+	DE	Dadurch werden nur diejenigen Titel exportiert, deren LMS-Bewertung sich von den Bewertungen im Datei-Tag (BPM, Kommentar, eingestellt im Import-Bereich) unterscheiden.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_SELFILETAG
 	EN	Currently selected file tag
+	DE	Aktuell ausgewähltes Datei-Tag
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PATHSUBSTITUTION
 	EN	Replace file path
+	DE	Verzeichnispfad ersetzen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PATHSUBSTITUTION_DESC
 	EN	Replace the LMS root file path in your <b>exported</b> file urls with a different file path.<br>Helpful if you want to use the exported playlist with another version of your LMS library on another PC.
-
+	DE	Ersetze das LMS Wurzelverzeichnis in den exportierte Datei-URLs mit einem anderen Pfad. Hilfreich, wenn die exportierte Wiedergabeliste auf einem anderen Gerät verwendet werden soll.
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PATHSUBSTITUTION_LMSPATH
 	EN	LMS base file path
+	DE	LMS Wurzelverzeichnis
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PATHSUBSTITUTION_NEWPATH
 	EN	New base file path
+	DE	Neues Wurzelverzeichnis
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONSUBSTITUTION
 	EN	Replace file extension
+	DE	Ersetze die Dateiendung
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONSUBSTITUTION_DESC
 	EN	Replace the file extension of your <b>exported</b> file urls. Helpful if you want to use the exported playlist with a lossy version of your lossless LMS library.
+	DE	Ersetzt die Dateiendung in den exportierten Datei-URLs. Hilfreich, falls die exportierte Wiedergabeliste z.B. mit einer MP3-Version der Sammlung verwendet werden soll.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONEXCEPTIONS
 	EN	Replace file extensions:<br>ignore list
+	DE	Ersetze die Dateiendung: Ignorierliste
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONEXCEPTIONS_DESC
 	EN	If you replace file extensions when exporting your playlist, you can specify here which extensions should be ignored, i.e. they won't be replaced. For example, if they already belong to a lossy format.<br><b>Multiple</b> extensions have to be separated with a <b>comma</b>.
+	DE	Falls Dateiendungen ersetzt werden, kann hier spezifiziert werden, welche Endungen nicht ersetzt werden sollen. Die Endungen müssen mit einem Komma voneinader getrennt werden.
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS
 	EN	Playlists
+	DE	Wiedergabelisten
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_DESC
 	EN	<b>Playlists that contain remote tracks cannot be imported!</b>
+	DE	Wiedergabelisten mit nicht lokalen Titeln können nicht importiert werden!
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_HEADER
 	EN	<b>Import ratings by setting a rating value for <b>all</b> tracks in a playlist.</b>
+	DE	Importiere Bewertungen, indem alle eine Bewertung für alle Titel der Wiedergabeliste gesetzt wird.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_PLNAME
 	EN	Playlist Name
+	DE	Name der Wiedergabeliste
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_PLRATING
 	EN	Rating
+	DE	Bewertung
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_PLRATING_NOPLFOUND
 	EN	No playlists found
+	DE	Keine Wiedergabeliste gefunden
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_INPROGRESS
 	EN	rating...
+	DE	Bewertung läuft...
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_RATENOW_BUTTON
 	EN	Rate Playlist Now
+	DE	Wiedergabeliste jetzt bewerten
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_PLMAXTRACKS
 	EN	Max. number of playlist tracks
+	DE	Maximale Anzahl der Titel je Wiedergabeliste
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS_PLMAXTRACKS_DESC
 	EN	Set the maximum number of tracks for import playlists. The default is 1000 tracks (which is already quite high). Larger playlists are probably more likely to cause problems.
+	DE	Definiert die maximale Anzahl von Titel für eine Import-Wiedergabeliste. Standard sind 1000 (das ist schon sehr viel). Größere Wiedergabeliste können möglicherweise zu Problemen führen.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS
 	EN	File Tags
+	DE	Datei Tags
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT
 	EN	Manual Import
+	DE	Manueller Import
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT_DESC
 	EN	<b>Manually</b> import ratings from file tags <b>now</b>.<br>Unless you've enabled the <i>Don't unrate</i> option this will <b>reset <u>all</u> ratings to values derived from the file tags.</b>
+	DE	Sofortiger, manueller Import der Bewertungen aus den Datei-Tags. Dies ersetzt alle Bewertungen mit den Bewertungen aus den Datei-Tags, außer die Option 'Bewertung nicht löschen' ist gesetzt.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_HEADER
 	EN	<b>Import ratings from the BPM tags or the comment tags of your files.</b>
+	DE	Importiere die Bewertungen aus den BPM-Tags oder den Kommentar-Tags deiner Dateien.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT_BUTTON
 	EN	Import now
+	DE	Jetzt importieren
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_MANUAL_IMPORT_MISSINGKEYWORDS
 	EN	You have to set at least one keyword!
+	DE	Du musst mindestens ein Schlüsselwort definieren!
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_MANUAL_IMPORT_INPROGRESS
 	EN	importing...
+	DE	Import läuft...
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_AUTOSCAN
 	EN	Include ratings import in LMS scan
+	DE	Bewertungsimport in Duchsuchen der Sammlung einbinden
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_AUTOSCAN_DESC
 	EN	Always import ratings from file tags when LMS performs a scan.<br>This will <b>reset <u>all</u> ratings</b> in the LMS database to values based on your file tags.
+	DE	Importiere Bewertungen aus den Datei-Tags bei jedem Durchsuchen der Sammlung durch LMS. Dies setzt alle Bewertungen in der Datenbank auf die Werte aus den Datei-Tags zurück!
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_DONTUNRATE
 	EN	Don't unrate tracks
+	DE	Bewertung nicht löschen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_DONTUNRATE_DESC
 	EN	Importing ratings from file tags was designed to have the LMS database mirror all track ratings it finds in your file tags and unrate all other tracks (resulting in <b>synced track ratings</b>).<br>If you enable this (<b>not recommended</b>), new and changed track ratings will show in the LMS database after import but <b><i>formerly</i> rated tracks which are no longer marked as rated in your file tags will <u>not</u> be unrated</b>.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE
 	EN	Choose file tag for import
+	DE	Wähle Datei-Tag zum Import
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE_DESC
 	EN	Choose the file tag you want to import rating values from.<br><br><b>Comment tags:</b> Import ratings derived from <b>keywords</b> in the <b>comment tags</b> of your files.<br><br><b>BPM:</b> Import ratings from the <b>BPM</b> tag. Values in the BPM tag have to be integer values on a <b><u>10-step</u></b> scale from 0 to 100. Anything else will be ignored.<br><br><b>If you <i>change</i> the file tag you want to import ratings from, <u>save</u> your selection first <u>before</u> you start importing.</b>
+	DE	Wähle den Datei-Tag von dem du die Bewertungen importieren willst. <br><br><b>Kommentar Tags:</b> Importiere Bewertungen abgeleitet von <b>Schlüsselwörtern</b> in den <b>Kommentar-Tags</b> deiner Dateien.<br><br><b>BPM:</b> Importiere Bewertungen aus dem BPM-Tag. Werte in den BPM-Tags müssen ganzzahlige Werte in 10er Schritten auf einer Skala von 0 bis 100 sein. Alles andere wird ignoriert.<br><br><b>Wenn du das Datei-Tag, von dem die Bewertungen importiert werden sollen, <i>ändern</i> möchtest, <u>sichere</u> zuerst die Auswahl <u>bevor</u> du mit dem Import startest.</b>
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE_BPM
 	EN	BPM tag
+	DE	BPM-Tag
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE_COMMENT
 	EN	Comment tag
+	DE	Kommentar-Tag
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_EXAMPLE
 	EN	<b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx": if a comment tag contains "favstars<b>4</b>xx" -> track rating = <b>4</b> stars
+	DE	<b>Beispiel:</b><br>Bewertung Schlüsselwort <b>prä</b>fix = "favstars", Bewertung Schlüsselwort <b>suffix</b> = "xx": Wenn ein Kommentar-Tag "favstars<b>4</b>xx" beinhaltet, ist die Bewertung = <b>4</b> Sterne
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD
 	EN	Set your rating keywords
+	DE	Definiere deine Bewertungs-Schlüsselworte
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD_PREFIX
 	EN	<b>Rating Keyword <u>Pre</u>fix</b>
+	DE	<b>Bewertung Schlüsselwort <u>Prä</u>fix</b>
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD_SUFFIX
 	EN	<b>Rating Keyword <u>Suf</u>fix</b>
+	DE	<b>Bewertung Schlüsselwort <u>Suf</u>fix</b>
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD_DESC
 	EN	At least one field must be filled.<br>Up to 30 letters, case insensitive, no numbers or special characters.<br>Rating values have to <b>integers</b> on a scale from 0 to 5 in your keywords, <i>no half-star rating values</i>.
-
+	DE	Mindestens ein Feld muss ausgefüllt werden. <br>Bis zu 30 Zeichen, ohne Groß-/Kleinschreibung, keine Zahlen oder Sonderzeichen.<br>Bewertungswerte müssen ganzzahlig auf einer Skala von 0 bis 5 sein, keine Halb-Sterne-Bewertungen.
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP
 	EN	Backup
+	DE	Sicherung
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP
 	EN	Manual backup
+	DE	Manuelle Sicherung
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_DESC
 	EN	Backup all <b>rated</b> tracks (from your entire library) and their rating values to a single backup file.
+	DE	Sichere alle <b>bewerteten</b> Titel (aus der ganzen Sammlung) und ihre Bewertungen in eine einzelne Sicherungsdatei.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_BUTTON
 	EN	Backup now
+	DE	Jetzt sichern
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_INPROGRESS
 	EN	creating backup...
+	DE	erzeuge Sicherung...
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS
 	EN	Scheduled backups
+	DE	Geplante Sicherungen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS_DESC
 	EN	Enable scheduled daily backups
+	DE	Aktiviere geplante, tägliche Sicherungen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME
 	EN	Scheduled backup time
+	DE	Geplante Sicherungszeit
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME_DESC
 	EN	Set the time for your daily backup. If you leave this empty, no scheduled backups will occur.
+	DE	Bestimme die Zeit für deine tägliche Sicherung. Wenn du hier nichts einträgst, erfolgt keine tägliche Sicherung.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_PRESCANBACKUP
 	EN	Backup before each library rescan
+	DE	Sicherung vor jedem Durchsuchen der Sammlung
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_PRESCANBACKUP_DESC
 	EN	Have RL automatically create a backup of your database values right <b>before</b> the scan process starts.<br>This setting affects only <b>pre-scan</b> backups. It's unrelated to the <i>scheduled</i> backup function.
+	DE	RL legt automatisch eine Sicherung deiner Bewertungs-Datenbank <b>bevor</b> der Durchsuchungsvorgang gestartet wird. <br>Diese Einstellung betrifft nur die Sicherung vor dem Durchsuchen und ist unabhängig von der geplanten Sicherung.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS
 	EN	Auto-delete old backups
+	DE	Alte Sicherungen automatisch löschen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS_DESC
 	EN	Have RL delete old backups automatically (esp. recommended if you have enabled <i>scheduled daily backups</i>).
+	DE	RL löscht alte Sicherungen automatisch (besonders empfohlen bei geplanten, täglichen Sicherungen).
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS_WARNING
 	EN	recommended if scheduled backups are enabled
+	DE	empfohlen, wenn geplante Sicherungen aktiviert sind
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPDAYSTOKEEP
 	EN	Delete backups older than
+	DE	Läsche Sicherungen älter als
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPDAYSTOKEEP_DESC
 	EN	Set the number of days after which old backups will be deleted.
+	DE	Bestimme die Anzahl der Tage, nach denen alte Sicherungen gelöscht werden.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPDAYSTOKEEP_BACKUPDAYS
 	EN	day(s)
+	DE	Tag(e)
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPMINFILESTOKEEP
 	EN	Minimum number of backups to keep
+	DE	Mindestanzahl zu behaltender Sicherungen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPMINFILESTOKEEP_DESC
 	EN	Keep at least this number of backup files, regardless of their creation date.<br>If you don't create scheduled or regular manual backups, this will prevent RL from accidentally deleting <b>all</b> of your old backup files.
-
+	DE	Behalte mindestens diese Anzahl von Sicherungsdateien, unabhängig von deren Alter.<br>Wenn du keine geplanten oder regelmäßigen manuellen Sicherungen machst, verhindert diese Einstellung, das RL versehentliche <b>ALLE</b> Sicherungsdateien löscht.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE
 	EN	Restore
+	DE	Wiederherstellen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE
 	EN	Select a backup file to restore from
+	DE	Wähle eine Sicherungsdatei zur Wiederherstellung aus
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE_DESC
 	EN	Select a backup file (created with <i>Ratings Light</i>) to restore your ratings values from.<br><br><b>Please note:</b> Restoring from old <i>TrackStat</i> backup files will <b>only</b> work if the <b>URLs / file paths of the music files have not changed</b>.<br>Relative file path guessing is <b>only</b> supported for backups created with <i>Ratings Light</i>.
+	DE	Wähle eine Sicherungsdatei (die mit Ratings Light erstellt wurde) aus, von der deine Bewertungen wiederhergestellt werden sollen. <br>Bitte beachten: </b>Die Wiederherstellung anhand alter TrackStat-Sicherungsdateien funktioniert nur, wenn sich die <b>URLs / Dateipfade der Musikdateien nicht geändert haben</b>.<br>Das Herleiten relativer Dateipfade wird nur von Sicherungsdateien unterstützt, die mit Ratings Light erzeugt wurden.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOW
 	EN	Restore from backup file now
+	DE	Jetzt aus Sicherungsdatei wiederherstellen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOW_DESC
 	EN	Restore ratings from the backup file you chose above.<br><br><b>All ratings will be reset to the values of the backup file.</b>
+	DE	Stellt die Bewertungen anhand der Sicherungsdatei wieder her <br><b>Alle Bewertungen werden auf die Werte aus der Sicherungsdatei zurückgesetzt.</b>.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_BUTTON
 	EN	Restore now
+	DE	Jetzt wiedeherstellen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_MISSINGFILE
 	EN	You have to select a file first!
+	DE	Du musst zuerst eine Datei auswählen!
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOXMLFILE
 	EN	Please select a valid XML file created with <i>Ratings Light</i> !
+	DE	Bitte wähle eine gültige XML-Datei aus, die mit Ratings Light erzeugt wurde.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_INPROGESS
 	EN	restoring...
+	DE	Wiederherstellung läuft...
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE
 	EN	Choose what to restore
+	DE	Wähle, was wiederhergestellt werden soll
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE_DESC
 	EN	You can limit restoring to local file tracks or online library tracks.
+	DE	Du kannst die Wiederherstellung auf lokale Dateien oder Titel aus Online-Musiksammlungen begrenzen.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE_ALL
 	EN	All tracks
+	DE	Alle Titel
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE_LOCALONLY
 	EN	Local file tracks only
+	DE	Nur Titel aus lokalen Dateien
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE_REMOTEONLY
 	EN	Online library tracks only
+	DE	Nur Titel aus Online-Musiksammlungen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_CLEARALLBEFORE
 	EN	Clear all ratings before restore
+	DE	Lösche zuerst alle Bewertungen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_CLEARALLBEFORE_DESC
 	EN	This will clear all ratings in the database before starting the restore process. All rating values in your database will be reset to the values from the backup. In other words, ratings not contained in the backup will be lost.
-
+	DE	Dadurch werden alle Bewertungen aus der Datenbank gelöscht, bevor die Wiederherstellung gestartet wird. Alle Bewertungen in der Datenbank werden zurückgesetzt. Das heißt, alle Bewertungen, die nicht im Backup enthalten sind, gehen so verloren.
 
 
 PLUGIN_RATINGSLIGHT_MENUS_RATED_TRACKS_MENU_FOLDER
 	EN	Rated Tracks
+	DE	Bewertete Titel
 
 PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_TOPRATED
 	EN	Top Rated - Artists
+	DE	TOP Bewertet - Interpreten
 
 PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_TOPRATED
 	EN	Top Rated - Genres
+	DE	TOP Bewertet - Stilrichtungen
 
 PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_TOPRATED
 	EN	Top Rated - Tracks
+	DE	TOP Bewertet - Titel
 
 PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_RATED
 	EN	Rated - Artists
+	DE	Bewertet - Interpreten
 
 PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_RATED
 	EN	Rated - Genres
+	DE	Bewertet - Stilrichtungen
 
 PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_RATED
 	EN	Rated - Tracks
+	DE	Bewertet - Titel
 
 PLUGIN_RATINGSLIGHT_STAR
 	EN	star
+	DE	Stern
 
 PLUGIN_RATINGSLIGHT_STARS
 	EN	stars
+	DE	Sterne
 
 PLUGIN_RATINGSLIGHT_MENUS_ARTISTMENU_SUFFIX
 	EN	- Artists
+	DE	- Interpreten
 
 PLUGIN_RATINGSLIGHT_MENUS_GENREMENU_SUFFIX
 	EN	- Genres
+	DE	- Stilrichtungen
 
 PLUGIN_RATINGSLIGHT_MENUS_TRACKSMENU_SUFFIX
 	EN	- Tracks
+	DE	- Titel
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS
 	EN	Show browse menus for rated tracks
+	DE	Zeige Durchsuchen-Menüs für bewertete Titel
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_DESC
 	EN	Browse your rated tracks by artist, genre or tracks.<br><br><b>Rated:</b> All rated tracks.<br><br><b>Rated + Top rated:</b> Adds artist, genre and tracks menus for <i>top</i> rated tracks. <i>Top</i> rated tracks have the minimum rating that you defined in the <i>Various Settings</i> section of this plugin's preferences.<br><br><b>Exact ratings:</b> Artist, genre and tracks menus for each (full-star) rating value (1 to 5). <b>Half-star ratings are rounded up</b> (to avoid creating 5 extra virtual libraries and 15 extra browse menus for half-stars).<br><br><b>Exact ratings (incl. half-stars):</b> Artist, genre and tracks menus for each half-star rating value (0.5 to 5).
+	DE	Durchsuche deine bewerteten Titel nach Interpret, Stilrichtung oder Titel.<br><br><b>Bewertet:</b> Alle bewerteten Titel.<br><br><b>Bewertet + TOP bewertet:</b> Fügt Interpret-,Stilrichtung, und Titel-Menüs für <i>TOP</i> bewertete Titel hinzu. <i>TOP</i> bewertete Titel haben die Mindestbewertung, die du im Bereich <i>Verschiedene Einstellungen</i> dieses Plugins definiert hast. <br><br><b>Exakte Bewertungen:</b> Interpret-, Stilrichtung- und Titel-Menüs für jeden (ganzen Stern)-Bewertungswert (1 bis 5). <b>Halb-Sterne-Bewertungen werden aufgerundet</b>. <br><br><b>Exakte Bewertungen (inkl. Halb-Sterne):</b> Interpret-, Stilrichtung- und Titel-Menüs für jeden Halb-Sterne-Bewertungswert (0.5 to 5).
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_DISABLE
 	EN	Disable menus
+	DE	Menüs deaktivieren
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_RATED_ONLY
 	EN	Rated
+	DE	Bewertet
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_TOPRATED
 	EN	Rated + Top Rated
+	DE	Bewertet + TOP-bewertet
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_EXACTRATING
 	EN	Exact ratings
+	DE	Exakte Bewertungen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SHOW_RATED_TRACKS_MENUS_EXACTRATING_HALFSTARS
 	EN	Exact ratings (incl. half-stars)
+	DE	Exakte Bewertungen (inkl. Halb-Sterne-Bewertungen)
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ARTISTS_MENU
 	EN	<b>Artists</b> browse menu
+	DE	<b>Interpreten</b> Durchsuchen-Menü
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_GENRES_MENU
 	EN	<b>Genres</b> browse menu
+	DE	<b>Stilrichtungen</b> Durchsuchen-Menü
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_TRACKS_MENU
 	EN	<b>Tracks</b> browse menu
+	DE	<b>Tracks</b> Durchsuchen-Menü
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SOURCE_VL
 	EN	Select virtual library<br>for browse menus
+	DE	Wähle virtuelle Bibliothek für Durchsuchen-Menüs
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SOURCE_VL_DESC
 	EN	Select the virtual library for which Ratings Light should create artists and genre browse menus
+	DE	Wähle die virtuelle Bibliothek für die Ratings Light Interpreten- und Stilrichtungs-Ddurchsuchenmenüs erstellen soll.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER
 	EN	Rating character
+	DE	Bewertung Zeichen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_DESC
 	EN	Choose the displayed rating character for menus and titelformats.<br><br><b>*** IMPORTANT, please read ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> and other players running jivelite <b>do not support displaying the unicode blackstar character out of the box</b>.<br>This character is not part of their <i>default</i> font. If you want to display this character on these devices you'll have to <b>replace the default font</b> on these devices with a font that contains this character.<br><br><a href="https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font" target="_blank" rel="noopener noreferrer">Click here for more information, instructions and fonts.</a>
+	DE	Wähle das anzuzeigende Bewertungs-Zeichen für Menüs und Titelformate aus.<br><br><b>*** WICHTIG, bitte lesen ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> und andere Player, die Jivelite verwenden, <b>unterstützen die Anzeige des Unicode Blackstar Zeichen nicht von Haus aus</b>.<br>Dieses Zeichen ist nicht in deren <i>Standard</i> Zeichensatz enthalten. Wenn du dieses Zeichen auf diesen Geräten verwenden möchtest, musst du den Standard-Zeichensatz <b>ersetzen</b> durch einen, der dieses Zeichen enthält.<br><br><a href="https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font" target="_blank" rel="noopener noreferrer">Klicke hier für mehr Information, Anleitung und Zeichensatz.</a>
+
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_STAR_TEXT
 	EN	* - common text star
+	DE	* - normaler Text-Stern
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_STAR_2605
 	EN	★ - blackstar (unicode 2605)
+	DE	★ - blackstar (unicode 2605)
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS
 	EN	Set half-star ratings
+	DE	Halb-Sterne-Bewertungen aktivieren
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS_DESC
 	EN	Use half-star ratings to rate your tracks. This setting applies mainly to the LMS (Dark) <b>Default skin</b> and <b>context rating menus</b>. Material, for example, uses its own rating UI with Ratings Light.<br><br><b>Please note:</b> Even if you disable <b>setting</b> of half-star ratings, <i>Ratings Light</i> will still <b>display</b> the <b>exact</b> track rating value incl. half-stars.
+	DE	Bewertung mit halben Sternen zulassen. Diese Einstellung betrifft hauptsächlich die LMS Default Benutzeroberfläche und Kontextmenüs. Material, z.B., hat eine eigene Benutzeroberfläche für die Bewertung. Auch wenn diese Einstellung deaktiviert ist, zeigt Ratings Light immer ndie exakte Bewertung inklusiver halber Sterne an.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING
 	EN	Enable iPeng rating workaround
+	DE	iPeng Bewertung workaraound aktivieren
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING_DESC
 	EN	Displaying and changing track ratings in iPeng is already possible via the <b>context menu</b>.<br>iPeng <b>additionally</b> offers the possibility to display and change track ratings directly in the <b>top left menu bar</b>. Unfortunately iPeng supports this officially only for the now discontinued TrackStat plugin.<br>If you check this box, you can also use <i>Ratings Light</i> to display and change track ratings directly in iPeng's top left menu bar (with the help of a workaround).<br><br>If you have changed this setting, please <b>restart the server for the change to take effect</b>.
+	DE	Die Anzeige und das Ändern der Titelbewertung in iPeng ist bereits über das Kontextmenü möglich. iPeng bietet zusätzlich die Möglichkeit, die Bewertungen direkt in der linken oberen Menüzeile anzusehen und zu ändern. Unglücklicherweise ist dies offiziell nur für das bereits eingestellte TrackStat-Plugin möglich. Wenn diese Option gewählt ist, ist dies auch mit Ratings Light durch einen Workaround möglich. Nach dem Ändern dieser Optin bitte den Server neu starten.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_WEB_LIMIT
 	EN	Show more rated tracks - web UI limit
+	DE	Zeige mehr bewertete Titel - Weboberfläche Begrenzung
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_WEB_LIMIT_DESC
 	EN	Limits the number of tracks in Ratings Light <b>web UI</b> context menus. These context menus ("<i>Show rated tracks</i>") are available for artist, album, genre, year, decade, playlist, and on the song details page.
+	DE	Begrenzt die Anzahl der Titel in den 'Ratings-Light'-Weboberflächen-Kontextmenüs. Diese Kontextmenüs 'Zeige bewertete Titel' sind verfügbar für Interpret, Album, Stilrichtung, Jahr, Jahrzent, Wiedergabeliste und auf der Titel-Detailseite.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
 	EN	Show more rated tracks - menu limit
+	DE	Zeige mehr bewertete Titel - Menü Begrenzung
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
 	EN	Limits the number of tracks in <b>context</b> menus in <b>Material skin</b> and on <b>piCorePlayer, SB Touch, SB Radio</b>. These context menus ("<i>Show rated tracks</i>") are available for artist, album, genre, year, decade, playlist, and on the song details page.
-
+	DE	Begrenzt die Anzahl der angezeigten Titel in Kontextmenüs des Material-Skins und im PiCorePlayer, SB Touch und SB Radio. Diese 'Ziege bewertete Titel'-Kontextmenüs sind verfügbar für Interpret, Album, Stilrichtung, Jahr, Jahrzent, Wiedergabeliste und auf der Titeödetails-Seite.
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PERCENTAGE_RATED
 	EN	Percentage of rated songs
+	DE	Anteil bewerteter Titel in Prozent
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PERCENTAGE_RATED_DESC
 	EN	Included a certain percentage of rated songs in "<b>un</b>rated songs" DSTM mixes.
+	DE	Anteil bewerteter Titel in 'unbewertete Titel'-DSTM Mixen.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PERCENTAGE_TOPRATED
 	EN	Percentage of top rated songs
+	DE	Anteil TOP bewerteter Titel in Prozent
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PERCENTAGE_TOPRATED_DESC
 	EN	Percentage of top rated songs in "rated songs" DSTM mixes.<br>You can set/change the minimum rating for tracks to be considered <b>top</b> rated in the <b>Various</b> section of the <i>Ratings Light</i> settings.
+	DE	Anteil TOP bewerteter Titel in 'bewertete Titel'-DSTM Mixen. Die minimale Bewertung für Titel, die als TOP bewertet gelten sollen, kann angelegt/geändert werden.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_NUMSEEDTRACKS
 	EN	Number of DSTM seed tracks
+	DE	Anzahl der DSTM-Saat-Titel
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_NUMSEEDTRACKS_DESC
 	EN	Sets the number of seed tracks from which DSTM compiles a genre list for its mix.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PLAYEDTRACKSTOKEEP
 	EN	Number of played tracks in playlist
+	DE	Anzahl gespielter Titel in Wiedergabeliste
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PLAYEDTRACKSTOKEEP_DESC
 	EN	Sets the number of <b>played</b> tracks to keep in the DSTM playlist when new tracks are added.
+	DE	Definiert die Anzahl der gespielten Titel, die in der DSTM Wiedergabeliste bleiben sollen, wenn neue Titel hinzugefügt werden.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_BATCHSIZENEWTRACKS
 	EN	New tracks added in one batch
+	DE	Anzahl neuer Titel je Vorgang
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_BATCHSIZENEWTRACKS_DESC
 	EN	Sets the number of new tracks DSTM adds in one batch.
+	DE	Definiert die Anzahl neu hinzuzufügender Titel für DSTM in einem Vorgang.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_MINTRACKDUR
 	EN	Minimum track duration
+	DE	Minimale Titellänge
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_MINTRACKDUR_DESC
 	EN	Set the minimum track duration (in <i>seconds</i>) for tracks in <b>Don't Stop The Music</b> mixes.
+	DE	Minimale Länge eines Titels in 'Don't Stop The Musik' (in Sekunden)
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_EXCLUDEDGENRES
 	EN	Exclude genres
+	DE	Stilrichtungen ausschließen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_EXCLUDEDGENRES_DESC
 	EN	Exclude genres from <b>Don't Stop The Music</b> mixes.
+	DE	Stilrichtungen von 'Don't Stop The Music' ausschließen.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_CHOOSEEXLUDEGENRES
 	EN	Choose genres to exclude
-
+	DE	Auszuschließende Stilrichtungen
 
 
 PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS
 	EN	Ratings Light - Rated Tracks
+	DE	Ratings Light - Bewertete Titel
 
 PLUGIN_RATINGSLIGHT_VLNAME_TOPRATEDTRACKS
 	EN	Ratings Light - Top Rated Tracks
+	DE	Ratings Light - TOP bewertete Titel
 
 PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED
 	EN	Ratings Light - Tracks rated
+	DE	Ratings Light - bewertete Titel
 
 PLUGIN_RATINGSLIGHT_LIBVIEW
 	EN	Library View
-
+	DE	Sammlungen
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST
 	EN	Show rated tracks by
+	DE	Zeige bewertete Titel von
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST
 	EN	Show more rated tracks by
+	DE	Zeige mehr bewertete Titel von
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_LISTHEADER
 	EN	Rated tracks by
+	DE	Bewertete Titel von
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_LISTHEADER
 	EN	More rated tracks by
+	DE	Mehr bewertete Titel von
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM
 	EN	Show rated tracks in
+	DE	Zeige bewertete Titel aus
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM
 	EN	Show more rated tracks in
+	DE	Zeige mehr bewertete Titel aus
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM_LISTHEADER
 	EN	Rated tracks in
+	DE	Bewrtete Titel aus
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM_LISTHEADER
 	EN	More rated tracks in
+	DE	mehr bewertete Titel aus
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINGENRE
 	EN	Show random selection of rated tracks in
+	DE	Zeige Zufallsauswahl bewerteter Titel aus
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINGENRE_LISTHEADER
 	EN	Random selection of rated tracks in
+	DE	Zufallsauswahl bewerteter Titel aus
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMYEAR
 	EN	Show random selection of rated tracks from
+	DE	Zeige Zufallsauswahl bewerteter Titel aus
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSFROMYEAR_LISTHEADER
 	EN	Random selection of rated tracks from
+	DE	Zufallsauswahl bewerteter Titel aus
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMDECADE
 	EN	Show random selection of rated tracks from the
+	DE	Zeige Zufallsauswahl bewerteter Titel aus den
 
 PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSFROMDECADE_LISTHEADER
 	EN	Random selection of rated tracks from the
+	DE	Zufallsauswahl bewerteter Titel aus den
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINPLAYLIST
 	EN	Show rated tracks in
+	DE	Zeige bewertete Tracks in
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_ALLSONGS
 	EN	All songs
+	DE	Alle Titel
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW
 	EN	Play now
+	DE	Jetzt abspielen
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW_MSG
 	EN	Playing track now
+	DE	Aktuelle Wiedergabe
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW_MSG_ALL
 	EN	Playing tracks now
+	DE	Spiele jetzt alle Titel ab
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT
 	EN	Play next
+	DE	als nächstes
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT_MSG
 	EN	Track will be played next
+	DE	Titel wird als nächstes wiedergegeben
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT_MSG_ALL
 	EN	Tracks will be played next
+	DE	Titel werden als nächste abgespielt
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND
 	EN	Append to queue
+	DE	Der Warteschlange hinzufügen
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND_MSG
 	EN	Added track to end of queue
+	DE	Titel ans Ende der Warteschlange hinzugefügt
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND_MSG_ALL
 	EN	Added tracks to end of queue
+	DE	Titel ans Ende der Warteschlange hinzugefügt
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_MOREINFO
 	EN	More information
-
+	DE	Mehr Informationen
 
 
 PLUGIN_RATINGSLIGHT_DSTM_RATED
 	EN	Ratings Light - rated tracks
+	DE	Ratings Light - bewertete Titel
 
 PLUGIN_RATINGSLIGHT_DSTM_TOPRATED
 	EN	Ratings Light - rated tracks (with % of top rated)
+	DE	Ratings Light - bewertete Titel (mit Anteil TOP bewerteter)
 
 PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE
 	EN	Ratings Light - rated tracks (similar genres)
+	DE	Ratings Light - bewertete Titel (ähnliche Stilrichtungen)
 
 PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE_TOPRATED
 	EN	Ratings Light - rated tracks (similar genres, with % of top rated)
+	DE	Ratings Light - bewertete Titel (ähnliche Stilrichtungen, mit Anteil TOP bewerteter)
 
 PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED
 	EN	Ratings Light - unrated tracks (with % of rated)
+	DE	Ratings Light - unbewertete Titel (mit Anteil bewerteter)
 
 PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_GENRE
 	EN	Ratings Light - unrated tracks (similar genres, with % of rated)
+	DE	Ratings Light - unbewertete Titel (ähnliche Stilrichtungen, mit Anteil bewerteter)
 
 PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED
 	EN	Ratings Light - unrated tracks (unplayed with % of rated)
+	DE	Ratings Light - unbewertete Titel (nie gespielt mit Anteil bewerteter)
 
 PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED_GENRE
 	EN	Ratings Light - unrated tracks (unplayed, similar genres, with % of rated)
+	DE	Ratings Light - unbewertete Titel (nie gespielt, ähnliche Stilrichtungen, mit Anteil bewerteter)
