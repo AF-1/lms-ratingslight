@@ -2231,7 +2231,7 @@ sub initVLmenus {
 									}
 								);
 							}
-	
+
 							# Genres with rated tracks
 							if ($prefs->get('browsemenus_genres')) {
 								push @items, $menuGenerator->(
@@ -2248,7 +2248,7 @@ sub initVLmenus {
 									}
 								);
 							}
-	
+
 							# Rated tracks
 							if ($prefs->get('browsemenus_tracks')) {
 								$pt->{'sort'} = 'track';
