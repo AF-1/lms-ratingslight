@@ -2503,7 +2503,7 @@ sub getFunctions {
 			}
 			return unless $digit >= '0' && $digit <= '9';
 
-			my $curTrack = $::VERSION lt '8.2' ? Slim::Player::Playlist::song($client) : Slim::Player::Playlist::track($client);
+			my $curTrack = Slim::Player::Playlist::track($client);
 			if ($digit >= 0 && $digit <=5) {
 				$rating100ScaleValue = $digit * 20;
 			}
