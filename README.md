@@ -115,6 +115,9 @@ You can install an [**applet**](https://github.com/AF-1#applets) on your *piCore
 <b>Please note:</b> <i>SB Touch, SB Radio, piCorePlayer, Squeezeplay and other players running jivelite</i> do not support displaying the unicode blackstar character out of the box. This character is not part of their default font. If you want to display this character on these devices you'll have to replace the default font on these devices with a font that contains this character.<br>
 More information, instructions, and fonts <a href="https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font">here</a>.<br>The <b>Material</b> web skin uses its own way to display track ratings in menus and playlists.</p></details><br>
 
+<details><summary>»<b>I have <i>renamed / moved</i> some audio files. How can I preserve my ratings for these tracks?</b>«</summary><br><p>
+You can use backups. Go to the plugin's settings page (backup section) immediately before you rescan your library and confirm that <i>Backup before each library rescan</i> is <b>en</b>abled. Just to be safe on the safe side, create a manual backup as well.<br>Then rescan your library. With the rescan completed, go to the plugin's settings page and restore the rating values from the pre-scan backup. RL will try to restore the ratings for moved/renamed tracks using (relative) path guessing and MusicBrainz IDs. Of course, there's no guarantee that it will restore 100% but that's as good as it gets.
+</p></details><br>
 
 <details><summary>»<b>Where does Ratings Light store track ratings?</b>«</summary><br><p><i>Ratings Light</i> does not use its own database. It tells LMS to store the track ratings in the <b>LMS</b> <i>persistent</i> database which is not cleared on rescans. However, if you value your ratings very much, I'd recommend to enable <i>scheduled</i> backups in RL. Or at least create occasional <i>manual</i> backups.</p></details><br>
 
