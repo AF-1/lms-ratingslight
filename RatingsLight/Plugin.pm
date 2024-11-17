@@ -170,6 +170,33 @@ sub initPlugin {
 	$class->SUPER::initPlugin(@_);
 }
 
+sub postinitPlugin {
+	unless (!Slim::Schema::hasLibrary() || Slim::Music::Import->stillScanning) {
+		initVirtualLibraries();
+		Slim::Utils::Timers::setTimer(undef, time() + 2, \&backupScheduler);
+	}
+
+	if (Slim::Utils::PluginManager->isEnabled('Slim::Plugin::DontStopTheMusic::Plugin')) {
+		require Plugins::RatingsLight::DontStopTheMusic;
+		Plugins::RatingsLight::DontStopTheMusic->init();
+	}
+
+	$material_enabled = Slim::Utils::PluginManager->isEnabled('Plugins::MaterialSkin::Plugin');
+	main::DEBUGLOG && $log->is_debug && $log->debug('Plugin "Material Skin" is enabled') if $material_enabled;
+
+	if (Slim::Utils::PluginManager->isEnabled('Plugins::MusicArtistInfo::Plugin')) {
+		$MAIprefs = preferences('plugin.musicartistinfo');
+	}
+
+	# temp. workaround to allow legacy TS rating in iPeng until iPeng supports RL or is discontinued
+	if ($prefs->get('enableipengtslegacyrating') && !Slim::Utils::PluginManager->isEnabled('Plugins::TrackStat::Plugin')) {
+		Slim::Control::Request::addDispatch(['trackstat', 'getrating', '_trackid'], [0, 1, 0, \&getRatingTSLegacy]);
+		Slim::Control::Request::addDispatch(['trackstat', 'setrating', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
+		Slim::Control::Request::addDispatch(['trackstat', 'setratingpercent', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
+		Slim::Control::Request::addDispatch(['trackstat', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
+	}
+}
+
 sub initPrefs {
 	$prefs->init({
 		rlparentfolderpath => Slim::Utils::OSDetect::dirsFor('prefs'),
@@ -281,33 +308,10 @@ sub initPrefs {
 			refreshTitleFormats();
 		}, 'displayratingchar');
 	$prefs->setChange(sub {regTrackInfoHandlerRating(1);}, 'ratingcontextmenupos');
-}
-
-sub postinitPlugin {
-	unless (!Slim::Schema::hasLibrary() || Slim::Music::Import->stillScanning) {
-		initVirtualLibraries();
-		backupScheduler();
-	}
-
-	if (Slim::Utils::PluginManager->isEnabled('Slim::Plugin::DontStopTheMusic::Plugin')) {
-		require Plugins::RatingsLight::DontStopTheMusic;
-		Plugins::RatingsLight::DontStopTheMusic->init();
-	}
-
-	$material_enabled = Slim::Utils::PluginManager->isEnabled('Plugins::MaterialSkin::Plugin');
-	main::DEBUGLOG && $log->is_debug && $log->debug('Plugin "Material Skin" is enabled') if $material_enabled;
-
-	if (Slim::Utils::PluginManager->isEnabled('Plugins::MusicArtistInfo::Plugin')) {
-		$MAIprefs = preferences('plugin.musicartistinfo');
-	}
-
-	# temp. workaround to allow legacy TS rating in iPeng until iPeng supports RL or is discontinued
-	if ($prefs->get('enableipengtslegacyrating') && !Slim::Utils::PluginManager->isEnabled('Plugins::TrackStat::Plugin')) {
-		Slim::Control::Request::addDispatch(['trackstat', 'getrating', '_trackid'], [0, 1, 0, \&getRatingTSLegacy]);
-		Slim::Control::Request::addDispatch(['trackstat', 'setrating', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
-		Slim::Control::Request::addDispatch(['trackstat', 'setratingpercent', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
-		Slim::Control::Request::addDispatch(['trackstat', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
-	}
+	$prefs->setChange(sub {
+			main::DEBUGLOG && $log->is_debug && $log->debug('Pref for scheduled backups changed. Resetting or killing timer.');
+			backupScheduler();
+		}, 'scheduledbackups', 'backuptime');
 }
 
 
@@ -1781,12 +1785,19 @@ sub adjustRatings {
 ## backup, restore
 
 sub backupScheduler {
+	main::DEBUGLOG && $log->is_debug && $log->debug('Checking backup scheduler');
+
+	main::DEBUGLOG && $log->is_debug && $log->debug('Killing backup timer if any.');
+	Slim::Utils::Timers::killTimers(undef, \&backupScheduler);
+
 	if ($prefs->get('scheduledbackups')) {
 		my $backuptime = $prefs->get('backuptime');
 		my $day = $prefs->get('backup_lastday');
 		if (!defined($day)) {
 			$day = '';
 		}
+		main::DEBUGLOG && $log->is_debug && $log->debug('backup time = '.Data::Dump::dump($backuptime));
+		main::DEBUGLOG && $log->is_debug && $log->debug('last backup day = '.Data::Dump::dump($day));
 
 		if (defined($backuptime) && $backuptime ne '') {
 			my $time = 0;
@@ -1800,26 +1811,29 @@ sub backupScheduler {
 				}
 			}iegsx;
 			my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
+			main::DEBUGLOG && $log->is_debug && $log->debug('local time = '.Data::Dump::dump(padnum($hour).':'.padnum($min).':'.padnum($sec).' -- '.padnum($mday).'.'.padnum($mon).'.'));
 
 			my $currenttime = $hour * 60 * 60 + $min * 60;
 
-			if (($day ne $mday) && $currenttime>$time) {
+			if (($day ne $mday) && $currenttime > $time) {
+				main::DEBUGLOG && $log->is_debug && $log->debug('Starting scheduled backup');
 				eval {
-					createBackup();
+					Slim::Utils::Scheduler::add_task(\&createBackup);
 				};
 				if ($@) {
 					$log->error("Scheduled backup failed: $@");
 				}
 				$prefs->set('backup_lastday',$mday);
 			} else {
-				my $timesleft = $time-$currenttime;
+				my $timeleft = $time - $currenttime;
 				if ($day eq $mday) {
-					$timesleft = $timesleft + 60*60*24;
+					$timeleft = $timeleft + 60 * 60 * 24;
 				}
-				main::DEBUGLOG && $log->is_debug && $log->debug(parse_duration($timesleft)." ($timesleft seconds) left until next scheduled backup");
+				main::DEBUGLOG && $log->is_debug && $log->debug(parse_duration($timeleft)." ($timeleft seconds) left until next scheduled backup time. The actual backup is created no later than 30 minutes after the set backup time.");
 			}
+
+			Slim::Utils::Timers::setTimer(undef, time() + 1800, \&backupScheduler);
 		}
-		Slim::Utils::Timers::setTimer(0, Time::HiRes::time() + 3600, \&backupScheduler);
 	}
 }
 
@@ -3049,6 +3063,11 @@ sub getClientModel {
 		return $model;
 	}
 	return '';
+}
+
+sub padnum {
+	use integer;
+	sprintf("%02d", $_[0]);
 }
 
 *escape = \&URI::Escape::uri_escape_utf8;

@@ -207,7 +207,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW_DESC
 	EN	LMS uses a rating scale with values ranging from zero (no stars) to 100 (5 stars) and 10 for every additional half-star (Examples: 20 = 1 star, 50 = 2.5 stars).<br><br>If your LMS database includes odd rating values (like 4 or 67), i.e. not evenly divisible by 10, you can use this button to <b>replace all odd rating values with rounded values that comply with the LMS standard rating scale</b> (evenly divisible by 10).<br>Example: 4 => 0 and 67 => 70.
 	DE	LMS benutzt eine Bewertungsskala von 0 (kein Stern) bis 100 (5 Sterne) und 10 für jeden halben Stern. Beispiele: 20 = 1 Stern, 50 = 2,5 Sterne.
-		Wenn die Datenbak abweichende Werte für die Bewertung nutzt (wie 4 oder 67), also unteilbar durch 10, kann man mit dieser Funktion die unpassenden Bewertungen durch gerundete Werte ersetzen (Bsp: 4->0; 67 -> 70).
+		Wenn die Datenbank abweichende Werte für die Bewertung nutzt (wie 4 oder 67), also unteilbar durch 10, kann man mit dieser Funktion die unpassenden Bewertungen durch gerundete Werte ersetzen (Bsp: 4->0; 67 -> 70).
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW_BUTTON
 	EN	Adjust ratings now
