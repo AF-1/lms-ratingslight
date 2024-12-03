@@ -60,7 +60,7 @@ my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
 my (%restoreitem, $currentKey, $inTrack, $inValue, $backupParser, $backupParserNB, $restorestarted, $material_enabled, $MAIprefs);
-my $opened = 0;
+my ($opened, $restoreCount) = 0;
 
 sub initPlugin {
 	my $class = shift;
@@ -485,6 +485,7 @@ sub rateAlbumContextMenu {
 	}
 	return undef if defined($filter->{'work_id'}); # no context menu for works
 
+
 	my $albumID = $obj->id;
 	my $albumName = $obj->name;
 	$albumName = trimStringLength($albumName, 70);
@@ -505,9 +506,13 @@ sub rateAlbumContextMenu {
 			favorites => 0,
 		};
 	} else {
+		if (!$client) {
+			$log->warn('Client required. Can\'t proceed.');
+			return;
+		}
 		return {
 			type => 'redirect',
-			name => $client->string('PLUGIN_RATINGSLIGHT_RATEALBUM'),
+			name => string('PLUGIN_RATINGSLIGHT_RATEALBUM'),
 			favorites => 0,
 			web => {
 				url => 'plugins/RatingsLight/html/ratealbumtracksselect?albumid='.$albumID.'&albumname='.$albumName
@@ -1078,6 +1083,10 @@ sub handleRatedWebTrackList {
 	main::DEBUGLOG && $log->is_debug && $log->debug('actionTrackIDs = '.Data::Dump::dump($actionTrackIDs));
 
 	if ($action && ($action eq 'load' || $action eq 'insert' || $action eq 'add') && $actionTrackIDs) {
+		if (!$client) {
+			$log->warn('Client required. Can\'t proceed.');
+			return;
+		}
 		$client->execute(['playlistcontrol', 'cmd:'.$action, 'track_id:'.$actionTrackIDs]);
 	}
 
@@ -1849,11 +1858,13 @@ sub restoreFromBackup {
 	}
 
 	$prefs->set('status_restoringfrombackup', 1);
+	$restoreCount = 0;
 	$restorestarted = time();
 	my $restorefile = $prefs->get('restorefile');
 
 	if ($restorefile) {
 		clearAllRatings(1) if $prefs->get('clearallbeforerestore');
+		main::INFOLOG && $log->is_info && $log->info('Starting restore from backup file');
 		initRestore();
 		Slim::Utils::Scheduler::add_task(\&restoreScanFunction);
 	} else {
@@ -1936,14 +1947,13 @@ sub doneScanning {
 	$opened = 0;
 	close(BACKUPFILE);
 
-	main::DEBUGLOG && $log->is_debug && $log->debug('Restore completed after '.(time() - $restorestarted).' seconds.');
+	main::INFOLOG && $log->is_info && $log->info('Restore completed after '.(time() - $restorestarted).' seconds. Restored '.$restoreCount.($restoreCount == 1 ? ' track.' : ' tracks.').' Restore count listed here may be slightly higher (e.g. +1) than the correct number stated in the backup file.');
 	sleep 1;
 	refreshAll();
 
 	$prefs->set('status_restoringfrombackup', 0);
 	$prefs->set('isTSlegacyBackupFile', 0);
 	Slim::Utils::Scheduler::remove_task(\&restoreScanFunction);
-	#$prefs->set('restorefile', '');
 }
 
 sub handleStartElement {
@@ -1958,6 +1968,7 @@ sub handleStartElement {
 	}
 	if ($element eq 'TrackStat') {
 		$prefs->set('isTSlegacyBackupFile', 1);
+		main::DEBUGLOG && $log->is_debug && $log->debug('is TS legacy backup file');
 	}
 }
 
@@ -2043,7 +2054,9 @@ sub handleEndElement {
 				if (!$trackURL && !$trackURLmd5 && !$backupTrackMBID) {
 					$log->warn("No valid urlmd5, url or musicbrainz id for this track. Can't restore values for file with restore URL = ".Data::Dump::dump($fullTrackURL));
 				} else {
+					main::DEBUGLOG && $log->is_debug && $log->debug("Setting rating $rating100ScaleValue for track: $trackURL\n");
 					writeRatingToDB(undef, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, 1);
+					$restoreCount++;
 				}
 			}
 		}
@@ -2512,7 +2525,7 @@ sub getFunctions {
 
 			if (Slim::Music::Import->stillScanning) {
 				$log->warn('Warning: access to rating values blocked until library scan is completed');
-				$client->showBriefly({'line' => [$client->string('PLUGIN_RATINGSLIGHT'),$client->string('PLUGIN_RATINGSLIGHT_BLOCKED')]}, 3);
+				$client->showBriefly({'line' => [string('PLUGIN_RATINGSLIGHT'),string('PLUGIN_RATINGSLIGHT_BLOCKED')]}, 3);
 				return;
 			}
 			return unless $digit >= '0' && $digit <= '9';
