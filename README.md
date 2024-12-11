@@ -120,7 +120,9 @@ Possible causes of problems:<br>
 
    - You have duplicate tracks/albums (e.g different audio formats) and your files have the same MusicBrainz ID tags. LMS often tries to match tracks on MusicBrainz IDs first.<br>
 
-  - Your audio files have RATING tags that LMS may use to display ratings.
+  - Your audio files have RATING tags that LMS may use to display ratings.<br>
+
+  - You used TrackStat before switching to Ratings Light. But then you (briefly) reinstalled TrackStat (don't!). TS might have reset the ratings you set with RL in the meantime.
 
 In short, <i>Ratings Light</i> has usually <i>nothing</i> to do with <i>displaying</i> ratings, except for the track context / song info menu and the title format.
 </p></details><br>
