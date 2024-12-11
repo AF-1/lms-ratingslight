@@ -109,6 +109,17 @@ You can install an [**applet**](https://github.com/AF-1#applets) on your *piCore
 
 <details><summary>»<b>Is <i>album</i> rating supported?</b>«</summary><br><p><i>“Album ratings“</i> as such do not exist in LMS, only <b>track</b> ratings. You can <b>set</b> a rating for all or only the unrated tracks in an album using the <b>album context menu</b>. Setting ratings for single album tracks in this menu is possible with the Default, Dark Default and Classic web skin.<br><br>RL does <b>not display</b> “album ratings“, i.e. the average track rating of all album tracks. Most albums would probably have a very low average track rating (displayed as zero stars) and you'd have to display the “album rating“ in the album context menu.<br>If you want albums sorted by (average) rating, take a look at the <a href="https://github.com/AF-1/#-context-stats"><b>Context Stats</b></a> plugin.</p></details><br>
 
+<details><summary>»<b>I have ratings <i>display</i> issues (ratings not displayed, wrong rating values…)</b>«</summary><br><p><i>Ratings Light</i> is only responsible for displaying ratings in 2 places (see [screenshot](#### LMS web ui view)):<br>in the track context / song info menu and via the <i>title format</i> if you use e.g. "RL_RATING_STARS_APPENDED".<br>So while <i>Ratings Light</i> is always used to <i>set</i> ratings, plugins, skins or apps usually ask LMS <i>directly</i> for the rating value. RL is not involved. That's why RL plays, for example, no role in displaying rating values in Material Skin's playlist queue or track / album lists.<br><br>
+You can always see the actual rating value for a track in the LMS database by going to the context / song info menu of the track and looking for the <i>Rating</i> tag. It shows the rating value in the LMS scale from 0 to 100 where 20 = 1 star. You'll have to reload this menu after changing the rating value to see the new rating value.<br><br>
+Possible causes of problems:<br>
+
+   - You have duplicate tracks/albums (e.g different audio formats) and your files have the same MusicBrainz ID tags. LMS often tries to match tracks on MusicBrainz IDs first.<br>
+
+  - Your audio files have RATING tags that LMS may use to display ratings.
+
+In short, <i>Ratings Light</i> has usually <i>nothing</i> to do with <i>displaying</i> ratings, except for the track context / song info menu and the title format.
+</p></details><br>
+
 <details><summary>»<b>Does <i>Ratings Light</i> work with <i>online</i> tracks?</b>«</summary><br><p>It should work with online tracks that have been <b>added to your LMS library as part of an album</b>. LMS does not import single online tracks or tracks of online playlists as library tracks and therefore they cannot be processed by Ratings Light. That's a restriction imposed by LMS.</p></details><br>
 
 <details><summary>»<b>How do I make <i>Ratings Light</i> display track rating in album view, client playlists etc.?</b>«</summary><br><p>On the <i>LMS Settings</i> > <i>Interface</i> page, you'll find that <i>Ratings Light</i> provides 2 <b>title formats</b>:<br><br><b>RL_RATING_STARS</b> and <b>RL_RATING_STARS_APPENDED</b>.<br><br>You can create a new title format, e.g. “<b>TITLE RL_RATING_STARS_APPENDED</b>“ that will display the track title followed by the track rating value in stars.<br><br>In <i>LMS Settings</i> > <i>Advanced</i> > <i>Ratings Light</i> > <i>Menus</i> you can <b>choose the displayed rating character for menus and titel formats</b>: a <b>common text star</b> or the <b>unicode 2605 blackstar</b> character.<br><br>
