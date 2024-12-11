@@ -100,11 +100,11 @@ If you want to display the **black star** character on *players with jivelite* a
 
 You can install an [**applet**](https://github.com/AF-1#applets) on your *piCorePlayer*, *SB Touch*, *SB Radio* or *SqueezePlay* to **display track ratings** on the **Now Playing** screen. Examples:
 
-pCP, Touch, SqueezePlay:
+#### pCP, Touch, SqueezePlay
 ![display ratings on the now playing screen of jivelite players](screenshots/ratings_npscreen_jivelite.jpg)
 <br><br>
 
-Radio:
+#### SB Radio
 ![display ratings on the now playing screen of SB Radio](screenshots/ratings_npscreen_radio.jpg)
 <br><br><br><br><br>
 
