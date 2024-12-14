@@ -70,6 +70,7 @@ sub initPlugin {
 
 	Slim::Control::Request::addDispatch(['ratingslight', 'setrating', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'setratingpercent', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'getrating', '_trackid'], [0, 1, 0, \&getRating]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbumoptions', '_albumid'], [1, 1, 1, \&rateAlbumTracksOptions_jive]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratingmenu', '_trackid', '_isalbum', '_unratedonly'], [0, 1, 1, \&getRatingMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbum', '_albumid', '_rating', '_unratedonly'], [1, 1, 1, \&_rateAlbumTracks]);
@@ -190,7 +191,7 @@ sub postinitPlugin {
 
 	# temp. workaround to allow legacy TS rating in iPeng until iPeng supports RL or is discontinued
 	if ($prefs->get('enableipengtslegacyrating') && !Slim::Utils::PluginManager->isEnabled('Plugins::TrackStat::Plugin')) {
-		Slim::Control::Request::addDispatch(['trackstat', 'getrating', '_trackid'], [0, 1, 0, \&getRatingTSLegacy]);
+		Slim::Control::Request::addDispatch(['trackstat', 'getrating', '_trackid'], [0, 1, 0, \&getRating]);
 		Slim::Control::Request::addDispatch(['trackstat', 'setrating', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
 		Slim::Control::Request::addDispatch(['trackstat', 'setratingpercent', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
 		Slim::Control::Request::addDispatch(['trackstat', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
@@ -2771,11 +2772,27 @@ sub writeRatingToDB {
 	}
 
 	if ($track && blessed $track && (UNIVERSAL::isa($track, 'Slim::Schema::Track') || UNIVERSAL::isa($track, 'Slim::Schema::RemoteTrack'))) {
-		my $previousRating100ScaleValue = $track->rating || 0;
-		$track->rating($rating100ScaleValue);
+		main::DEBUGLOG && $log->is_debug && $log->debug('Trying to set rating for: '.$track->url);
+		my $previousRating100ScaleValue = getRatingFromDB($track);
+		my $urlmd5 = $track->urlmd5;
+		my $sql = "update tracks_persistent set rating=$rating100ScaleValue where urlmd5 = \"$urlmd5\"";
+		my $dbh = Slim::Schema->dbh;
+		my $sth = $dbh->prepare($sql);
+		eval {
+			$sth->execute();
+			commit($dbh);
+		};
+		if ($@) {
+			$log->warn("Database error: $DBI::errstr");
+			eval {
+				rollback($dbh);
+			};
+		}
+		$sth->finish();
 
 		# confirm and log new rating value
-		my $newTrackRating = $track->rating || 0;
+		my $newTrackRating = getRatingFromDB($track);
+
 		if (defined $newTrackRating && $newTrackRating == $rating100ScaleValue) {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")\n");
 			unless ($dontlogthis) {
@@ -2803,51 +2820,44 @@ sub getRatingFromDB {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Track is not blessed');
 		$track = Slim::Schema->find('Track', $track->{id});
 		if (!blessed($track)) {
-			main::DEBUGLOG && $log->is_debug && $log->debug('No blessed track object found');
+			main::INFOLOG && $log->is_info && $log->info('No blessed track object found');
 			return $rating100ScaleValue;
 		}
 	}
 
-	# check if remote track is part of LMS library
-	if ((Slim::Music::Info::isRemoteURL($track->url) == 1) && (!defined($track->extid))) {
-		main::DEBUGLOG && $log->is_debug && $log->debug('Track is remote but has no extid, probably not part of LMS library. Trying to get rating with url: '.$track->url);
-		my $url = $track->url;
-		my $urlmd5 = $track->urlmd5 || md5_hex($url);
-
-		my $dbh = Slim::Schema->dbh;
-		my $sqlstatement = "select tracks_persistent.rating from tracks_persistent where tracks_persistent.urlmd5 = \"$urlmd5\"";
-		eval{
-			my $sth = $dbh->prepare($sqlstatement);
-			$sth->execute() or do {$sqlstatement = undef;};
-			$rating100ScaleValue = $sth->fetchrow || 0;
-			$sth->finish();
-		};
-		if ($@) { main::DEBUGLOG && $log->is_debug && $log->debug("error: $@"); }
-		main::DEBUGLOG && $log->is_debug && $log->debug("Found rating $rating100ScaleValue for url: ".$url);
-		return adjustRating($rating100ScaleValue);
-	}
-
-	# check for dead/moved local tracks
+	# check for dead/moved/non-library local tracks
+	main::DEBUGLOG && $log->is_debug && $log->debug('Track is remote but has no extid, probably not part of LMS library.') if ((Slim::Music::Info::isRemoteURL($track->url) == 1) && (!defined($track->extid)));
 	if ((Slim::Music::Info::isRemoteURL($track->url) != 1) && (!defined($track->filesize))) {
-		main::DEBUGLOG && $log->is_debug && $log->debug('Local track with zero filesize in db - track dead or moved??? Track URL: '.$track->url);
+		main::INFOLOG && $log->is_info && $log->info('Local track with zero filesize in db - track dead or moved??? Track URL: '.$track->url);
 		return $rating100ScaleValue;
 	}
 
-	my $thisrating = $track->rating;
-	$rating100ScaleValue = $thisrating if $thisrating;
+	# use sqlite instead of LMS method in case library has tracks with identical MusicBrainz IDs
+	main::DEBUGLOG && $log->is_debug && $log->debug('Trying to get rating with sqlite and url: '.$track->url);
+	my $urlmd5 = $track->urlmd5 || md5_hex($track->url);
+
+	my $dbh = Slim::Schema->dbh;
+	my $sqlstatement = "select rating from tracks_persistent where urlmd5 = \"$urlmd5\"";
+	eval{
+		my $sth = $dbh->prepare($sqlstatement);
+		$sth->execute() or do {$sqlstatement = undef;};
+		$rating100ScaleValue = $sth->fetchrow || 0;
+		$sth->finish();
+	};
+	if ($@) { main::DEBUGLOG && $log->is_debug && $log->debug("error: $@"); }
+	main::DEBUGLOG && $log->is_debug && $log->debug("Found rating $rating100ScaleValue for url: ".$track->url);
 	return adjustRating($rating100ScaleValue);
 }
 
-sub getRatingTSLegacy {
+sub getRating {
 	my $request = shift;
-	main::DEBUGLOG && $log->is_debug && $log->debug('Used TS Legacy dispatch to get rating.');
 	main::DEBUGLOG && $log->is_debug && $log->debug('request params = '.Data::Dump::dump($request->getParamsCopy()));
 	if (Slim::Music::Import->stillScanning) {
 		$log->warn('Warning: access to rating values blocked until library scan is completed');
 		return;
 	}
 
-	if ($request->isNotQuery([['trackstat'],['getrating']])) {
+	if ($request->isNotQuery([['ratingslight'],['getrating']]) && $request->isNotQuery([['trackstat'],['getrating']])) {
 		$log->error('incorrect command');
 		$request->setStatusBadDispatch();
 		return;
