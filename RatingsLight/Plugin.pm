@@ -2792,7 +2792,6 @@ sub writeRatingToDB {
 
 		# confirm and log new rating value
 		my $newTrackRating = getRatingFromDB($track);
-
 		if (defined $newTrackRating && $newTrackRating == $rating100ScaleValue) {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")\n");
 			unless ($dontlogthis) {
@@ -2835,7 +2834,6 @@ sub getRatingFromDB {
 	# use sqlite instead of LMS method in case library has tracks with identical MusicBrainz IDs
 	main::DEBUGLOG && $log->is_debug && $log->debug('Trying to get rating with sqlite and url: '.$track->url);
 	my $urlmd5 = $track->urlmd5 || md5_hex($track->url);
-
 	my $dbh = Slim::Schema->dbh;
 	my $sqlstatement = "select rating from tracks_persistent where urlmd5 = \"$urlmd5\"";
 	eval{
