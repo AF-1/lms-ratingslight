@@ -82,9 +82,9 @@ If you want to test a new patch that hasn't made it into a release version yet, 
 <br><br><br><br>
 
 
-## Reporting a new issue
+## Report a new issue
 
-If you want to report a new issue, please fill out this [**issue report template**](https://github.com/AF-1/lms-ratingslight/issues/new?template=bug_report.md&title=%5BISSUE%5D+).<br><br>
+To report a new issue please file a GitHub [**issue report**](https://github.com/AF-1/lms-ratingslight/issues/new/choose).<br><br>
 If you use this plugin and like it, perhaps you could give it a :star: so that other users can discover it (in their News Feed). Thank you.
 <br><br><br><br>
 
