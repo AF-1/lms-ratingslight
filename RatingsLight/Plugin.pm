@@ -74,7 +74,7 @@ sub initPlugin {
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbumoptions', '_albumid'], [1, 1, 1, \&rateAlbumTracksOptions_jive]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratingmenu', '_trackid', '_isalbum', '_unratedonly'], [0, 1, 1, \&getRatingMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbum', '_albumid', '_rating', '_unratedonly'], [1, 1, 1, \&_rateAlbumTracks]);
-	Slim::Control::Request::addDispatch(['ratingslight', 'ratedtracksmenu', '_trackid', '_thisid', '_objecttype'], [0, 1, 1, \&getRatedTracksMenu]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'ratedtracksmenu'], [0, 1, 1, \&getRatedTracksMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'actionsmenu'], [0, 1, 1, \&getActionsMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'], [0, 0, 0, undef]);
 	Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'], [0, 1, 0, undef]);
@@ -117,16 +117,33 @@ sub initPlugin {
 			return objectInfoHandler('trackArtist', @_);
 		},
 	));
+
+	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbycomposer => (
+		after => 'ratingslightrating',
+		before => 'ratingslightmoreratedtracksinalbum',
+		func => sub {
+			return objectInfoHandler('trackComposer', @_);
+		},
+	));
+
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksinalbum => (
 		after => 'ratingslightrating',
 		func => sub {
 			return objectInfoHandler('trackAlbum', @_);
 		},
 	));
+
 	Slim::Menu::ArtistInfo->registerInfoProvider(ratingslightratedtracksbyartist => (
 		after => 'addartist',
+		before => 'ratingslightratedtracksbyartistcomposer',
 		func => sub {
 			return objectInfoHandler('artist', @_);
+		},
+	));
+	Slim::Menu::ArtistInfo->registerInfoProvider(ratingslightratedtracksbyartistcomposer => (
+		after => 'addartist',
+		func => sub {
+			return objectInfoHandler('artistcomposer', @_);
 		},
 	));
 	Slim::Menu::AlbumInfo->registerInfoProvider(ratingslightratedtracksinalbum => (
@@ -886,7 +903,7 @@ sub objectInfoHandler {
 	}
 	my $curTrackRating = 0;
 
-	if (($objectType eq 'trackAlbum') || ($objectType eq 'trackArtist')) {
+	if ($objectType eq 'trackAlbum' || $objectType eq 'trackArtist' || $objectType eq 'trackComposer') {
 		# check if remote track is part of online library
 		if ((Slim::Music::Info::isRemoteURL($url) == 1) && (!defined($obj->extid))) {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Track is remote but not part of LMS library. Track URL: '.$url);
@@ -928,7 +945,61 @@ sub objectInfoHandler {
 		$curTrackRating = getRatingFromDB($obj);
 		$vfd = 1;
 	}
+
+	if ($objectType eq 'trackComposer') {
+		$objectType = 'composer';
+		$trackID = $objectID;
+
+		# get composer name + id
+		my %cond = ();
+		my %attr = (
+			'group_by' => 'me.id',
+		);
+
+		$cond{'contributorTracks.track'} = $trackID;
+		$cond{'contributorTracks.role'} = 2;
+		$attr{'join'} = ['contributorTracks'];
+
+		my $composer = Slim::Schema->rs('Contributor')->search(\%cond, \%attr)->first;
+		main::DEBUGLOG && $log->is_debug && $log->debug('composer = '.Data::Dump::dump($composer));
+
+		if ($composer) {
+			$objectID = $composer->id;
+		} else {
+			main::DEBUGLOG && $log->is_debug && $log->debug('Track has no composer. Cannot retrieve composer id.');
+			return;
+		}
+
+		$objectName = $composer->name;
+		$curTrackRating = getRatingFromDB($obj);
+		$vfd = 1;
+	}
+
+
+	if ($objectType eq 'artistcomposer') {
+		# check if artist (objectID) is also composer
+		my %cond = ();
+		my %attr = (
+			'group_by' => 'me.id',
+		);
+
+		$cond{'contributorTracks.contributor'} = $objectID;
+		$cond{'contributorTracks.role'} = 2;
+		$attr{'join'} = ['contributorTracks'];
+
+		my $composer = Slim::Schema->rs('Contributor')->search(\%cond, \%attr)->first;
+		main::DEBUGLOG && $log->is_debug && $log->debug('composer = '.Data::Dump::dump($composer));
+		if (!$composer) {
+			main::DEBUGLOG && $log->is_debug && $log->debug('Artist is not listed a composer for any tracks.');
+			return;
+		}
+
+		$objectName = $obj->name;
+		$vfd = 1;
+	}
+
 	$objectName = trimStringLength($objectName, 70);
+	my $titlemore = $curTrackRating > 0 ? 1 : undef;
 
 	if ($objectType eq 'album') {
 		$menuItemTitlePrefixString = $curTrackRating > 0 ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM');
@@ -937,15 +1008,19 @@ sub objectInfoHandler {
 		$objectName = trimStringLength($objectName, 50);
 		$menuItemTitlePrefixString = $curTrackRating > 0 ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST');
 	}
+	if ($objectType eq 'composer' || $objectType eq 'artistcomposer') {
+		$objectName = trimStringLength($objectName, 50);
+		$menuItemTitlePrefixString = ($curTrackRating && $curTrackRating > 0) ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYCOMPOSER') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYCOMPOSER');
+	}
 	if ($objectType eq 'genre') {
-		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINGENRE');
+		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RNDSELRATEDTRACKSINGENRE');
 	}
 	if ($objectType eq 'year') {
-		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMYEAR');
+		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RNDSELRATEDTRACKSFROMYEAR');
 		$objectID = $obj;
 	}
 	if ($objectType eq 'decade') {
-		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSFROMDECADE');
+		$menuItemTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RNDSELRATEDTRACKSFROMDECADE');
 		$objectID = floor($obj/10) * 10 + 0;
 		$objectName = $objectID.'s';
 	}
@@ -965,7 +1040,14 @@ sub objectInfoHandler {
 					actions => {
 						go => {
 							player => 0,
-							cmd => ['ratingslight', 'ratedtracksmenu', $trackID, $objectID, $objectType],
+							cmd => ['ratingslight', 'ratedtracksmenu'],
+							params => {
+								'trackid' => $trackID,
+								'objectid' => $objectID,
+								'objecttype' => $objectType,
+								'objectname' => $objectName,
+								'titlemore' => $titlemore,
+							},
 						},
 					}
 				},
@@ -980,7 +1062,7 @@ sub objectInfoHandler {
 				objecttype => $objectType,
 				objectid => $objectID,
 				trackid => $trackID,
-				titlemore => ($curTrackRating > 0 ? 'more' : undef),
+				titlemore => $titlemore,
 				web => {
 					'type' => 'htmltemplate',
 					'value' => 'plugins/RatingsLight/html/showratedtracks.html'
@@ -1004,7 +1086,7 @@ sub getRatedTracks {
 	my ($countOnly, $client, $objectType, $objectID, $currentTrackID, $listlimit) = @_;
 	main::DEBUGLOG && $log->is_debug && $log->debug('objectType = '.$objectType.' ## countOnly = '.$countOnly.' ## trackID = '.$currentTrackID.' ## thisID = '.$objectID);
 
-	my %validObjectTypes = map {$_ => 1} ('artist', 'album', 'genre', 'year', 'decade', 'playlist');
+	my %validObjectTypes = map {$_ => 1} ('artist', 'album', 'genre', 'year', 'decade', 'playlist', 'composer', 'artistcomposer');
 
 	unless ($validObjectTypes{$objectType}) {
 		$log->warn('No valid objectType');
@@ -1023,7 +1105,9 @@ sub getRatedTracks {
 
 	$sqlstatement .= " join playlist_track on playlist_track.track = tracks.url and playlist_track.playlist = $objectID" if ($objectType eq 'playlist');
 
-	$sqlstatement .= " join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0 where tracks.audio = 1 and tracks.id != $currentTrackID";
+	$sqlstatement .= " join contributor_track on tracks.id = contributor_track.track and contributor_track.contributor = $objectID and contributor_track.role = 2" if ($objectType eq 'composer' || $objectType eq 'artistcomposer');
+
+	$sqlstatement .= " join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and ifnull(tracks_persistent.rating, 0) > 0 where tracks.audio = 1 and tracks.id != $currentTrackID";
 
 	$sqlstatement .= " and tracks.primary_artist = $objectID" if ($objectType eq 'artist');
 
@@ -1044,7 +1128,7 @@ sub getRatedTracks {
 	my $dbh = Slim::Schema->dbh;
 	eval{
 		my $sth = $dbh->prepare($sqlstatement);
-		$sth->execute() or do {$sqlstatement = undef;};
+		$sth->execute() or do {$sqlstatement = undef; return \@ratedtracks;};
 
 		if ($countOnly == 1) {
 			$trackCount = $sth->fetchrow;
@@ -1116,7 +1200,7 @@ sub handleRatedWebTrackList {
 			push (@ratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, artistname => $artistname, artistID => $artistID, artworkid => $artworkID});
 		} elsif ($objectType eq 'artist') {
 			push (@ratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, albumname => $albumname, albumID => $albumID, artworkid => $artworkID});
-		} elsif (($objectType eq 'genre') || ($objectType eq 'year') || ($objectType eq 'decade') || ($objectType eq 'playlist')) {
+		} elsif ($objectType eq 'genre' || $objectType eq 'year' || $objectType eq 'decade' || $objectType eq 'playlist' || $objectType eq 'composer' || $objectType eq 'artistcomposer') {
 			push (@ratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, artistname => $artistname, artistID => $artistID, albumname => $albumname, albumID => $albumID, artworkid => $artworkID});
 		}
 		push @alltrackids, $track_id;
@@ -1134,6 +1218,8 @@ sub handleRatedWebTrackList {
 		$listheadername = ''.(@{$ratedtracks})[0]->year;
 	} elsif ($objectType eq 'decade') {
 		$listheadername = (floor(((@{$ratedtracks})[0]->year)/10) * 10 + 0).'s';
+	} elsif ($objectType eq 'composer' || $objectType eq 'artistcomposer' || $objectType eq 'artistcomposer') {
+		$listheadername = $objectName || 'this composer';
 	} elsif ($objectType eq 'playlist') {
 		$listheadername = $objectName || 'this playlist';
 	}
@@ -1164,10 +1250,12 @@ sub getRatedTracksMenu {
 		$request->setStatusNeedsClient();
 		return;
 	}
-	my $trackID = $request->getParam('_trackid') || 0;
-	my $thisID = $request->getParam('_thisid');
-	my $objectType = $request->getParam('_objecttype');;
-	main::DEBUGLOG && $log->is_debug && $log->debug('objectType = '.$objectType.' ## thisID = '.$thisID.' ## trackID = '.$trackID);
+	my $trackID = $request->getParam('trackid') || 0;
+	my $thisID = $request->getParam('objectid');
+	my $objectName = $request->getParam('objectname');
+	my $objectType = $request->getParam('objecttype');
+	my $titlemore = $request->getParam('titlemore');
+	main::DEBUGLOG && $log->is_debug && $log->debug('paramsCopy = '.Data::Dump::dump($request->getParamsCopy()));
 
 	my $ratedtracks = getRatedTracks(0, $client, $objectType, $thisID, $trackID, $ratedtrackscontextmenulimit);
 
@@ -1175,6 +1263,33 @@ sub getRatedTracksMenu {
 	$menuStyle{'titleStyle'} = 'mymusic';
 	$menuStyle{'menuStyle'} = 'album';
 	$menuStyle{'windowStyle'} = 'icon_list';
+
+	my $menuTitlePrefixString = '';
+	if ($objectType eq 'album') {
+		$menuTitlePrefixString = $titlemore ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINALBUM_LISTHEADER') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM_LISTHEADER');
+	}
+	if ($objectType eq 'artist') {
+		$objectName = trimStringLength($objectName, 50);
+		$menuTitlePrefixString = $titlemore ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_LISTHEADER') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYARTIST_LISTHEADER');
+	}
+	if ($objectType eq 'composer' || $objectType eq 'artistcomposer') {
+		$objectName = trimStringLength($objectName, 50);
+		$menuTitlePrefixString = $titlemore ? string('PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYCOMPOSER_LISTHEADER') : string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYCOMPOSER_LISTHEADER');
+	}
+	if ($objectType eq 'genre') {
+		$menuTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RNDSELRATEDTRACKSINGENRE_LISTHEADER');
+	}
+	if ($objectType eq 'year') {
+		$menuTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RNDSELRATEDTRACKSFROMYEAR_LISTHEADER');
+	}
+	if ($objectType eq 'decade') {
+		$menuTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RNDSELRATEDTRACKSFROMDECADE_LISTHEADER');
+	}
+	if ($objectType eq 'playlist') {
+		$menuTitlePrefixString = string('PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM_LISTHEADER');
+	}
+
+	$menuStyle{'text'} = $menuTitlePrefixString.' '.$objectName;
 	$request->addResult('window',\%menuStyle);
 
 	my $cnt = 0;
@@ -1185,7 +1300,11 @@ sub getRatedTracksMenu {
 	my @alltrackids = ();
 
 	foreach my $ratedtrack (@{$ratedtracks}) {
-		$request->addResultLoop('item_loop',$cnt,'icon-id',$ratedtrack->coverid);
+		if ($ratedtrack->coverid) {
+			$request->addResultLoop('item_loop', $cnt, 'icon-id', $ratedtrack->coverid);
+		} else {
+			$request->addResultLoop('item_loop', $cnt, 'icon', 'plugins/RatingsLight/html/images/coverplaceholder.png');
+		}
 		push @alltrackids, $ratedtrack->id;
 
 		my ($tracktitle, $ratingtext, $returntext) = '';

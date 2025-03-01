@@ -4,12 +4,18 @@
 	[% ELSE %]
 		[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSINALBUM_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
 	[% END %]
+[% ELSIF objecttype == 'composer' || objecttype == 'artistcomposer' %]
+	[% IF titlemore %]
+		[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYCOMPOSER_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
+	[% ELSE %]
+		[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKSBYCOMPOSER_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
+	[% END %]
 [% ELSIF objecttype == 'genre' %]
-	[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSINGENRE_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
+	[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_RNDSELRATEDTRACKSINGENRE_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
 [% ELSIF objecttype == 'year' %]
-	[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSFROMYEAR_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
+	[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_RNDSELRATEDTRACKSFROMYEAR_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
 [% ELSIF objecttype == 'decade' %]
-	[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSFROMDECADE_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
+	[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_RNDSELRATEDTRACKSFROMDECADE_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
 [% ELSE %]
 	[% IF titlemore %]
 		[% pagetitle = 'PLUGIN_RATINGSLIGHT_MENUS_MORERATEDTRACKSBYARTIST_LISTHEADER' | string; pagetitle = pagetitle _ " " _ listheadername %]
@@ -82,7 +88,7 @@
 				<br>
 				<a class="albumtitle underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=albums&album_id=[% ratedtrack.albumID %]&linktitle=[% pagetitle %]&player=[% playerURI %]/index.html?index=0">[% ratedtrack.albumname %]</a>
 				[% END %]
-				[% IF objecttype == 'genre' || objecttype == 'year' || objecttype == 'decade' || objecttype == 'playlist' %]
+				[% IF objecttype == 'genre' || objecttype == 'year' || objecttype == 'decade' || objecttype == 'playlist' || objecttype == 'composer' || objecttype == 'artistcomposer' %]
 				<br>
 				<a class="secondline underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=albums&artist_id=[% ratedtrack.artistID %]&linktitle=[% pagetitle %]&player=[% playerURI %]">[% ratedtrack.artistname %]</a> &#x2022;
 				<a class="secondline underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=tracks&album_id=[% ratedtrack.albumID %]&linktitle=[% pagetitle %]&player=[% playerURI %]">[% ratedtrack.albumname %]</a>
