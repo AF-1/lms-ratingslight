@@ -59,7 +59,7 @@ my $log = Slim::Utils::Log->addLogCategory({
 my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
-my (%restoreitem, $currentKey, $inTrack, $inValue, $backupParser, $backupParserNB, $restorestarted, $material_enabled, $MAIprefs);
+my (%restoreitem, $currentKey, $inTrack, $inValue, $backupParser, $backupParserNB, $restorestarted, $material_enabled);
 my ($opened, $restoreCount) = 0;
 
 sub initPlugin {
@@ -201,10 +201,6 @@ sub postinitPlugin {
 
 	$material_enabled = Slim::Utils::PluginManager->isEnabled('Plugins::MaterialSkin::Plugin');
 	main::DEBUGLOG && $log->is_debug && $log->debug('Plugin "Material Skin" is enabled') if $material_enabled;
-
-	if (Slim::Utils::PluginManager->isEnabled('Plugins::MusicArtistInfo::Plugin')) {
-		$MAIprefs = preferences('plugin.musicartistinfo');
-	}
 
 	# temp. workaround to allow legacy TS rating in iPeng until iPeng supports RL or is discontinued
 	if ($prefs->get('enableipengtslegacyrating') && !Slim::Utils::PluginManager->isEnabled('Plugins::TrackStat::Plugin')) {
@@ -2326,18 +2322,7 @@ sub initVLmenus {
 					url => sub {
 						my ($client, $callback, $args, $pt) = @_;
 						if ($menuType eq 'artists') {
-							Slim::Menu::BrowseLibrary::_artists($client,
-								sub {
-										my $items = shift;
-										main::DEBUGLOG && $log->is_debug && $log->debug("Browsing artists");
-										if (defined($MAIprefs) && $MAIprefs->get('browseArtistPictures')) {
-											$items->{items} = [ map {
-													$_->{image} ||= 'imageproxy/mai/artist/' . ($_->{id} || 0) . '/image.png';
-													$_;
-											} @{$items->{items}} ];
-										}
-									$callback->($items);
-								}, $args, $pt);
+							Slim::Menu::BrowseLibrary::_artists($client, $callback, $args, $pt);
 						} elsif ($menuType eq 'genres') {
 							Slim::Menu::BrowseLibrary::_genres($client, $callback, $args, $pt);
 						} elsif ($menuType eq 'tracks') {
