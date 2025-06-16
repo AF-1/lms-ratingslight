@@ -216,6 +216,7 @@ sub initPrefs {
 		rlparentfolderpath => Slim::Utils::OSDetect::dirsFor('prefs'),
 		topratedminrating => 60,
 		prescanbackup => 1,
+		irmappinglogless => 1,
 		playlistimport_maxtracks => 1000,
 		filetagtype => 1,
 		rating_keyword_prefix => '',
@@ -2615,6 +2616,7 @@ sub initIR {
 	if ($prefs->get('enableIRremotebuttons')) {
 		Slim::Control::Request::subscribe(\&newPlayerCheck, [['client']],[['new']]);
 		Slim::Buttons::Common::addMode('PLUGIN.RatingsLight::Plugin', getFunctions(),\&Slim::Buttons::Input::Choice::setMode);
+		main::DEBUGLOG && $log->is_debug && $log->debug('IR remote button rating enabled.');
 	} else {
 		Slim::Control::Request::unsubscribe(\&newPlayerCheck, [['client']],[['new']]);
 	}
@@ -2624,9 +2626,7 @@ sub getFunctions {
 	our %menuFunctions = (
 		'saveremoteratings' => sub {
 			my $rating100ScaleValue = undef;
-			my $client = shift;
-			my $button = shift;
-			my $digit = shift;
+			my ($client, $button, $digit) = @_;
 
 			if (Slim::Music::Import->stillScanning) {
 				$log->warn('Warning: access to rating values blocked until library scan is completed');
@@ -2636,24 +2636,14 @@ sub getFunctions {
 			return unless $digit >= '0' && $digit <= '9';
 
 			my $curTrack = Slim::Player::Playlist::track($client);
-			if ($digit >= 0 && $digit <=5) {
-				$rating100ScaleValue = $digit * 20;
-			}
+			$rating100ScaleValue = $digit * 20 if ($digit >= 0 && $digit <=5);
 
 			if ($digit >= 6 && $digit <= 9) {
 				my $currentRating = $curTrack->rating || 0;
-				if ($digit == 6) {
-					$rating100ScaleValue = $currentRating - 20;
-				}
-				if ($digit == 7) {
-					$rating100ScaleValue = $currentRating + 20;
-				}
-				if ($digit == 8) {
-					$rating100ScaleValue = $currentRating - 10;
-				}
-				if ($digit == 9) {
-					$rating100ScaleValue = $currentRating + 10;
-				}
+				$rating100ScaleValue = $currentRating - 20 if $digit == 6;
+				$rating100ScaleValue = $currentRating + 20 if $digit == 7;
+				$rating100ScaleValue = $currentRating - 10 if $digit == 8;
+				$rating100ScaleValue = $currentRating + 10 if $digit == 9;
 				$rating100ScaleValue = ratingSanityCheck($rating100ScaleValue);
 			}
 			main::DEBUGLOG && $log->is_debug && $log->debug('IR command: button = '.$button.' ## digit = '.$digit.' ## trackURL = '.$curTrack->url.' ## track ID = '.$curTrack->id.' ## rating = '.$rating100ScaleValue);
@@ -2680,11 +2670,9 @@ sub newPlayerCheck {
 }
 
 sub mapKeyHold {
-	# from Peter Watkins' plugin AllQuiet
-	my $client = shift;
-	my $baseKeyName = shift;
-	my $function = shift;
-	my $logless = 1;
+	# based on the func from Peter Watkins' plugin AllQuiet
+	my ($client, $baseKeyName, $function) = @_;
+	my $logless = $prefs->get('irmappinglogless');
 	if (defined($client)) {
 		my $mapsAltered = 0;
 		my @maps = @{$client->irmaps};
@@ -2696,18 +2684,12 @@ sub mapKeyHold {
 						my %mHash2 = %{$mHash{$key}};
 						# if no $baseKeyName.hold
 						if ((!defined($mHash2{$baseKeyName.'.hold'})) || ($mHash2{$baseKeyName.'.hold'} eq 'dead')) {
-							unless (defined $logless) {
-								main::DEBUGLOG && $log->is_debug && $log->debug("Mapping $function to ${baseKeyName}.hold for $i-$key");
-							}
+							main::DEBUGLOG && $log->is_debug && $log->debug("Mapping $function to ${baseKeyName}.hold for $i-$key") unless $logless;
 							if ((defined($mHash2{$baseKeyName}) || (defined($mHash2{$baseKeyName.'.*'}))) && (!defined($mHash2{$baseKeyName.'.single'}))) {
-								# make baseKeyName.single = baseKeyName
 								$mHash2{$baseKeyName.'.single'} = $mHash2{$baseKeyName};
 							}
-							# make baseKeyName.hold = $function
 							$mHash2{$baseKeyName.'.hold'} = $function;
-							# make baseKeyName.repeat = 'dead'
 							$mHash2{$baseKeyName.'.repeat'} = 'dead';
-							# make baseKeyName.release = 'dead'
 							$mHash2{$baseKeyName.'.hold_release'} = 'dead';
 							# delete unqualified baseKeyName
 							$mHash2{$baseKeyName} = undef;
@@ -2715,9 +2697,7 @@ sub mapKeyHold {
 							$mHash2{$baseKeyName.'.*'} = undef;
 							++$mapsAltered;
 						} else {
-							unless (defined $logless) {
-								main::DEBUGLOG && $log->is_debug && $log->debug("${baseKeyName}.hold mapping already exists for $i-$key");
-							}
+							main::DEBUGLOG && $log->is_debug && $log->debug("${baseKeyName}.hold mapping already exists for $i-$key") unless $logless;
 						}
 						$mHash{$key} = \%mHash2;
 					}
@@ -2726,9 +2706,7 @@ sub mapKeyHold {
 			}
 		}
 		if ($mapsAltered > 0) {
-			unless (defined $logless) {
-				main::DEBUGLOG && $log->is_debug && $log->debug("Mapping ${baseKeyName}.hold to $function for \"'.$client->name().'\" in $mapsAltered modes");
-			}
+			main::DEBUGLOG && $log->is_debug && $log->debug("Mapping ${baseKeyName}.hold to $function for \"'.$client->name().'\" in $mapsAltered modes") unless $logless;
 			$client->irmaps(\@maps);
 		}
 	}

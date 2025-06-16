@@ -44,7 +44,7 @@ PLUGIN_RATINGSLIGHT_LANGSTRING_COMPLETELIB
 
 PLUGIN_RATINGSLIGHT_RATEALBUM
 	EN	Rate album tracks
-	DE	Bewerte Album Titel
+	DE	Bewerte Albumtitel
 
 PLUGIN_RATINGSLIGHT_WEB_ALBUMRATE_INFOPREFIX
 	EN	Information
@@ -72,28 +72,28 @@ PLUGIN_RATINGSLIGHT_RATEALBUM_SUCCESS
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS
 	EN	Rate album tracks
-	DE	Bewerte Alum Titel
+	DE	Bewerte Albumtitel
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS_ALL
 	EN	Rate all album tracks
-	DE	Bewerte alle Album Titel
+	DE	Bewerte alle Albumtitel
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS_UNRATED
 	EN	Rate only unrated album tracks
-	DE	Bewerte nur unbewertete Album Titel
+	DE	Bewerte nur unbewertete Albumtitel
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS_UNRATED_ALL
 	EN	Rate all <b>un</b>rated album tracks
-	DE	Bewerte alle <b>un</b>bewertete Titel
+	DE	Bewerte alle <b>un</b>bewerteten Titel
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_SUBPAGE
 	EN	Settings Section
-	DE	Einstellungs-Bereich
+	DE	Einstellungsbereich
 
 PLUGIN_RATINGSLIGHT_SETTINGS_SUBPAGE_DESC
 	EN	Select a settings section
-	DE	Wähle einen Einstellungs-Bereich
+	DE	Wähle einen Einstellungsbereich
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS
 	EN	Various Settings
@@ -121,7 +121,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_DSTM
 
 PLUGIN_RATINGSLIGHT_SETTINGS_FAQ_LINK_TEXT
 	EN	Click here for more information (incl. FAQ).
-	DE	Klicke hier für mehr Informationen (incl. FAQ in Englisch).
+	DE	Klicke hier für mehr Informationen (inkl. FAQ in Englisch).
 
 PLUGIN_RATINGSLIGHT_SETTINGS_FAQ_LINK
 	EN	https://github.com/AF-1/#-ratings-light
@@ -129,16 +129,16 @@ PLUGIN_RATINGSLIGHT_SETTINGS_FAQ_LINK
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTEBUTTONS
-	EN	Quick rating with IR remote buttons
-	DE	Schnelle Bewertung mit IR-Fernbedienungstasten
+	EN	Quick rating with IR remote buttons<br><i>SB Classic, Boom or Transporter</i>
+	DE	Schnelle Bewertung mit IR-Fernbedienungstasten<br><i>SB Classic, Boom oder Transporter</i>
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTEBUTTONS_DESC
-	EN	<br>Changing this setting will only take effect <b>after an LMS restart.</b><br><br>Rate the track that is currently playing on your device by <b>holding down</b> a button on your Logitech IR remote<br>(devices with a VFD display like Squeezebox, Boom, Transporter).<br><br>Press and <b>hold</b> the key until you see the new track rating on your display or a message confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5 = 1 to 5 stars<br>0 = unrate<br>6 = subtract 1 star from current rating<br>7 = add 1 star to current rating<br>8 = subtract 0.5 stars from current rating<br>9 = add 0.5 stars to current rating<br><br><b>Boom (mini remote) only:</b><br><br>arrow up = add 1 star to current rating<br>arrow down = subtract 1 star from current rating
-	DE	Änderungen an dieser Einstellung werden erst nach einem LMS Neustart wirksam. Bewrte den Titel, der gerade abgespielt wird, durch einen langen Tastendruck auf der Logitech IR Fernbedienung. Drücke und halte die Taste, bis die neue Bewertung auf dem Display angezeigt wird. Tasten 1-5: 1-5 Sterne, 0: unbewertet, 6: einen Stern abziehen, 7: einen Stern hinzufügen, 8: einen halben Stern abziehen, 9: einen halben Stern hizufügen.
+	EN	This setting applies </i><b>exclusively</b></i> to devices with a VFD display like SB Classic, Boom or Transporter. It does not have any effect on other devices like SB Touch.<br>Rating tracks with your SB <b>Touch</b> remote requires an applet on your device (like the <i>Dark Flat Skin</i> applet).<br><br>Changing this setting will only take effect <b>after a server restart.</b><br><br>Rate the track that is currently playing on your device by <b>holding down</b> a button on your Logitech IR remote.<br><br>Press and <b>hold</b> the key until you see the new track rating on your display or a message confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5 = 1 to 5 stars<br>0 = unrate<br>6 = subtract 1 star from current rating<br>7 = add 1 star to current rating<br>8 = subtract 0.5 stars from current rating<br>9 = add 0.5 stars to current rating<br><br><b>Boom (mini remote) only:</b><br><br>arrow up = add 1 star to current rating<br>arrow down = subtract 1 star from current rating
+	DE	Diese Einstellung bezieht sich </i><b>nur</b></i> auf Geräte mit einem VFD Display wie SB Classic, Boom oder Transporter. Es hat keinen Effekt auf ändere Geräte wie SB Touch.<br>Bewerten von Tracks mit der <b>SB Touch</b> Fernbedienung erfordert ein Applet auf dem Gerät (wie das <i>Dark Flat Skin</i> Applet).<br><br>Änderungen an dieser Einstellung werden erst <b>nach einem Server-Neustart</b> wirksam.<br><br>Bewerte den Titel, der gerade abgespielt wird, durch einen <b>langen</b> Tastendruck auf der Logitech IR Fernbedienung.<br><br>Drücke und <b>halte</b> die Taste, bis die neue Bewertung auf dem Display angezeigt wird.<br><br><b>Tasten:</b><br><br>1-5: 1-5 Sterne<br>0: unbewertet<br>6: einen Stern abziehen<br>7: einen Stern hinzufügen<br>8: einen halben Stern abziehen<br>9: einen halben Stern hinzufügen.<br><br>Boom (Mini Fernbedienung):<br><br>Pfeil nach oben = aktuelle Bewertung um 1 Stern erhöhen<br>Pfeil nach unten = 1 Stern von der aktuellen Bewertung abziehen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTERATINGCONFIRMMSG
 	EN	Show confirmation message<br>for IR remote rating
-	DE	Zeige Bestätigungsnachricht für IR-Fernbedienungs-Bewertung
+	DE	Zeige Bestätigungsnachricht für IR-Fernbedienungsbewertung
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTERATINGCONFIRMMSG_DESC
 	EN	Shows a brief message on the VFD display of your Logitech device confirming the new rating value if you rate a song <i>using IR remote rating</i>.
@@ -158,11 +158,11 @@ PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USERECENTLYRATEDPLAYLIST
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USERECENTLYRATEDPLAYLIST_DESC
 	EN	Keeps a playlist of recently rated tracks.<br>Ignores batch rating actions like imports or restores from backup.
-	DE	Enthät eine Wiedergabeliste der zuletzt bewerteten Titel. Massenänderungen wie Importe oder Wiederherstellungen werden nicht berücksichtigt.
+	DE	Erstellt eine Wiedergabeliste der zuletzt bewerteten Titel. Massenänderungen wie Importe oder Wiederherstellungen werden nicht berücksichtigt.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USERECENTLYRATEDPLAYLIST_MAXCOUNT
 	EN	Max. number of tracks<br>in Recently Rated playlist
-	DE	Maximale Anzahl zuletzt bewerteter Titel in Wiedergabeliste
+	DE	Max. Anzahl der Wiedergabeliste mit zuletzt bewerteten Titeln
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_USERECENTLYRATEDPLAYLIST_MAXCOUNT_DESC
 	EN	Limits the number of tracks in the <i>Recently Rated playlist</i>
@@ -206,8 +206,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW_DESC
 	EN	LMS uses a rating scale with values ranging from zero (no stars) to 100 (5 stars) and 10 for every additional half-star (Examples: 20 = 1 star, 50 = 2.5 stars).<br><br>If your LMS database includes odd rating values (like 4 or 67), i.e. not evenly divisible by 10, you can use this button to <b>replace all odd rating values with rounded values that comply with the LMS standard rating scale</b> (evenly divisible by 10).<br>Example: 4 => 0 and 67 => 70.
-	DE	LMS benutzt eine Bewertungsskala von 0 (kein Stern) bis 100 (5 Sterne) und 10 für jeden halben Stern. Beispiele: 20 = 1 Stern, 50 = 2,5 Sterne.
-		Wenn die Datenbank abweichende Werte für die Bewertung nutzt (wie 4 oder 67), also unteilbar durch 10, kann man mit dieser Funktion die unpassenden Bewertungen durch gerundete Werte ersetzen (Bsp: 4->0; 67 -> 70).
+	DE	LMS benutzt eine Bewertungsskala von 0 (kein Stern) bis 100 (5 Sterne) und 10 für jeden halben Stern. Beispiele: 20 = 1 Stern, 50 = 2,5 Sterne.<br><br>Wenn die Datenbank abweichende Werte für die Bewertung nutzt (wie 4 oder 67), also unteilbar durch 10, lassen sich mit dieser Funktion die unpassenden Bewertungen durch gerundete Werte ersetzen (Bsp: 4 -> 0; 67 -> 70).
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_NOW_BUTTON
 	EN	Adjust ratings now
@@ -248,7 +247,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_SINGLE_FILE
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_SINGLE_FILE_DESC
 	EN	By default, <i>Ratings Light</i> groups rated tracks by rating value into one playlist file per rating value. This settings allows you to export <b>all</b> rated tracks to a <b>single</b> playlist file.
-	DE	Normalerweise gruppiert 'Ratings Light' die bewerteten Titel nach Bewertung(eine Wiedergabeliste je Bewertung). Diese Einstellung erlaubt es, alle bewerteten Titel in eine einzige Wiedergabeliste zu exportieren.
+	DE	Normalerweise gruppiert 'Ratings Light' die bewerteten Titel nach Bewertung (eine Wiedergabeliste je Bewertung). Diese Einstellung erlaubt es, alle bewerteten Titel in eine einzige Wiedergabeliste zu exportieren.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_ONLY_DIFF
 	EN	Export only tracks with rating values different from file tag ratings
@@ -268,7 +267,8 @@ PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PATHSUBSTITUTION
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PATHSUBSTITUTION_DESC
 	EN	Replace the LMS root file path in your <b>exported</b> file urls with a different file path.<br>Helpful if you want to use the exported playlist with another version of your LMS library on another PC.
-	DE	Ersetze das LMS Wurzelverzeichnis in den exportierte Datei-URLs mit einem anderen Pfad. Hilfreich, wenn die exportierte Wiedergabeliste auf einem anderen Gerät verwendet werden soll.
+	DE	Ersetze das LMS Wurzelverzeichnis in den exportierte Datei-URLs durch einen anderen Pfad. Hilfreich, wenn die exportierte Wiedergabeliste auf einem anderen Gerät verwendet werden soll.
+
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PATHSUBSTITUTION_LMSPATH
 	EN	LMS base file path
 	DE	LMS Wurzelverzeichnis
@@ -457,7 +457,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_PRESCANBACKUP
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_PRESCANBACKUP_DESC
 	EN	Have RL automatically create a backup of your database values right <b>before</b> the scan process starts.<br>This setting affects only <b>pre-scan</b> backups. It's unrelated to the <i>scheduled</i> backup function.
-	DE	RL legt automatisch eine Sicherung deiner Bewertungs-Datenbank <b>bevor</b> der Durchsuchungsvorgang gestartet wird. <br>Diese Einstellung betrifft nur die Sicherung vor dem Durchsuchen und ist unabhängig von der geplanten Sicherung.
+	DE	RL erstellt automatisch eine Sicherung deiner Bewertungsdatenbank, <b>bevor</b> der Durchsuchungsvorgang gestartet wird. <br>Diese Einstellung betrifft nur die Sicherung vor dem Durchsuchen und ist unabhängig von der geplanten Sicherung.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS
 	EN	Auto-delete old backups
@@ -473,7 +473,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_AUTODELETEBACKUPS_WARNING
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPDAYSTOKEEP
 	EN	Delete backups older than
-	DE	Läsche Sicherungen älter als
+	DE	Lösche Sicherungen älter als
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPDAYSTOKEEP_DESC
 	EN	Set the number of days after which old backups will be deleted.
@@ -654,15 +654,15 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SOURCE_VL
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_SOURCE_VL_DESC
 	EN	Select the virtual library for which Ratings Light should create artists and genre browse menus
-	DE	Wähle die virtuelle Bibliothek für die Ratings Light Interpreten- und Stilrichtungs-Ddurchsuchenmenüs erstellen soll.
+	DE	Wähle die virtuelle Bibliothek, für die Ratings Light Interpreten- und Stilrichtungs-Durchsuchenmenüs erstellen soll.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER
 	EN	Rating character
 	DE	Bewertung Zeichen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_DESC
-	EN	Choose the displayed rating character for menus and titelformats.<br><br><b>*** IMPORTANT, please read ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> and other players running jivelite <b>do not support displaying the unicode blackstar character out of the box</b>.<br>This character is not part of their <i>default</i> font. If you want to display this character on these devices you'll have to <b>replace the default font</b> on these devices with a font that contains this character.<br><br><a href="https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font" target="_blank" rel="noopener noreferrer">Click here for more information, instructions and fonts.</a>
-	DE	Wähle das anzuzeigende Bewertungs-Zeichen für Menüs und Titelformate aus.<br><br><b>*** WICHTIG, bitte lesen ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> und andere Player, die Jivelite verwenden, <b>unterstützen die Anzeige des Unicode Blackstar Zeichen nicht von Haus aus</b>.<br>Dieses Zeichen ist nicht in deren <i>Standard</i> Zeichensatz enthalten. Wenn du dieses Zeichen auf diesen Geräten verwenden möchtest, musst du den Standard-Zeichensatz <b>ersetzen</b> durch einen, der dieses Zeichen enthält.<br><br><a href="https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font" target="_blank" rel="noopener noreferrer">Klicke hier für mehr Information, Anleitung und Zeichensatz.</a>
+	EN	Choose the displayed rating character for menus and titelformats.<br><br><b>*** IMPORTANT, please read ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> and other players running jivelite <b>do not support displaying the unicode blackstar character out of the box</b>.<br>This character is not part of their <i>default</i> font. If you want to display this character on these devices you'll have to <b>replace the default font</b> on these devices with a font that contains this character or install the <i>Dark Flat Skin</i> applet if available for your device.<br><br><a href="https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font" target="_blank" rel="noopener noreferrer">Click here for more information, instructions and fonts.</a>
+	DE	Wähle das anzuzeigende Bewertungs-Zeichen für Menüs und Titelformate aus.<br><br><b>*** WICHTIG, bitte lesen ***</b><br><br>SB <b>Touch</b>, SB <b>Radio</b>, <b>piCorePlayer</b>, <b>Squeezeplay</b> und andere Player, die Jivelite verwenden, <b>unterstützen die Anzeige des Unicode Blackstar Zeichen nicht von Haus aus</b>.<br>Dieses Zeichen ist nicht in deren <i>Standard</i> Zeichensatz enthalten. Wenn du dieses Zeichen auf diesen Geräten verwenden möchtest, musst du den Standard-Zeichensatz <b>ersetzen</b> durch einen, der dieses Zeichen enthält, oder das <i>Dark Flat Skin</i> Applet installieren, falls es für dein Gerät verfügbar ist.<br><br><a href="https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font" target="_blank" rel="noopener noreferrer">Klicke hier für mehr Information, Anleitung und Zeichensatz.</a>
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATINGDISPLAYCHARACTER_STAR_TEXT
 	EN	* - common text star
@@ -678,7 +678,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_USEHALFSTARS_DESC
 	EN	Use half-star ratings to rate your tracks. This setting applies mainly to the LMS (Dark) <b>Default skin</b> and <b>context rating menus</b>. Material, for example, uses its own rating UI with Ratings Light.<br><br><b>Please note:</b> Even if you disable <b>setting</b> of half-star ratings, <i>Ratings Light</i> will still <b>display</b> the <b>exact</b> track rating value incl. half-stars.
-	DE	Bewertung mit halben Sternen zulassen. Diese Einstellung betrifft hauptsächlich die LMS Default Benutzeroberfläche und Kontextmenüs. Material, z.B., hat eine eigene Benutzeroberfläche für die Bewertung. Auch wenn diese Einstellung deaktiviert ist, zeigt Ratings Light immer ndie exakte Bewertung inklusiver halber Sterne an.
+	DE	Bewertung mit halben Sternen zulassen. Diese Einstellung betrifft hauptsächlich die LMS Default Benutzeroberfläche und Kontextmenüs. Material hat z.B. eine eigene Benutzeroberfläche für die Bewertung. Auch wenn diese Einstellung deaktiviert ist, zeigt Ratings Light immer die exakte Bewertung an, also auch halbe Sterne.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_CONTEXTMENUPOS
 	EN	Rating context menu position
@@ -702,7 +702,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING_DESC
 	EN	Displaying and changing track ratings in iPeng is already possible via the <b>context menu</b>.<br>iPeng <b>additionally</b> offers the possibility to display and change track ratings directly in the <b>top left menu bar</b>. Unfortunately iPeng supports this officially only for the now discontinued TrackStat plugin.<br>If you check this box, you can also use <i>Ratings Light</i> to display and change track ratings directly in iPeng's top left menu bar (with the help of a workaround).<br><br>If you have changed this setting, please <b>restart the server for the change to take effect</b>.
-	DE	Die Anzeige und das Ändern der Titelbewertung in iPeng ist bereits über das Kontextmenü möglich. iPeng bietet zusätzlich die Möglichkeit, die Bewertungen direkt in der linken oberen Menüzeile anzusehen und zu ändern. Unglücklicherweise ist dies offiziell nur für das bereits eingestellte TrackStat-Plugin möglich. Wenn diese Option gewählt ist, ist dies auch mit Ratings Light durch einen Workaround möglich. Nach dem Ändern dieser Optin bitte den Server neu starten.
+	DE	Die Anzeige und das Ändern der Titelbewertung in iPeng ist bereits über das Kontextmenü möglich. iPeng bietet zusätzlich die Möglichkeit, die Bewertungen direkt in der linken oberen Menüzeile anzusehen und zu ändern. Unglücklicherweise ist dies offiziell nur für das bereits eingestellte TrackStat-Plugin möglich. Wenn diese Option gewählt ist, ist dies auch mit Ratings Light durch einen Workaround möglich. Nach dem Ändern dieser Option bitte den Server neu starten.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_WEB_LIMIT
 	EN	Show more rated tracks - web UI limit
@@ -718,7 +718,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
 	EN	Limits the number of tracks in <b>context</b> menus in <b>Material skin</b> and on <b>piCorePlayer, SB Touch, SB Radio</b>. These context menus ("<i>Show rated tracks</i>") are available for artist, album, genre, year, decade, playlist, and on the song details page.
-	DE	Begrenzt die Anzahl der angezeigten Titel in Kontextmenüs des Material-Skins und im PiCorePlayer, SB Touch und SB Radio. Diese 'Ziege bewertete Titel'-Kontextmenüs sind verfügbar für Interpret, Album, Stilrichtung, Jahr, Jahrzent, Wiedergabeliste und auf der Titeödetails-Seite.
+	DE	Begrenzt die Anzahl der angezeigten Titel in Kontextmenüs des Material-Skins und im PiCorePlayer, SB Touch und SB Radio. Diese 'Zeige bewertete Titel'-Kontextmenüs sind verfügbar für Interpret, Album, Stilrichtung, Jahr, Jahrzent, Wiedergabeliste und auf der Titeldetails-Seite.
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PERCENTAGE_RATED

@@ -139,6 +139,37 @@ You can use backups. Go to the plugin's settings page (backup section) immediate
 
 <details><summary>»<b>Where does Ratings Light store track ratings?</b>«</summary><br><p><i>Ratings Light</i> does not use its own database. It tells LMS to store the track ratings in the <b>LMS</b> <i>persistent</i> database which is not cleared on rescans. However, if you value your ratings very much, I'd recommend to enable <i>scheduled</i> backups in RL. Or at least create occasional <i>manual</i> backups.</p></details><br>
 
+<details><summary>»<b>Which <i>buttons</i> on the IR <i>remote</i> control should I use for <i>rating</i>?</b>«<br>&nbsp;&nbsp;&nbsp;&nbsp;»<b>Which devices are supported?</b>«</summary><br><p>
+To enable IR remote rating:<br>
+
+   - <b>SB Classic, Boom, Transporter</b>, other VFD devices:<br>
+
+      - rating is handled on the server side.<br>
+
+      - enable the <b>Quick rating with IR remote buttons</b> setting on the plugin's settings page and restart the server.<br>
+
+   - <b>SB Touch</b>:<br>
+
+      - IR remote rating is handled by an <b>applet <i>on</i></b> the device. The plugin setting <i>Quick rating with IR remote buttons</i> has <b>no effect</b>.<br>
+
+      - Install an applet that enables and handles remote rating like the <a href="https://github.com/AF-1/jivelite-darkflatskin?#dark-flat-skin"><b>Dark Flat Skin</b></a> applet.
+
+Rate the track currently playing on your device by <b>holding down</b> a button on the IR remote.<br>Press and <b>hold</b> the key until you see the new track rating on your display or a message confirming the new track rating.<br><br><b>Key map</b>:<br>
+
+   - keys 1 to 5 = 1 to 5 stars<br>
+   - 0 = unrate<br>
+   - 6 = subtract 1 star from current rating<br>
+   - 7 = add 1 star to current rating<br>
+   - 8 = subtract 0.5 stars from current rating<br>
+   - 9 = add 0.5 stars to current rating
+
+The keys are the same for all supported devices except for the<br>
+<b>Boom (mini remote)</b>:<br>
+
+   - arrow up = add 1 star to current rating<br>
+   - arrow down = subtract 1 star from current rating
+</p></details><br>
+
 <details><summary>»<b>Does <i>Ratings Light</i> auto-rate tracks when I play or skip them?</b>«</summary><br><p>No. Please use the <a href="https://github.com/AF-1/#-alternative-play-count"><b>Alternative Play Count</b></a> plugin for that. It can auto-rate tracks and offers you an alternative, the <b>dynamic played/skipped value</b> that reflects your <b>recent</b> listening habits/decisions but does not mess with your tracking ratings.</p></details><br>
 
 <details><summary>»<b>How do I migrate ratings from <i>TrackStat</i> to <i>Ratings Light</i>?</b>«</summary><br><p>You don't have to. Since ratings are stored in an LMS database (see FAQ above), you just <b>un</b>install <i>TrackStat</i> and install <i>Ratings Light</i>. TrackStat had its own database table (with identical columns though) but <i>ratings</i> should be in sync. You can even import ratings for <i>local</i> tracks from old TrackStat backup files.</p></details><br>
