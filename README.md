@@ -215,7 +215,7 @@ The <b>recently rated playlist</b> keeps a record of all tracks with changed rat
 
 If you want to keep detailed track of your rating actions and don't need a playable list, I suggest you use the <b>log file</b>.</p></details><br>
 
-<details><summary>»<b>I would like this plugin to be displayed in my language. Is that possible?</b>«</summary><br><p>If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.</p></details>
+<details><summary>»<b>Can this plugin be <i>displayed in my language</i>?</b>«</summary><br><p>If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.</p></details>
 <br><br><br>
 
 [^1]: The screenshots might not correspond to the UI of the latest release in every detail.
