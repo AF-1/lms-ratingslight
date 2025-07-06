@@ -1,7 +1,7 @@
 Ratings Light
 ====
 
-**Ratings Light**[^1] takes care of rating tracks in your LMS library. See [**features**](#features) section for details.
+**Ratings Light** takes care of rating tracks in your LMS library. See [**features**](#features) section for details.
 <br><br>
 <a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
 <br><br>
@@ -10,7 +10,7 @@ Ratings Light
 <br><br>
 
 
-## Screenshots[^3]
+## Screenshots[^1]
 
 #### LMS web ui view:
 ![LMS web UI](screenshots/lms_webui.jpg)
@@ -214,9 +214,10 @@ The <b>recently rated playlist</b> keeps a record of all tracks with changed rat
 - <b>Un</b>rating a track (rating = 0) will not delete this track from the playlist because unrating is a rating change too.<br>
 
 If you want to keep detailed track of your rating actions and don't need a playable list, I suggest you use the <b>log file</b>.</p></details><br>
+
+<details><summary>»<b>I would like this plugin to be displayed in my language. Is that possible?</b>«</summary><br><p>If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.</p></details><br>
 <br><br><br>
 
-[^1]: If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.
+[^1]: The screenshots might not correspond to the UI of the latest release in every detail.
 [^2]: Browse menus are provided by LMS. Under certain circumstances you may see (empty) albums or artists in some menus that shouldn't be there. There's nothing I can do about it because LMS creates and provides these menus.<br>Just go down one level: click to *show all tracks* or *show all albums*.<br>In case this LMS issue ever gets resolved, I'll update this page.
-[^3]: The screenshots might not correspond to the UI of the latest release in every detail.
 
