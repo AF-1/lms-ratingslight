@@ -213,9 +213,9 @@ The <b>recently rated playlist</b> keeps a record of all tracks with changed rat
 - it will <b>not add tracks twice</b>. Example: Set a track's rating to 4 stars, then set it to 2 stars. The track will only show up only once in the playlist with the <b>latest</b> rating (2 stars), <b>no matter how often</b> you have changed its rating.
 - <b>Un</b>rating a track (rating = 0) will not delete this track from the playlist because unrating is a rating change too.<br>
 
-If you want to keep detailed track of your rating actions and don't need a playable list, I suggest you use the <b>log file</b>.</p></details><br>
+If you want to keep detailed track of your rating actions and don't need a playable list, I suggest you use the <b>log file</b>.</p></details>
 
-<details><summary>»<b>I would like this plugin to be displayed in my language. Is that possible?</b>«</summary><br><p>If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.</p></details><br>
+<details><summary>»<b>I would like this plugin to be displayed in my language. Is that possible?</b>«</summary><br><p>If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.</p></details>
 <br><br><br>
 
 [^1]: The screenshots might not correspond to the UI of the latest release in every detail.
