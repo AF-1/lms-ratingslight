@@ -1,5 +1,6 @@
 Ratings Light
 ====
+![Min. LMS Version](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2FAF-1%2Fsobras%2Fmain%2Frepos%2Flms%2Fpublic.xml&query=%2F%2F*%5Blocal-name()%3D'plugin'%20and%20%40name%3D'RatingsLight'%5D%2F%40minTarget&prefix=v&label=Min.%20LMS%20Version&color=darkgreen)<br>
 
 **Ratings Light** takes care of rating tracks in your LMS library. See [**features**](#features) section for details.
 <br><br>
@@ -62,13 +63,6 @@ Some features are not enabled by default.
 
 <br><br><br><br>
 
-
-## Requirements
-
-- LMS version >= 8.**2**
-- LMS database = **SQLite**
-
-<br>
 <a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
 
 <br><br><br>
