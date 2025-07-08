@@ -62,7 +62,6 @@ Ratings Light
 * most features should work with **online library tracks** (see [FAQ](#faq))
 
 Some features are not enabled by default.
-
 <br><br><br><br>
 
 
