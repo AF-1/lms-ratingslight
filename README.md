@@ -4,8 +4,10 @@ Ratings Light
 
 **Ratings Light** takes care of rating tracks in your LMS library. See [**features**](#features) section for details.
 <br><br>
+
 <a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
 <br><br>
+
 **Use the** &nbsp; <img src="screenshots/menuicon.png" width="30"> &nbsp;**icon** (top right) to **jump directly to a specific section.**
 
 <br><br>
@@ -62,10 +64,6 @@ Ratings Light
 Some features are not enabled by default.
 
 <br><br><br><br>
-
-<a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
-
-<br><br><br>
 
 
 ## Installation
