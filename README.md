@@ -38,21 +38,21 @@ Ratings Light
 
 ## Features
 
-* *set* track ratings
+* **set** track ratings
 	* in your browser using web skins like *(Dark) Default* or *Material*
 	* on your Logitech devices or piCorePlayer (context menu)
 	* using the IR remote of your (Logitech) device
 	* in supported apps and plugins
 	* supports **incremental** rating changes
 
-* *import* track ratings
+* **import** track ratings
 	* batch rate all tracks in a playlist
 	* from file tags
 	   * using keywords in *comments* tags (auto-import after scan is possible)
 	   * using the *BPM* tag
 	   * auto-import after a (re)scan is possible
 
-* *export* rated tracks to playlist files (as a backup or to import ratings in other apps)
+* **export** rated tracks to playlist files (as a backup or to import ratings in other apps)
 * create **virtual libraries for (top) rated tacks** with *browse menus*[^2]
 * *create* (scheduled) **backups** of your ratings and *restore* your ratings from backups
 * keep track of your **recently rated songs** with a dedicated *playlist* or a plain text *log file*
