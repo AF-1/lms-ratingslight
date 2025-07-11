@@ -124,8 +124,8 @@ PLUGIN_RATINGSLIGHT_SETTINGS_FAQ_LINK_TEXT
 	DE	Klicke hier für mehr Informationen (inkl. FAQ in Englisch).
 
 PLUGIN_RATINGSLIGHT_SETTINGS_FAQ_LINK
-	EN	https://github.com/AF-1/#-ratings-light
-	DE	https://github.com/AF-1/#-ratings-light
+	EN	https://github.com/AF-1
+	DE	https://github.com/AF-1
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTEBUTTONS
