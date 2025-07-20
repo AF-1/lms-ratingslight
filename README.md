@@ -10,10 +10,39 @@ Ratings Light
 
 **Use the** &nbsp; <img src="screenshots/menuicon.png" width="30"> &nbsp;**icon** (top right) to **jump directly to a specific section.**
 
-<br><br>
+<br><br><br>
 
 
-## Screenshots[^1]
+## Features
+
+* **set** track ratings
+	* in your browser using web skins like *(Dark) Default* or *Material*
+	* on your Logitech devices or piCorePlayer (context menu)
+	* using the IR remote of your (Logitech) device
+	* in supported apps and plugins
+	* supports **incremental** rating changes
+
+* **import** track ratings
+	* batch rate all tracks in a playlist
+	* from file tags
+	   * using keywords in *comments* tags (auto-import after scan is possible)
+	   * using the *BPM* tag
+	   * auto-import after a (re)scan is possible
+
+* **export** rated tracks to playlist files (as a backup or to import ratings in other apps)
+* create **virtual libraries for (top) rated tacks** with *browse menus*[^1]
+* *create* (scheduled) **backups** of your ratings and *restore* your ratings from backups
+* keep track of your **recently rated songs** with a dedicated *playlist* or a plain text *log file*
+* **show rated songs** for any *artist, album, genre, year* or *playlist* from the **context menu**
+* includes mixes for the **Don't Stop The Music** plugin
+* *display track ratings* in *LMS menus* (web UI and text) or on older devices using the *Now Playing screensaver* or the *Music Information Screen* plugin
+* most features should work with **online library tracks** (see [FAQ](#faq))
+
+Some features are not enabled by default.<br>You can enable them here: `LMS > Settings > Advanced > Ratings Light`
+<br><br><br>
+
+
+## Screenshots[^2]
 
 #### LMS web ui view:
 ![LMS web UI](screenshots/lms_webui.jpg)
@@ -35,34 +64,6 @@ Ratings Light
 ![Rated Tracks - Home Menu](screenshots/rl_settings_preview.gif)
 <br><br><br>
 
-
-## Features
-
-* **set** track ratings
-	* in your browser using web skins like *(Dark) Default* or *Material*
-	* on your Logitech devices or piCorePlayer (context menu)
-	* using the IR remote of your (Logitech) device
-	* in supported apps and plugins
-	* supports **incremental** rating changes
-
-* **import** track ratings
-	* batch rate all tracks in a playlist
-	* from file tags
-	   * using keywords in *comments* tags (auto-import after scan is possible)
-	   * using the *BPM* tag
-	   * auto-import after a (re)scan is possible
-
-* **export** rated tracks to playlist files (as a backup or to import ratings in other apps)
-* create **virtual libraries for (top) rated tacks** with *browse menus*[^2]
-* *create* (scheduled) **backups** of your ratings and *restore* your ratings from backups
-* keep track of your **recently rated songs** with a dedicated *playlist* or a plain text *log file*
-* **show rated songs** for any *artist, album, genre, year* or *playlist* from the **context menu**
-* includes mixes for the **Don't Stop The Music** plugin
-* *display track ratings* in *LMS menus* (web UI and text) or on older devices using the *Now Playing screensaver* or the *Music Information Screen* plugin
-* most features should work with **online library tracks** (see [FAQ](#faq))
-
-Some features are not enabled by default.<br>You can enable them here: `LMS > Settings > Advanced > Ratings Light`
-<br><br><br><br>
 
 
 ## Installation
@@ -209,6 +210,6 @@ If you want to keep detailed track of your rating actions and don't need a playa
 <details><summary>»<b>Can this plugin be <i>displayed in my language</i>?</b>«</summary><br><p>If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.</p></details>
 <br><br><br>
 
-[^1]: The screenshots might not correspond to the UI of the latest release in every detail.
-[^2]: Browse menus are provided by LMS. Under certain circumstances you may see (empty) albums or artists in some menus that shouldn't be there. There's nothing I can do about it because LMS creates and provides these menus.<br>Just go down one level: click to *show all tracks* or *show all albums*.<br>In case this LMS issue ever gets resolved, I'll update this page.
+[^1]: Browse menus are provided by LMS. Under certain circumstances you may see (empty) albums or artists in some menus that shouldn't be there. There's nothing I can do about it because LMS creates and provides these menus.<br>Just go down one level: click to *show all tracks* or *show all albums*.<br>In case this LMS issue ever gets resolved, I'll update this page.
+[^2]: The screenshots might not correspond to the UI of the latest release in every detail.
 
