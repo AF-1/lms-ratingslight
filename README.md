@@ -10,7 +10,7 @@ Ratings Light
 
 **Use the** &nbsp; <img src="screenshots/menuicon.png" width="30"> &nbsp;**icon** (top right) to **jump directly to a specific section.**
 
-<br><br><br>
+<br><br>
 
 
 ## Features
@@ -39,7 +39,7 @@ Ratings Light
 * most features should work with **online library tracks** (see [FAQ](#faq))
 
 Some features are not enabled by default.<br>You can enable them here: `LMS > Settings > Advanced > Ratings Light`
-<br><br><br>
+<br><br><br><br>
 
 
 ## Screenshots[^2]
