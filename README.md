@@ -61,7 +61,7 @@ Ratings Light
 * *display track ratings* in *LMS menus* (web UI and text) or on older devices using the *Now Playing screensaver* or the *Music Information Screen* plugin
 * most features should work with **online library tracks** (see [FAQ](#faq))
 
-Some features are not enabled by default. You can enable them here: `LMS > Settings > Advanced > Ratings Light`
+Some features are not enabled by default.<br>You can enable them here: `LMS > Settings > Advanced > Ratings Light`
 <br><br><br><br>
 
 
