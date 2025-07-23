@@ -101,7 +101,7 @@ You can install an [**applet**](https://github.com/AF-1#applets) on your *piCore
 
 ## 💡 Display track titles in menus or lists with appended rating stars
 
-If you look at the [screenshots](#screenshots2), you'll see that, in some menus, the *title* of <ins>rated</ins> tracks is appended by rating stars. This can be very helpful in client playlists or album view menus to figure out right away which tracks are rated and their invididual ratings (instead of entering the song details menu of every track).<br><br>
+If you look at the [screenshots](#screenshots2), you will notice that in some menus the *titles* of <ins>rated</ins> tracks are followed by rating stars. This can be very helpful in client playlists or album view menus to figure out right away which tracks are rated and their invididual ratings (instead of having to enter the song details menu of every track).<br><br>
 Here's how to achieve this:<br>
 First go to `LMS settings > Interface` and create a so-called *title format* with this name: `TITLE RL_RATING_STARS_APPENDED`. Then select it and click `Apply`.<br>
 
