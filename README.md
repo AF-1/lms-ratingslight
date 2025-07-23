@@ -103,7 +103,7 @@ You can install an [**applet**](https://github.com/AF-1#applets) on your *piCore
 
 If you look at the [screenshots](#screenshots2), you will notice that in some menus the *titles* of <ins>rated</ins> tracks are followed by rating stars. This can be very helpful in client playlists or album view menus to figure out right away which tracks are rated and their invididual ratings (instead of having to enter the song details menu of every track).<br><br>
 Here's how to achieve this:<br>
-First go to `LMS settings > Interface` and create a so-called *title format* with this name: `TITLE RL_RATING_STARS_APPENDED`. Then select it and click `Apply`.<br>
+First go to `LMS settings > Interface` and create a so-called *title format* with this name:<br>`TITLE RL_RATING_STARS_APPENDED`. Then select it and click `Apply`.<br>
 
 By default, a rating star is displayed as a common asterisk \*. But the **unicode 2605 blackstar** character ★ is prettier. Go to `LMS Settings > Advanced > Ratings Light > Menus` where you can *choose the displayed rating character for menus and titel formats* and set it to the black star.<br><br>
 There is one <b>problem:</b> On some players like *SB Touch, SB Radio, piCorePlayer, Squeezeplay and other players running jivelite* the unicode blackstar character is **not part of the *default* font**.<br>But you can replace the default font on these devices with a font that contains this character:<br>
