@@ -86,7 +86,7 @@ If you find this project useful, giving it a <img src="screenshots/githubstar.pn
 <br><br><br><br>
 
 
-## Display and set ratings on the Now Playing screen
+## 💡 Display and set ratings on the Now Playing screen
 
 You can install an [**applet**](https://github.com/AF-1#applets) on your *piCorePlayer*, *SB Touch*, *SB Radio* or *SqueezePlay* to **display track ratings** on the **Now Playing** screen.<br>On devices with a ***touch*** screen (piCorePlyer, SB Touch) you can also *set* ratings directly on the NowPlaying screen.
 
@@ -99,7 +99,7 @@ You can install an [**applet**](https://github.com/AF-1#applets) on your *piCore
 <br><br><br><br>
 
 
-## Display track titles in menus or lists with appended rating stars
+## 💡 Display track titles in menus or lists with appended rating stars
 
 If you look at the [screenshots](#screenshots2), you'll see that, in some menus, the *title* of <ins>rated</ins> tracks is appended by rating stars. This can be very helpful in client playlists or album view menus to figure out right away which tracks are rated and their invididual ratings (instead of entering the song details menu of every track).<br><br>
 Here's how to achieve this:<br>
