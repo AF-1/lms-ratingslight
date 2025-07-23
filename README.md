@@ -88,7 +88,7 @@ If you find this project useful, giving it a <img src="screenshots/githubstar.pn
 
 ## Display and set ratings on the Now Playing screen
 
-You can install an [**applet**](https://github.com/AF-1#applets) on your *piCorePlayer*, *SB Touch*, *SB Radio* or *SqueezePlay* to **display track ratings** on the **Now Playing** screen. On devices with a touch screen (piCorePlyer, SB Touch) you can also **set** ratings directly on the NowPlaying screeen.
+You can install an [**applet**](https://github.com/AF-1#applets) on your *piCorePlayer*, *SB Touch*, *SB Radio* or *SqueezePlay* to **display track ratings** on the **Now Playing** screen.<br>On devices with a **touch** screen (piCorePlyer, SB Touch) you can also **set** ratings directly on the NowPlaying screeen.
 
 #### pCP, Touch, SqueezePlay
 ![display ratings on the now playing screen of jivelite players](screenshots/ratings_npscreen_jivelite.jpg)
@@ -114,7 +114,7 @@ There is one <b>problem:</b> On some players like *SB Touch, SB Radio, piCorePla
 
 - If that's not for you, you can always try to replace the font **manually**. More information, instructions and font files [**here**](https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font).
 
-> [^NOTE]
+> [!NOTE]
 > A few menus and lists (e.g. jivelite's current track list) do not use title formats. You will only see the track title without appended rating stars.<br>
 > And the **Material** web skin uses its own way to display track ratings in menus and playlists.
 
