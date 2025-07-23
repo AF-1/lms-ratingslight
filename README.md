@@ -86,16 +86,9 @@ If you find this project useful, giving it a <img src="screenshots/githubstar.pn
 <br><br><br><br>
 
 
-## Rating character in title format (* or ★)
+## Display and set ratings on the Now Playing screen
 
-The default rating character for the title format **RL_RATING_STARS_APPENDED** (*settings > interface*) is the common **asterisk** (*) wrapped in parentheses. Some screenshots here show this title format with the *black star* rating character (★) (see *RL settings > menus*).<br>
-If you want to display the **black star** character on *players with jivelite* as graphical frontend (*piCorePlayer, Touch, Radio, SqueezePlay...*), you have to install a font that includes the black star character. [**This page**](https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font) has more information.
-<br><br><br><br>
-
-
-## Display ratings on the Now Playing screen of piCorePlayer, Squeezebox Touch or Radio
-
-You can install an [**applet**](https://github.com/AF-1#applets) on your *piCorePlayer*, *SB Touch*, *SB Radio* or *SqueezePlay* to **display track ratings** on the **Now Playing** screen. Examples:
+You can install an [**applet**](https://github.com/AF-1#applets) on your *piCorePlayer*, *SB Touch*, *SB Radio* or *SqueezePlay* to **display track ratings** on the **Now Playing** screen. On devices with a touch screen (piCorePlyer, SB Touch) you can also **set** ratings directly on the NowPlaying screeen.
 
 #### pCP, Touch, SqueezePlay
 ![display ratings on the now playing screen of jivelite players](screenshots/ratings_npscreen_jivelite.jpg)
@@ -103,6 +96,28 @@ You can install an [**applet**](https://github.com/AF-1#applets) on your *piCore
 
 #### SB Radio
 ![display ratings on the now playing screen of SB Radio](screenshots/ratings_npscreen_radio.jpg)
+<br><br><br><br>
+
+
+## Display track titles in menus or lists with appended rating stars
+
+If you look at the [screenshots](#screenshots), you'll see that, in some menus, the *title* of <ins>rated</ins> tracks is appended by rating stars. This can be very helpful in client playlists or album view menus to figure out right away which tracks are rated and their invididual ratings (instead of entering the song details menu of every track).<br><br>
+Here's how to achieve this:<br>
+First go to `LMS settings > Interface` and create a so-called *title format* with this name: `TITLE RL_RATING_STARS_APPENDED`. Then select it and click `Apply`.<br>
+
+By default, a rating star is displayed as a common asterisk \*. But the **unicode 2605 blackstar** character ★ is prettier. Go to `LMS Settings > Advanced > Ratings Light > Menus` where you can *choose the displayed rating character for menus and titel formats* and set it to the black star.<br><br>
+There is one <b>problem:</b> On some players like *SB Touch, SB Radio, piCorePlayer, Squeezeplay and other players running jivelite* the unicode blackstar character is **not part of the *default* font**.<br>But you can replace the default font on these devices with a font that contains this character:<br>
+
+- `piCorePlayer, SB Touch, Squeezeplay:` just install and enable the [**Dark Flat Skin**](https://github.com/AF-1/jivelite-darkflatskin). It already contains the necessary font files to display the black star in supported  menus and lists.<br>
+
+- `SB Radio:`
+
+- If that's not for you, you can always try to replace the font **manually**. More information, instructions and font files [**here**](https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font).
+
+> [^NOTE]
+> A few menus and lists (e.g. jivelite's current track list) do not use title formats. You will only see the track title without appended rating stars.<br>
+> And the **Material** web skin uses its own way to display track ratings in menus and playlists.
+
 <br><br><br><br><br>
 
 
@@ -125,10 +140,6 @@ In short, <i>Ratings Light</i> has usually <i>nothing</i> to do with <i>displayi
 </p></details><br>
 
 <details><summary>»<b>Does <i>Ratings Light</i> work with <i>online</i> tracks?</b>«</summary><br><p>It should work with online tracks that have been <b>added to your LMS library as part of an album</b>. LMS does not import single online tracks or tracks of online playlists as library tracks and therefore they cannot be processed by Ratings Light. That's a restriction imposed by LMS.</p></details><br>
-
-<details><summary>»<b>How do I make <i>Ratings Light</i> display track rating in album view, client playlists etc.?</b>«</summary><br><p>On the <i>LMS Settings</i> > <i>Interface</i> page, you'll find that <i>Ratings Light</i> provides 2 <b>title formats</b>:<br><br><b>RL_RATING_STARS</b> and <b>RL_RATING_STARS_APPENDED</b>.<br><br>You can create a new title format, e.g. “<b>TITLE RL_RATING_STARS_APPENDED</b>“ that will display the track title followed by the track rating value in stars.<br><br>In <i>LMS Settings</i> > <i>Advanced</i> > <i>Ratings Light</i> > <i>Menus</i> you can <b>choose the displayed rating character for menus and titel formats</b>: a <b>common text star</b> or the <b>unicode 2605 blackstar</b> character.<br><br>
-<b>Please note:</b> <i>SB Touch, SB Radio, piCorePlayer, Squeezeplay and other players running jivelite</i> do not support displaying the unicode blackstar character out of the box. This character is not part of their default font. If you want to display this character on these devices you'll have to replace the default font on these devices with a font that contains this character.<br>
-More information, instructions, and fonts <a href="https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font">here</a>.<br>The <b>Material</b> web skin uses its own way to display track ratings in menus and playlists.</p></details><br>
 
 <details><summary>»<b>I have <i>renamed / moved</i> some audio files. How can I preserve my ratings for these tracks?</b>«</summary><br><p>
 You can use backups. Go to the plugin's settings page (backup section) immediately before you rescan your library and confirm that <i>Backup before each library rescan</i> is <b>en</b>abled. Just to be safe on the safe side, create a manual backup as well.<br>Then rescan your library. With the rescan completed, go to the plugin's settings page and restore the rating values from the pre-scan backup. RL will try to restore the ratings for moved/renamed tracks using (relative) path guessing and MusicBrainz IDs. Of course, there's no guarantee that it will restore 100% but that's as good as it gets.
