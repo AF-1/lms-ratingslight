@@ -106,13 +106,7 @@ Here's how to achieve this:<br>
 First go to `LMS settings > Interface` and create a so-called *title format* with this name:<br>`TITLE RL_RATING_STARS_APPENDED`. Then select it and click `Apply`.<br>
 
 By default, a rating star is displayed as a common asterisk \*. But the **unicode 2605 blackstar** character ★ is prettier. Go to `LMS Settings > Advanced > Ratings Light > Menus` where you can *choose the displayed rating character for menus and titel formats* and set it to the black star.<br><br>
-There is one <b>problem:</b> On some players like *SB Touch, SB Radio, piCorePlayer, Squeezeplay and other players running jivelite* the unicode blackstar character is **not part of the *default* font**.<br>But you can replace the default font on these devices with a font that contains this character:<br>
-
-- `piCorePlayer, SB Touch, Squeezeplay:` just install and enable the [**Dark Flat Skin**](https://github.com/AF-1/jivelite-darkflatskin). It already contains the necessary font files to display the black star in supported  menus and lists.<br>
-
-- `SB Radio:`
-
-- If that's not for you, you can always try to replace the font **manually**. More information, instructions and font files [**here**](https://github.com/AF-1/sobras/tree/main/lms-jivelite-change-font).
+There is one <b>problem:</b> On some players like *SB Touch, SB Radio, piCorePlayer, Squeezeplay and other players running jivelite* the unicode blackstar character is **not part of the *default* font**. You'll have to install the font manually via SSH, the Font Replacer applet. If you have installed and selected the [**Dark Flat Skin**](https://github.com/AF-1/jivelite-darkflatskin) as the skin on your device, you don't have to do anything. It already includes and uses the necessary font files to display the black star in supported menus and lists.<br>
 
 <br>
 
