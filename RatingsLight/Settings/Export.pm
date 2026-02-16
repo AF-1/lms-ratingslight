@@ -65,7 +65,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(playlistexportsinglefile onlyratingsnotmatchtags exportextension exportextensionexceptions exportVL_id));
+	return ($prefs, qw(playlistexportsinglefile playlistexportunrated onlyratingsnotmatchtags exporttimerange exportratingchange exportextension exportextensionexceptions exportVL_id));
 }
 
 sub handler {
@@ -156,6 +156,7 @@ sub beforeRender {
 	@items = sort { $a->{sortName} cmp $b->{sortName} } @items;
 	$paramRef->{virtuallibraries} = \@items;
 	$paramRef->{curselfiletag} = $prefs->get('filetagtype');
+	$paramRef->{lastsuccessfulexport} = Slim::Utils::DateTime::longDateF($prefs->get('lastexport')).", ".Slim::Utils::DateTime::timeF($prefs->get('lastexport')) if $prefs->get('lastexport');
 }
 
 sub trim {

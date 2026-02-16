@@ -75,10 +75,10 @@
 [% END %]
 <br>
 
-[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING" desc="PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING_DESC" %]
-	<select class="stdedit" name="pref_enableipengtslegacyrating" id="enableipengtslegacyrating">
-		<option [% IF NOT prefs.enableipengtslegacyrating %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
-		<option [% IF prefs.enableipengtslegacyrating %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_DISPLAYRATINGHISTORY" desc="PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_DISPLAYRATINGHISTORY_DESC" %]
+	<select class="stdedit" name="pref_displayratinghistory" id="displayratinghistory">
+		<option [% IF NOT prefs.displayratinghistory %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.displayratinghistory %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
 	</select>
 [% END %]
 <br><br>

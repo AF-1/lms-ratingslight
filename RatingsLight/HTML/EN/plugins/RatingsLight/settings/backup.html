@@ -17,6 +17,10 @@
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP" desc="" %]
+[% IF lastsuccessfulbackup %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_LASTBACKUP" desc="" %][% lastsuccessfulbackup %][% END %]<br>
+[% END %]
+
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_DESC" %]
 	<input name="backup" type="submit" class="stdclick" onclick="inprogress('backupstatus');" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_BUTTON" | string %]">
 	<span class='status' id='backupstatus'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_INPROGRESS" | string %]</span>

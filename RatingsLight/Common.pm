@@ -35,7 +35,7 @@ use File::Copy qw(move);
 use File::Spec::Functions qw(:ALL);
 use File::stat;
 use FindBin qw($Bin);
-use POSIX qw(strftime);
+use POSIX qw(strftime floor);
 use Time::HiRes qw(time);
 use Path::Class;
 
@@ -60,25 +60,27 @@ sub createBackup {
 	my $backupDir = $prefs->get('rlfolderpath');
 	my ($sql, $sth) = undef;
 	my $dbh = Slim::Schema->dbh;
-	my ($trackURL, $trackURLmd5, $trackRating, $trackRemote, $trackExtid, $trackMBID);
+	my ($trackURL, $trackURLmd5, $trackRating, $trackLastRated, $trackPrevRating, $trackRemote, $trackExtid, $trackMBID);
 	my $started = time();
 	my $backuptimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
 
-	$sql = "select tracks.url, tracks.urlmd5, tracks_persistent.rating, tracks.remote, tracks.extid, tracks_persistent.musicbrainz_id from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where tracks_persistent.rating > 0";
+	$sql = "select tracks.url, tracks.urlmd5, tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating, tracks.remote, tracks.extid, tracks_persistent.musicbrainz_id from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating > 0 or tracks_persistent.lastRated is not null)";
 	$sth = $dbh->prepare($sql);
 	$sth->execute();
 
 	$sth->bind_col(1,\$trackURL);
 	$sth->bind_col(2,\$trackURLmd5);
 	$sth->bind_col(3,\$trackRating);
-	$sth->bind_col(4,\$trackRemote);
-	$sth->bind_col(5,\$trackExtid);
-	$sth->bind_col(6,\$trackMBID);
+	$sth->bind_col(4,\$trackLastRated);
+	$sth->bind_col(5,\$trackPrevRating);
+	$sth->bind_col(6,\$trackRemote);
+	$sth->bind_col(7,\$trackExtid);
+	$sth->bind_col(8,\$trackMBID);
 
 	my @ratedTracks = ();
 	while ($sth->fetch()) {
-		push (@ratedTracks, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'remote' => $trackRemote, 'extid' => $trackExtid, 'musicbrainzid' => $trackMBID});
+		push (@ratedTracks, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'lastRated' => $trackLastRated, 'prevRating' => $trackPrevRating, 'remote' => $trackRemote, 'extid' => $trackExtid, 'musicbrainzid' => $trackMBID});
 	}
 	$sth->finish();
 
@@ -91,10 +93,10 @@ sub createBackup {
 		};
 		my $trackcount = scalar(@ratedTracks);
 		my $ignoredtracks = 0;
-		main::DEBUGLOG && $log->is_debug && $log->debug('Found '.$trackcount.($trackcount == 1 ? ' rated track' : ' rated tracks').' in the LMS persistent database');
+		main::DEBUGLOG && $log->is_debug && $log->debug('Found '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' with rating data in the LMS persistent database');
 
 		print $output "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
-		print $output "<!-- Backup of Rating Values -->\n";
+		print $output "<!-- Backup of Rating Data -->\n";
 		print $output "<!-- ".$backuptimestamp." -->\n";
 		print $output "<RatingsLight>\n";
 		for my $ratedTrack (@ratedTracks) {
@@ -106,27 +108,30 @@ sub createBackup {
 				next;
 			}
 			my $urlmd5 = $ratedTrack->{'urlmd5'};
-			my $rating100ScaleValue = $ratedTrack->{'rating'};
+			my $rating100ScaleValue = $ratedTrack->{'rating'} || '';
+			my $lastRatedValue = $ratedTrack->{'lastRated'} || '';
+			my $previousRatingValue = defined($ratedTrack->{'prevRating'}) ? $ratedTrack->{'prevRating'} : '';
 			my $remote = $ratedTrack->{'remote'};
 			my $BACKUPrelFilePath = ($remote == 0 ? getRelFilePath($BACKUPtrackURL) : '');
 			$BACKUPtrackURL = escape($BACKUPtrackURL);
 			$BACKUPrelFilePath = $BACKUPrelFilePath ? escape($BACKUPrelFilePath) : '';
 			my $BACKUPtrackMBID = $ratedTrack->{'musicbrainzid'} || '';
-			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<urlmd5>".$urlmd5."</urlmd5>\n\t\t<relurl>".$BACKUPrelFilePath."</relurl>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<remote>".$remote."</remote>\n\t\t<musicbrainzid>".$BACKUPtrackMBID."</musicbrainzid>\n\t</track>\n";
+			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<urlmd5>".$urlmd5."</urlmd5>\n\t\t<relurl>".$BACKUPrelFilePath."</relurl>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<lastRated>".$lastRatedValue."</lastRated>\n\t\t<prevRating>".$previousRatingValue."</prevRating>\n\t\t<remote>".$remote."</remote>\n\t\t<musicbrainzid>".$BACKUPtrackMBID."</musicbrainzid>\n\t</track>\n";
 		}
 		print $output "</RatingsLight>\n";
 
 		if ($ignoredtracks > 0) {
 			print $output "<!-- WARNING: ".$ignoredtracks.($ignoredtracks == 1 ? " track was" : " tracks were")." ignored. Check server.log for more information. -->\n";
 		}
-		print $output "<!-- This backup contains ".$trackcount.($trackcount == 1 ? " rated track" : " rated tracks")." -->\n";
+		print $output "<!-- This backup contains ".$trackcount.($trackcount == 1 ? " track" : " tracks")." -->\n";
 		close $output;
 		main::DEBUGLOG && $log->is_debug && $log->debug('Backup completed after '.(time() - $started).' seconds.');
 
 		cleanupBackups();
 	} else {
-		main::INFOLOG && $log->is_info && $log->info('Found no rated tracks in the LMS database.');
+		main::INFOLOG && $log->is_info && $log->info('Found no tracks with rating data in the LMS database.');
 	}
+	$prefs->set('lastbackup', int(time()));
 	$prefs->set('status_creatingbackup', 0);
 }
 
@@ -174,7 +179,6 @@ sub importRatingsFromCommentTags {
 
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
-	my $tagimport_dontunrate = $prefs->get('tagimport_dontunrate');
 
 	my $dbh = Slim::Schema->dbh;
 	if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
@@ -182,43 +186,23 @@ sub importRatingsFromCommentTags {
 		$prefs->set('status_importingfromcommenttags', 0);
 		return
 	} else {
-		my $sqlunrate = "UPDATE tracks_persistent
-			SET rating = NULL
-			WHERE (tracks_persistent.rating > 0
-				AND tracks_persistent.urlmd5 IN (
-					SELECT tracks.urlmd5
-					FROM tracks
-					LEFT JOIN comments ON comments.track = tracks.id
-					WHERE (comments.value NOT LIKE ? OR comments.value IS NULL))
+		my $ratingTime = int(time());
+		my $sqlunrate = "update tracks_persistent
+			set rating = case when tracks_persistent.prevRating is null then null else 0 end, lastRated = $ratingTime, prevRating = tracks_persistent.rating
+			where (tracks_persistent.rating > 0
+				and tracks_persistent.urlmd5 in (
+					select tracks.urlmd5 from tracks
+					left join comments on comments.track = tracks.id
+					where (comments.value not like ? or comments.value is null))
 				);";
 
-		my $sqlrate = "UPDATE tracks_persistent
-			SET rating = ?
-			WHERE tracks_persistent.urlmd5 IN (
-				SELECT tracks.urlmd5
-					FROM tracks
-				JOIN comments ON comments.track = tracks.id
-					WHERE comments.value LIKE ?
+		my $sqlrate = "update tracks_persistent
+			set rating = ?, lastRated = $ratingTime, prevRating = tracks_persistent.rating
+			where tracks_persistent.urlmd5 in (
+				select tracks.urlmd5 from tracks
+				left join comments on comments.track = tracks.id
+				where comments.value like ?
 			);";
-
-		# unrate previously rated tracks in LMS if comment tag does no longer contain keyword(s)
-		if (!$tagimport_dontunrate) {
-			my $ratingkeyword_unrate = "%%".$rating_keyword_prefix."_".$rating_keyword_suffix."%%";
-
-			my $sth = $dbh->prepare($sqlunrate);
-			eval {
-				$sth->bind_param(1, $ratingkeyword_unrate);
-				$sth->execute();
-				commit($dbh);
-			};
-			if ($@) {
-				$log->error("Database error: $DBI::errstr");
-				eval {
-					rollback($dbh);
-				};
-			}
-			$sth->finish();
-		}
 
 		# rate tracks according to comment tag keyword
 		my $rating = 1;
@@ -242,6 +226,23 @@ sub importRatingsFromCommentTags {
 			$rating++;
 			$sth->finish();
 		}
+
+		# unrate previously rated tracks if comment tag does no longer contain keyword(s)
+		my $ratingkeyword_unrate = "%%".$rating_keyword_prefix."_".$rating_keyword_suffix."%%";
+
+		my $sth = $dbh->prepare($sqlunrate);
+		eval {
+			$sth->bind_param(1, $ratingkeyword_unrate);
+			$sth->execute();
+			commit($dbh);
+		};
+		if ($@) {
+			$log->error("Database error: $DBI::errstr");
+			eval {
+				rollback($dbh);
+			};
+		}
+		$sth->finish();
 	}
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('Import completed after '.(time() - $started).' seconds.');
@@ -257,43 +258,38 @@ sub importRatingsFromBPMTags {
 	}
 	$prefs->set('status_importingfromBPMtags', 1);
 	my $started = time();
-	my $tagimport_dontunrate = $prefs->get('tagimport_dontunrate');
+	my $ratingTime = int(time());
 
 	my $dbh = Slim::Schema->dbh;
 	my $sqlunrate = "update tracks_persistent
-		set rating = null
+		set rating = case when tracks_persistent.prevRating is null then null else 0 end, lastRated = $ratingTime, prevRating = tracks_persistent.rating
 		where (tracks_persistent.rating > 0
 			and tracks_persistent.urlmd5 in (
-				select tracks.urlmd5
-				from tracks
+				select tracks.urlmd5 from tracks
 				where tracks.audio == 1
 				and (tracks.bpm == 0 or tracks.bpm is null))
 			);";
 
 	my $sqlrate = "update tracks_persistent
-		set rating = ?
+		set rating = ?, lastRated = $ratingTime, prevRating = tracks_persistent.rating
 		where tracks_persistent.urlmd5 in (
-			select tracks.urlmd5
-				from tracks
-				where tracks.audio == 1
-				and tracks.bpm == ?
+			select tracks.urlmd5 from tracks
+				where tracks.audio == 1 and tracks.bpm == ?
 			);";
 
 	# unrate previously rated tracks in LMS if BPM tag value is zero or null
-	if (!$tagimport_dontunrate) {
-		my $sth = $dbh->prepare($sqlunrate);
+	my $sth = $dbh->prepare($sqlunrate);
+	eval {
+		$sth->execute();
+		commit($dbh);
+	};
+	if ($@) {
+		$log->error("Database error: $DBI::errstr");
 		eval {
-			$sth->execute();
-			commit($dbh);
+			rollback($dbh);
 		};
-		if ($@) {
-			$log->error("Database error: $DBI::errstr");
-			eval {
-				rollback($dbh);
-			};
-		}
-		$sth->finish();
 	}
+	$sth->finish();
 
 	# rate tracks according to BPM value
 	my $rating = 1;

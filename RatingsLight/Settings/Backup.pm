@@ -108,4 +108,9 @@ sub handler {
 	return $result;
 }
 
+sub beforeRender {
+	my ($class, $paramRef) = @_;
+	$paramRef->{lastsuccessfulbackup} = Slim::Utils::DateTime::longDateF($prefs->get('lastbackup')).", ".Slim::Utils::DateTime::timeF($prefs->get('lastbackup')) if $prefs->get('lastbackup');
+}
+
 1;

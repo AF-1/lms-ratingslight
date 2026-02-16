@@ -15,6 +15,13 @@
 
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
+[% IF lastsuccessfulexport %]
+[% WRAPPER setting title=" " desc="" %]
+[% "PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LASTEXPORT" | string %]: [% lastsuccessfulexport %]
+[% END %]
+[% END %]
+
+
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES_DESC" %]
 	<select name="pref_exportVL_id" id="exportVL_id">
 		[% FOREACH library = virtuallibraries %]
@@ -31,6 +38,45 @@
 	<select class="stdedit" name="pref_playlistexportsinglefile" id="playlistexportsinglefile">
 		<option [% IF NOT prefs.playlistexportsinglefile %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
 		<option [% IF prefs.playlistexportsinglefile %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_UNRATED" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_UNRATED_DESC" %]
+	<select class="stdedit" name="pref_playlistexportunrated" id="playlistexportunrated">
+		<option [% IF NOT prefs.playlistexportunrated %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.playlistexportunrated %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
+[% END %]
+<br>
+
+[% exporttimerangeoptions = {
+			'0' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_ALL'
+			'2592000' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LASTMONTH'
+			'7948800' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LAST3MONTHS'
+			'15811200' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LAST6MONTHS'
+			'31536000' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LAST12MONTHS'
+	}
+%]
+[% IF lastsuccessfulexport %][% exporttimerangeoptions.999 = 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_SINCELASTEXPORT' %][% END %]
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TIMERANGE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TIMERANGE_DESC" %]
+	<select name="pref_exporttimerange" id="exporttimerange">
+		[% FOREACH option IN exporttimerangeoptions.keys.nsort %]
+			<option [% IF prefs.exporttimerange == option %]selected='selected' [% END %]value="[% option %]">[% exporttimerangeoptions.$option | string %]</option>
+		[%- END -%]
+	</select>
+[% END %]
+<br>
+
+[% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_FILTERBYRATINGCHANGE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_FILTERBYRATINGCHANGE_DESC" %]
+	<select name="pref_exportratingchange" id="exportratingchange">
+		[% FOREACH option = {
+			'0' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_FILTERBYRATINGCHANGE_DISABLED',
+			'1' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_FILTERBYRATINGCHANGE_INCREASED',
+			'2' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_FILTERBYRATINGCHANGE_DECREASED',
+		} %]
+			<option [% IF prefs.exportratingchange == option.key %]selected='selected' [% END %]value="[% option.key %]">[% option.value | string %]</option>
+		[%- END -%]
 	</select>
 [% END %]
 <br>
@@ -69,7 +115,7 @@
 	[% END %]
 </table>
 [% END %]
-<br><br>
+<br>
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONSUBSTITUTION" desc="PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONSUBSTITUTION_DESC" %]
 	<input type="text" class="stdedit" name="pref_exportextension" id="exportextension" value="[% prefs.exportextension %]" size="4">

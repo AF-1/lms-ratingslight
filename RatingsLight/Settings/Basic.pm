@@ -64,7 +64,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(enableIRremotebuttons topratedminrating rlparentfolderpath uselogfile userecentlyratedplaylist recentlymaxcount postscanscheduledelay));
+	return ($prefs, qw(enableIRremotebuttons topratedminrating rlparentfolderpath uselogfile userecentlyratedplaylist recentlymaxcount debugverbose));
 }
 
 sub handler {
@@ -89,12 +89,6 @@ sub handler {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}
 	return $result;
-}
-
-sub beforeRender {
-	my ($class, $paramRef) = @_;
-	my $advMode = $prefs->get('advmode');
-	$paramRef->{'advmode'} = 1 if $advMode;
 }
 
 1;

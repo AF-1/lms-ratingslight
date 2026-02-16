@@ -30,6 +30,12 @@ PLUGIN_RATINGSLIGHT_LANGSTRING_UNRATED
 	EN	unrated
 	DE	unbewertet
 
+PLUGIN_RATINGSLIGHT_LANGSTRING_LASTRATED
+	EN	Last Rated
+
+PLUGIN_RATINGSLIGHT_LANGSTRING_PREVIOUSRATING
+	EN	Previous Rating
+
 PLUGIN_RATINGSLIGHT_LANGSTRING_TRACK
 	EN	track
 	DE	Titel
@@ -216,18 +222,19 @@ PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_ADJUSTRATINGS_INPROGRESS
 	EN	adjusting...
 	DE	Anpassung läuft...
 
-PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_POSTSCANSCHEDULEDELAY
-	EN	Post-Scan Delay
-	DE	Verzögerung nach Durchsuchen
+PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_DEBUGVERBOSE
+	EN	Verbose debug log
 
-PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_POSTSCANSCHEDULEDELAY_DESC
-	EN	Time to wait after a rescan before refreshing VLs and browse menus
-	DE	Wartezeit nach einer Durchsuchung, bevor die virtuellen Sammlungen und Menüs angepasst werden
+PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_DEBUGVERBOSE_DESC
+	EN	If enabled, the <b>debug</b> log level also includes messages that are not absolutely necessary for debugging issues in most cases. Disabled by default.
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES
 	EN	Export rated tracks<br>from this library (view)<br>to playlist files
 	DE	Bewertete Titel dieser Sammlung in Wiedergabelisten exportieren
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LASTEXPORT
+	EN	Last export
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES_DESC
 	EN	Choose a library (view) and export its rated tracks to playlist files, e.g. for import of LMS rated tracks into other apps.<br>Files are exported to the <i>Ratings Light</i> folder and have a m3u.txt-extension so they won't get picked up by LMS scans.
@@ -248,6 +255,52 @@ PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_SINGLE_FILE
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_SINGLE_FILE_DESC
 	EN	By default, <i>Ratings Light</i> groups rated tracks by rating value into one playlist file per rating value. This settings allows you to export <b>all</b> rated tracks to a <b>single</b> playlist file.
 	DE	Normalerweise gruppiert 'Ratings Light' die bewerteten Titel nach Bewertung (eine Wiedergabeliste je Bewertung). Diese Einstellung erlaubt es, alle bewerteten Titel in eine einzige Wiedergabeliste zu exportieren.
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_UNRATED
+	EN	Create file for <b>un</b>rated tracks
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_UNRATED_DESC
+	EN	By default, only <i>rated</i> tracks are exported. This setting allows you to create a playlist file for tracks that have been <i>un</i>rated, i.e. with a current track rating of zero and a higher <i>previous</i> track rating.<br><br>This is always a separate playlist file, even if you choose to export all rated tracks to a single file.
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TIMERANGE
+	EN	Limit exported tracks to time range
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TIMERANGE_DESC
+	EN	Limit the export of rated tracks to a specific time range, e.g. export only rated tracks since the last export. NB: Rated tracks without a value for <i>date last rated</i> are ignored.
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_ALL
+	EN	No limit
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_SINCELASTEXPORT
+	EN	Tracks rated since the last export
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LASTMONTH
+	EN	Tracks rated in the last month
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LAST3MONTHS
+	EN	Tracks rated in the last 3 months
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LAST6MONTHS
+	EN	Tracks rated in the last 6 months
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LAST12MONTHS
+	EN	Tracks rated in the last 12 months
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_FILTERBYRATINGCHANGE
+	EN	Filter by rating change
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_FILTERBYRATINGCHANGE_DESC
+	EN	The export is limited to rated tracks with increased or decreased rating values compared to their <i>previous</i> ratings.
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_FILTERBYRATINGCHANGE_DISABLED
+	EN	Disabled
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_FILTERBYRATINGCHANGE_INCREASED
+	EN	Only tracks with increased ratings
+
+PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_FILTERBYRATINGCHANGE_DECREASED
+	EN	Only tracks with decreased ratings
+
 
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_ONLY_DIFF
 	EN	Export only tracks with rating values different from file tag ratings
@@ -370,14 +423,6 @@ PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_AUTOSCAN_DESC
 	EN	Always import ratings from file tags when LMS performs a scan.<br>This will <b>reset <u>all</u> ratings</b> in the LMS database to values based on your file tags.
 	DE	Importiere Bewertungen aus den Datei-Tags bei jedem Durchsuchen der Sammlung durch LMS. Dies setzt alle Bewertungen in der Datenbank auf die Werte aus den Datei-Tags zurück!
 
-PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_DONTUNRATE
-	EN	Don't unrate tracks
-	DE	Bewertung nicht löschen
-
-PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_DONTUNRATE_DESC
-	EN	Importing ratings from file tags was designed to have the LMS database mirror all track ratings it finds in your file tags and unrate all other tracks (resulting in <b>synced track ratings</b>).<br>If you enable this (<b>not recommended</b>), new and changed track ratings will show in the LMS database after import but <b><i>formerly</i> rated tracks which are no longer marked as rated in your file tags will <u>not</u> be unrated</b>.
-	DE	Der Import von Bewertungen aus Datei-Tags wurde so konzipiert, dass die LMS-Datenbank alle Titelbewertungen, die sie in Ihren Datei-Tags findet, übernimmt und alle anderen Titel unbewertet lässt (was zu <b>synchronisierten Titelbewertungen</b> führt).<br>Wenn Sie dies aktivieren ((<b>nicht empfohlen(</b>), werden neue und geänderte Titelbewertungen nach dem Import in die LMS-Datenbank übernommen, aber <b><i>zuvor</i> bewertete Titel, die in Ihren Datei-Tags nicht mehr als bewertet gekennzeichnet sind, werden <u>nicht</u> entwertet</b>.
-
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE
 	EN	Choose file tag for import
 	DE	Wähle Datei-Tag zum Import
@@ -396,7 +441,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_FILETAGS_FILETAGTYPE_COMMENT
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_EXAMPLE
 	EN	<b>Example:</b><br>Rating keyword <b>pre</b>fix = "favstars", rating keyword <b>suffix</b> = "xx": if a comment tag contains "favstars<b>4</b>xx" -> track rating = <b>4</b> stars
-	DE	<b>Beispiel:</b><br>Bewertung Schlüsselwort <b>prä</b>fix = "favstars", Bewertung Schlüsselwort <b>suffix</b> = "xx": Wenn ein Kommentar-Tag "favstars<b>4</b>xx" beinhaltet, ist die Bewertung = <b>4</b> Sterne
+	DE	<b>Beispiel:</b><br>Bewertungs-Schlüsselwort <b>prä</b>fix = "favstars", Bewertungs-Schlüsselwort <b>suffix</b> = "xx": Wenn ein Kommentar-Tag "favstars<b>4</b>xx" beinhaltet, ist die Bewertung = <b>4</b> Sterne
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD
 	EN	Set your rating keywords
@@ -404,20 +449,23 @@ PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD_PREFIX
 	EN	<b>Rating Keyword <u>Pre</u>fix</b>
-	DE	<b>Bewertung Schlüsselwort <u>Prä</u>fix</b>
+	DE	<b>Bewertungs-Schlüsselwort <u>Prä</u>fix</b>
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD_SUFFIX
 	EN	<b>Rating Keyword <u>Suf</u>fix</b>
-	DE	<b>Bewertung Schlüsselwort <u>Suf</u>fix</b>
+	DE	<b>Bewertungs-Schlüsselwort <u>Suf</u>fix</b>
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD_DESC
-	EN	At least one field must be filled.<br>Up to 30 letters, case insensitive, no numbers or special characters.<br>Rating values have to <b>integers</b> on a scale from 0 to 5 in your keywords, <i>no half-star rating values</i>.
-	DE	Mindestens ein Feld muss ausgefüllt werden. <br>Bis zu 30 Zeichen, ohne Groß-/Kleinschreibung, keine Zahlen oder Sonderzeichen.<br>Bewertungswerte müssen ganzzahlig auf einer Skala von 0 bis 5 sein, keine Halb-Sterne-Bewertungen.
+	EN	You have to set at least one keyword.<br>Up to 30 letters, case insensitive, no numbers or special characters.<br>Rating values have to be <b>integers</b> on a scale from 0 to 5 in your keywords, <i>no half-star rating values</i>, i.e. no decimal numbers.
+	DE	Sie müssen wenigstens ein Bewertungs-Schlüsselwort festlegen.<br>Bis zu 30 Zeichen, ohne Groß-/Kleinschreibung, keine Zahlen oder Sonderzeichen.<br>Bewertungswerte müssen ganzzahlig auf einer Skala von 0 bis 5 sein, keine Halb-Sterne-Bewertungen.
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP
 	EN	Backup
 	DE	Sicherung
+
+PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_LASTBACKUP
+	EN	Last backup
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP
 	EN	Manual backup
@@ -696,13 +744,11 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATING_CONTEXTMENUPOS_HIGHER
 	EN	Higher menu position
 	DE	Weiter oben
 
-PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING
-	EN	Enable iPeng rating workaround
-	DE	iPeng Bewertung workaraound aktivieren
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_DISPLAYRATINGHISTORY
+	EN	Display rating history
 
-PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ENABLEIPENG_TSLEGACYRATING_DESC
-	EN	Displaying and changing track ratings in iPeng is already possible via the <b>context menu</b>.<br>iPeng <b>additionally</b> offers the possibility to display and change track ratings directly in the <b>top left menu bar</b>. Unfortunately iPeng supports this officially only for the now discontinued TrackStat plugin.<br>If you check this box, you can also use <i>Ratings Light</i> to display and change track ratings directly in iPeng's top left menu bar (with the help of a workaround).<br><br>If you have changed this setting, please <b>restart the server for the change to take effect</b>.
-	DE	Die Anzeige und das Ändern der Titelbewertung in iPeng ist bereits über das Kontextmenü möglich. iPeng bietet zusätzlich die Möglichkeit, die Bewertungen direkt in der linken oberen Menüzeile anzusehen und zu ändern. Unglücklicherweise ist dies offiziell nur für das bereits eingestellte TrackStat-Plugin möglich. Wenn diese Option gewählt ist, ist dies auch mit Ratings Light durch einen Workaround möglich. Nach dem Ändern dieser Option bitte den Server neu starten.
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_DISPLAYRATINGHISTORY_DESC
+	EN	Display values for date last rated and previous rating in a track's context menu if available.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_WEB_LIMIT
 	EN	Show more rated tracks - web UI limit

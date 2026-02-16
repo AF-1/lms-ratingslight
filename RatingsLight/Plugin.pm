@@ -59,7 +59,7 @@ my $log = Slim::Utils::Log->addLogCategory({
 my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
-my (%restoreitem, $currentKey, $inTrack, $inValue, $backupParser, $backupParserNB, $restorestarted, $material_enabled);
+my (%restoreitem, $currentKey, $inTrack, $inValue, $backupParser, $backupParserNB, $restorestarted, $material_enabled, $debugVerbose);
 my ($opened, $restoreCount) = 0;
 
 sub initPlugin {
@@ -110,89 +110,18 @@ sub initPlugin {
 
 	regTrackInfoHandlerRating();
 
-	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbyartist => (
-		after => 'ratingslightrating',
-		before => 'ratingslightmoreratedtracksinalbum',
-		func => sub {
-			return objectInfoHandler('trackArtist', @_);
-		},
-	));
-
-	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbycomposer => (
-		after => 'ratingslightrating',
-		before => 'ratingslightmoreratedtracksinalbum',
-		func => sub {
-			return objectInfoHandler('trackComposer', @_);
-		},
-	));
-
-	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksinalbum => (
-		after => 'ratingslightrating',
-		func => sub {
-			return objectInfoHandler('trackAlbum', @_);
-		},
-	));
-
-	Slim::Menu::ArtistInfo->registerInfoProvider(ratingslightratedtracksbyartist => (
-		after => 'addartist',
-		before => 'ratingslightratedtracksbyartistcomposer',
-		func => sub {
-			return objectInfoHandler('artist', @_);
-		},
-	));
-	Slim::Menu::ArtistInfo->registerInfoProvider(ratingslightratedtracksbyartistcomposer => (
-		after => 'addartist',
-		func => sub {
-			return objectInfoHandler('artistcomposer', @_);
-		},
-	));
-	Slim::Menu::AlbumInfo->registerInfoProvider(ratingslightratedtracksinalbum => (
-		after => 'addalbum',
-		func => sub {
-			return objectInfoHandler('album', @_);
-		},
-	));
-	Slim::Menu::AlbumInfo->registerInfoProvider(ratingslightratealbum => (
-		after => 'ratingslightratedtracksinalbum',
-		func => sub {
-			return rateAlbumContextMenu(@_);
-		},
-	));
-	Slim::Menu::GenreInfo->registerInfoProvider(ratingslightratedtracksingenre => (
-		after => 'addgenre',
-		func => sub {
-			return objectInfoHandler('genre', @_);
-		},
-	));
-	Slim::Menu::YearInfo->registerInfoProvider(ratingslightratedtracksfromyear => (
-		after => 'addyear',
-		before => 'ratingslightratedtracksfromdecade',
-		func => sub {
-			return objectInfoHandler('year', @_);
-		},
-	));
-	Slim::Menu::YearInfo->registerInfoProvider(ratingslightratedtracksfromdecade => (
-		after => 'addyear',
-		func => sub {
-			return objectInfoHandler('decade', @_);
-		},
-	));
-	Slim::Menu::PlaylistInfo->registerInfoProvider(ratingslightratedtracksinplaylist => (
-		after => 'addplaylist',
-		func => sub {
-			return objectInfoHandler('playlist', @_);
-		},
-	));
-
 	initExportBaseFilePathMatrix();
 	$class->SUPER::initPlugin(@_);
 }
 
 sub postinitPlugin {
 	unless (!Slim::Schema::hasLibrary() || Slim::Music::Import->stillScanning) {
+		updatePersistentTable();
 		initVirtualLibraries();
 		Slim::Utils::Timers::setTimer(undef, time() + 2, \&backupScheduler);
 	}
+
+	regContextMenuItems();
 
 	if (Slim::Utils::PluginManager->isEnabled('Slim::Plugin::DontStopTheMusic::Plugin')) {
 		require Plugins::RatingsLight::DontStopTheMusic;
@@ -201,14 +130,6 @@ sub postinitPlugin {
 
 	$material_enabled = Slim::Utils::PluginManager->isEnabled('Plugins::MaterialSkin::Plugin');
 	main::DEBUGLOG && $log->is_debug && $log->debug('Plugin "Material Skin" is enabled') if $material_enabled;
-
-	# temp. workaround to allow legacy TS rating in iPeng until iPeng supports RL or is discontinued
-	if ($prefs->get('enableipengtslegacyrating') && !Slim::Utils::PluginManager->isEnabled('Plugins::TrackStat::Plugin')) {
-		Slim::Control::Request::addDispatch(['trackstat', 'getrating', '_trackid'], [0, 1, 0, \&getRating]);
-		Slim::Control::Request::addDispatch(['trackstat', 'setrating', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
-		Slim::Control::Request::addDispatch(['trackstat', 'setratingpercent', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
-		Slim::Control::Request::addDispatch(['trackstat', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'],[0, 0, 0, undef]);
-	}
 }
 
 sub initPrefs {
@@ -312,7 +233,6 @@ sub initPrefs {
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 20}, 'dstm_num_seedtracks');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 200}, 'dstm_playedtrackstokeep');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 50}, 'dstm_batchsizenewtracks');
-	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 600}, 'postscanscheduledelay');
 	$prefs->setValidate('file', 'restorefile');
 
 	$prefs->setChange(\&Plugins::RatingsLight::Importer::toggleUseImporter, 'autoscan');
@@ -327,6 +247,10 @@ sub initPrefs {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Pref for scheduled backups changed. Resetting or killing timer.');
 			backupScheduler();
 		}, 'scheduledbackups', 'backuptime');
+	$debugVerbose = $prefs->get('debugverbose');
+	$prefs->setChange(sub {
+			$debugVerbose = $prefs->get('debugverbose');
+		}, 'debugverbose');
 }
 
 
@@ -340,15 +264,9 @@ sub setRating {
 		return;
 	}
 
-	if ($request->isNotCommand([['ratingslight'],['setrating']]) && $request->isNotCommand([['ratingslight'],['setratingpercent']]) && $request->isNotCommand([['trackstat'],['setrating']]) && $request->isNotCommand([['trackstat'],['setratingpercent']])) {
+	if ($request->isNotCommand([['ratingslight'],['setrating']]) && $request->isNotCommand([['ratingslight'],['setratingpercent']])) {
 		$request->setStatusBadDispatch();
 		$log->warn('incorrect command');
-		return;
-	}
-
-	if (($request->isCommand([['trackstat'],['setrating']]) || $request->isCommand([['trackstat'],['setratingpercent']])) && $request->source !~ /iPeng/) {
-		$request->setStatusBadDispatch();
-		$log->warn('TS legacy rating is only available for iPeng clients as a temp. workaround. Please use the correct ratingslight dispatch instead.');
 		return;
 	}
 
@@ -359,7 +277,7 @@ sub setRating {
 	}
 
 	my $ratingScale;
-	if ($request->isCommand([['ratingslight'],['setratingpercent']]) || $request->isCommand([['trackstat'],['setratingpercent']])) {
+	if ($request->isCommand([['ratingslight'],['setratingpercent']])) {
 		$ratingScale = "percent";
 	}
 
@@ -704,7 +622,7 @@ sub _rateAlbum {
 ### rating menu
 
 sub trackInfoHandlerRating {
-	my ($client, $url, $track, $remoteMeta, $tags) = @_;
+	my ($infoItem, $client, $url, $track, $remoteMeta, $tags) = @_;
 	my $rating100ScaleValue = 0;
 	my $usehalfstarratings = $prefs->get('usehalfstarratings');
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING');
@@ -737,53 +655,113 @@ sub trackInfoHandlerRating {
 		return;
 	}
 
-	$rating100ScaleValue = getRatingFromDB($track);
-	$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating100ScaleValue));
+	if ($infoItem eq 'rating') {
+		$prefs->get('usehalfstarratings');
+		$rating100ScaleValue = getRatingFromDB($track);
+		$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating100ScaleValue));
 
-	if ($tags->{menuMode}) {
-		return {
-			type => 'redirect',
-			name => $text,
-			jive => {
-				actions => {
-					go => {
-						player => 0,
-						cmd => ['ratingslight', 'ratingmenu', $track->id],
-					},
-				}
-			},
+		if ($tags->{menuMode}) {
+			return {
+				type => 'redirect',
+				name => $text,
+				jive => {
+					actions => {
+						go => {
+							player => 0,
+							cmd => ['ratingslight', 'ratingmenu', $track->id],
+						},
+					}
+				},
+			};
+		} else {
+			my $item = {
+				type => 'text',
+				name => $text,
+				itemvalue => $rating100ScaleValue,
+				usehalfstars => $usehalfstarratings,
+				itemid => $track->id,
+				web => {
+					'type' => 'htmltemplate',
+					'value' => 'plugins/RatingsLight/html/trackratinginfo.html'
+				},
+			};
+
+			delete $item->{type};
+			my @ratingValues = ();
+			if ($usehalfstarratings) {
+				@ratingValues = qw(100 90 80 70 60 50 40 30 20 10 0);
+			} else {
+				@ratingValues = qw(100 80 60 40 20 0);
+			}
+
+			my @items = ();
+			foreach my $ratingValue (@ratingValues) {
+				push(@items,
+				{
+					name => getRatingTextLine($ratingValue),
+					url => \&VFD_deviceRating,
+					passthrough => [$track->id, $url, $track, $ratingValue],
+				});
+			}
+			$item->{items} = \@items;
+			return $item;
+		}
+	}
+
+	if ($prefs->get('displayratinghistory')) {
+		my $returnVal = 0;
+		my ($persistentLastRated, $persistentPreviousRating);
+		my $urlmd5 = $track->urlmd5 || md5_hex($url);
+		my $dbh = Slim::Schema->dbh;
+
+		my $sql = "select ifnull(tracks_persistent.lastRated, 0), ifnull(tracks_persistent.prevRating, 0) from tracks_persistent where tracks_persistent.urlmd5 = \"$urlmd5\"";
+		eval {
+				my $sth = $dbh->prepare($sql);
+				$sth->execute() or do {
+					$sql = undef;
+					$log->error("Error executing: $sql");
+				};
+				$sth->bind_columns(undef, \$persistentLastRated, \$persistentPreviousRating);
+				$sth->fetch();
+				$sth->finish();
 		};
-	} else {
+		if ($@) {
+			$log->error("Database error: $DBI::errstr");
+		}
+		main::DEBUGLOG && $log->is_debug && $log->debug('persistentLastRated = '.Data::Dump::dump($persistentLastRated).' ## persistentPreviousRating = '.Data::Dump::dump($persistentPreviousRating));
+
+		if (!defined($persistentLastRated) && !defined($persistentPreviousRating)) {
+			my $sqlTrackExists = "select count(*) from tracks_persistent where tracks_persistent.urlmd5 = \"$urlmd5\"";
+			my $trackInDB = quickSQLquery($sqlTrackExists);
+			if (!$trackInDB) {
+				$log->warn("Couldn't retrieve information for this track.\nCould be part of a (client) playlist whose track references are no longer valid after a *rescan*.\nTrack url = ".$url."\nTrack urlmd5 = ".$urlmd5);
+				return;
+			}
+		}
+
+		if ($persistentLastRated == 0) {
+			main::DEBUGLOG && $log->is_debug && $log->debug('Track "'.$track->title.'" has not been rated before.'); # if $debugVerbose;
+			return;
+		}
+
+		my $displayText = '';
+		if ($infoItem eq 'lastRated') {
+			$returnVal = Slim::Utils::DateTime::longDateF($persistentLastRated).", ".Slim::Utils::DateTime::timeF($persistentLastRated);
+			$displayText = string('PLUGIN_RATINGSLIGHT_LANGSTRING_LASTRATED').': '.$returnVal;
+		}
+
+		if ($infoItem eq 'prevRating') {
+			$returnVal = $persistentPreviousRating;
+			$displayText = string('PLUGIN_RATINGSLIGHT_LANGSTRING_PREVIOUSRATING').': '.$returnVal;
+		}
+
 		my $item = {
 			type => 'text',
-			name => $text,
-			itemvalue => $rating100ScaleValue,
-			usehalfstars => $usehalfstarratings,
-			itemid => $track->id,
-			web => {
-				'type' => 'htmltemplate',
-				'value' => 'plugins/RatingsLight/html/trackratinginfo.html'
-			},
+			name => $displayText,
+			trackid => $track->id,
+			urlmd5 => $urlmd5,
+			infoitem => $infoItem,
 		};
-
-		delete $item->{type};
-		my @ratingValues = ();
-		if ($usehalfstarratings) {
-			@ratingValues = qw(100 90 80 70 60 50 40 30 20 10 0);
-		} else {
-			@ratingValues = qw(100 80 60 40 20 0);
-		}
-
-		my @items = ();
-		foreach my $ratingValue (@ratingValues) {
-			push(@items,
-			{
-				name => getRatingTextLine($ratingValue),
-				url => \&VFD_deviceRating,
-				passthrough => [$track->id, $url, $track, $ratingValue],
-			});
-		}
-		$item->{items} = \@items;
 		return $item;
 	}
 }
@@ -868,6 +846,8 @@ sub getRatingMenu {
 sub regTrackInfoHandlerRating {
 	my $refresh = shift;
 	Slim::Menu::TrackInfo->deregisterInfoProvider('ratingslightrating') if $refresh;
+	Slim::Menu::TrackInfo->deregisterInfoProvider('ratingslightlastrated') if $refresh;
+	Slim::Menu::TrackInfo->deregisterInfoProvider('ratingslightpreviousrating') if $refresh;
 
 	my $contextmenupos = ["before => 'artwork'", "after => 'favorites'"]; # 0 = artwork, 1 = fav
 	my $selPos = $prefs->get('ratingcontextmenupos') || 0;
@@ -876,7 +856,98 @@ sub regTrackInfoHandlerRating {
 
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightrating => (
 		eval($thisPos),
-		func => \&trackInfoHandlerRating,
+		func => sub {
+			return trackInfoHandlerRating('rating', @_);
+		},
+	));
+	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightlastrated => (
+		after => 'ratingslightrating',
+		before => 'ratingslightpreviousrating',
+		func => sub {
+			return trackInfoHandlerRating('lastRated', @_);
+		},
+	));
+	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightpreviousrating => (
+		after => 'ratingslightrating',
+		func => sub {
+			return trackInfoHandlerRating('prevRating', @_);
+		},
+	));
+}
+
+sub regContextMenuItems {
+	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbyartist => (
+		after => 'ratingslightrating',
+		before => 'ratingslightmoreratedtracksinalbum',
+		func => sub {
+			return objectInfoHandler('trackArtist', @_);
+		},
+	));
+
+	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbycomposer => (
+		after => 'ratingslightrating',
+		before => 'ratingslightmoreratedtracksinalbum',
+		func => sub {
+			return objectInfoHandler('trackComposer', @_);
+		},
+	));
+
+	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksinalbum => (
+		after => 'ratingslightrating',
+		func => sub {
+			return objectInfoHandler('trackAlbum', @_);
+		},
+	));
+
+	Slim::Menu::ArtistInfo->registerInfoProvider(ratingslightratedtracksbyartist => (
+		after => 'addartist',
+		before => 'ratingslightratedtracksbyartistcomposer',
+		func => sub {
+			return objectInfoHandler('artist', @_);
+		},
+	));
+	Slim::Menu::ArtistInfo->registerInfoProvider(ratingslightratedtracksbyartistcomposer => (
+		after => 'addartist',
+		func => sub {
+			return objectInfoHandler('artistcomposer', @_);
+		},
+	));
+	Slim::Menu::AlbumInfo->registerInfoProvider(ratingslightratedtracksinalbum => (
+		after => 'addalbum',
+		func => sub {
+			return objectInfoHandler('album', @_);
+		},
+	));
+	Slim::Menu::AlbumInfo->registerInfoProvider(ratingslightratealbum => (
+		after => 'ratingslightratedtracksinalbum',
+		func => sub {
+			return rateAlbumContextMenu(@_);
+		},
+	));
+	Slim::Menu::GenreInfo->registerInfoProvider(ratingslightratedtracksingenre => (
+		after => 'addgenre',
+		func => sub {
+			return objectInfoHandler('genre', @_);
+		},
+	));
+	Slim::Menu::YearInfo->registerInfoProvider(ratingslightratedtracksfromyear => (
+		after => 'addyear',
+		before => 'ratingslightratedtracksfromdecade',
+		func => sub {
+			return objectInfoHandler('year', @_);
+		},
+	));
+	Slim::Menu::YearInfo->registerInfoProvider(ratingslightratedtracksfromdecade => (
+		after => 'addyear',
+		func => sub {
+			return objectInfoHandler('decade', @_);
+		},
+	));
+	Slim::Menu::PlaylistInfo->registerInfoProvider(ratingslightratedtracksinplaylist => (
+		after => 'addplaylist',
+		func => sub {
+			return objectInfoHandler('playlist', @_);
+		},
 	));
 }
 
@@ -958,7 +1029,7 @@ sub objectInfoHandler {
 		$attr{'join'} = ['contributorTracks'];
 
 		my $composer = Slim::Schema->rs('Contributor')->search(\%cond, \%attr)->first;
-		main::DEBUGLOG && $log->is_debug && $log->debug('composer = '.Data::Dump::dump($composer));
+		main::DEBUGLOG && $log->is_debug && $log->debug('composer = '.Data::Dump::dump($composer)) if $debugVerbose;;
 
 		if ($composer) {
 			$objectID = $composer->id;
@@ -985,7 +1056,7 @@ sub objectInfoHandler {
 		$attr{'join'} = ['contributorTracks'];
 
 		my $composer = Slim::Schema->rs('Contributor')->search(\%cond, \%attr)->first;
-		main::DEBUGLOG && $log->is_debug && $log->debug('composer = '.Data::Dump::dump($composer));
+		main::DEBUGLOG && $log->is_debug && $log->debug('composer = '.Data::Dump::dump($composer)) if $debugVerbose;;
 		if (!$composer) {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Artist is not listed a composer for any tracks.');
 			return;
@@ -1252,7 +1323,7 @@ sub getRatedTracksMenu {
 	my $objectName = $request->getParam('objectname');
 	my $objectType = $request->getParam('objecttype');
 	my $titlemore = $request->getParam('titlemore');
-	main::DEBUGLOG && $log->is_debug && $log->debug('paramsCopy = '.Data::Dump::dump($request->getParamsCopy()));
+	main::DEBUGLOG && $log->is_debug && $log->debug('paramsCopy = '.Data::Dump::dump($request->getParamsCopy())) if $debugVerbose;
 
 	my $ratedtracks = getRatedTracks(0, $client, $objectType, $thisID, $trackID, $ratedtrackscontextmenulimit);
 
@@ -1634,59 +1705,97 @@ sub exportRatingsToPlaylistFiles {
 	my $started = time();
 
 	my $onlyratingsnotmatchtags = $prefs->get('onlyratingsnotmatchtags');
+	my $exportRatingChange = $prefs->get('exportratingchange');
+	my $exportTimeRange = $prefs->get('exporttimerange');
+	my $exportTimeRangeString;
+	if ($exportTimeRange) {
+		my $exportTimeRangeOptions = {
+					'0' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_ALL',
+					'999' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_SINCELASTEXPORT',
+					'2592000' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LASTMONTH',
+					'7948800' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LAST3MONTHS',
+					'15811200' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LAST6MONTHS',
+					'31536000' => 'PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_LAST12MONTHS',
+		};
+		$exportTimeRangeString = lc(string($exportTimeRangeOptions->{$exportTimeRange}));
+		if ($exportTimeRange == 999) {
+			my $lastExport = $prefs->get('lastexport');
+			$exportTimeRange = $lastExport ? time() - floor($lastExport) : 0;
+			$exportTimeRangeString .= " (".(strftime "%Y-%m-%d %H:%M:%S", localtime $lastExport).")" if $lastExport
+		}
+	}
+
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
+	my $exportVL_id = $prefs->get('exportVL_id');
+	main::DEBUGLOG && $log->is_debug && $log->debug('exportVL_id = '.Data::Dump::dump($exportVL_id));
+	my $singleFile = $prefs->get('playlistexportsinglefile');
+
 	my ($sql, $sth) = undef;
 	my $dbh = Slim::Schema->dbh;
 	my $exporttimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
-	my $exportVL_id = $prefs->get('exportVL_id');
-	main::DEBUGLOG && $log->is_debug && $log->debug('exportVL_id = '.$exportVL_id);
 	my $totaltrackcount = 0;
 	my $rating100ScaleValueCeil = 0;
 	my $rating100ScaleValueFloor = 0;
-	my $singleFile = $prefs->get('playlistexportsinglefile');
+	my $initRating100ScaleValue = $prefs->get('playlistexportunrated') ? 0 : 10;
+	my $unratedDone = $prefs->get('playlistexportunrated') ? 0 : 1;
+	my $foundTracks = 0;
 
-	for (my $rating100ScaleValue = 10; $rating100ScaleValue <= 100; $rating100ScaleValue = $rating100ScaleValue + 10) {
-		$rating100ScaleValueFloor = $rating100ScaleValue - 5;
+	for (my $rating100ScaleValue = $initRating100ScaleValue; $rating100ScaleValue <= 100; $rating100ScaleValue = $rating100ScaleValue + 10) {
+		$rating100ScaleValueFloor = $rating100ScaleValue - 5 if $rating100ScaleValue;
 		$rating100ScaleValueCeil = $rating100ScaleValue + 4;
-		if ($singleFile) {
+
+		$unratedDone = 1 if $rating100ScaleValue && $rating100ScaleValue == 10;
+		if ($singleFile && $unratedDone) {
 			$rating100ScaleValueCeil = 100;
 			$rating100ScaleValueFloor = 1;
 		}
+
+		$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5";
+		if ($rating100ScaleValue) {
+			$sql .=" and (tracks_persistent.rating >= $rating100ScaleValueFloor and tracks_persistent.rating <= $rating100ScaleValueCeil)";
+		} else {
+			$sql .= " and ifnull(tracks_persistent.rating, 0) = 0 and ifnull(tracks_persistent.prevRating, 0) > 0";
+		}
+		$sql .= " and tracks_persistent.lastRated > ".(floor(time()) - $exportTimeRange) if $exportTimeRange;
+		if ($exportRatingChange && $rating100ScaleValue) {
+			$sql .= " and ifnull(tracks_persistent.rating, 0) > ifnull(tracks_persistent.prevRating, 0)" if $exportRatingChange == 1;
+			$sql .= " and tracks_persistent.prevRating is not null and tracks_persistent.rating is not null and tracks_persistent.rating < tracks_persistent.prevRating" if $exportRatingChange == 2;
+		}
+		$sql .= " join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\"" if $exportVL_id;
+		$sql .= " where tracks.audio = 1";
+
 		if ($onlyratingsnotmatchtags) {
-			# comment tags
 			if ($prefs->get('filetagtype')) {
+				# comment tags (filetagtype = 1)
 				if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 					$log->warn('Error: no rating keywords found.');
-					return
+					return;
 				} else {
-					if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-							$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValueFloor and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))";
+					my $ratingkeyword = "%%".$rating_keyword_prefix.($rating100ScaleValue/20).$rating_keyword_suffix."%%";
+					if ($rating100ScaleValue) {
+						$sql .= " and tracks.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))";
 					} else {
-							$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValueFloor and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null)))";
+						$sql .= " and tracks.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where comments.value like ?)";
+						$ratingkeyword = "%%".$rating_keyword_prefix."_".$rating_keyword_suffix."%%";
 					}
 					$sth = $dbh->prepare($sql);
-					my $ratingkeyword = "%%".$rating_keyword_prefix.($rating100ScaleValue/20).$rating_keyword_suffix."%%";
 					$sth->bind_param(1, $ratingkeyword);
 				}
-			# BPM tags
 			} else {
-				if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-						$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValueFloor and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1 and persistent.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != $rating100ScaleValue or tracks.bpm is null))";
+				# BPM tags (filetagtype = 0)
+				if ($rating100ScaleValue) {
+					$sql .= " and tracks.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != $rating100ScaleValue or tracks.bpm is null))";
 				} else {
-						$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValueFloor and tracks_persistent.rating <= $rating100ScaleValueCeil and tracks_persistent.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != $rating100ScaleValue or tracks.bpm is null)))";
+					$sql .= " and tracks.urlmd5 in (select tracks.urlmd5 from tracks where ifnull(tracks.bpm, 0) > 0)";
 				}
 				$sth = $dbh->prepare($sql);
 			}
 		} else {
-			if ((defined $exportVL_id) && ($exportVL_id ne '')) {
-				$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent persistent on persistent.urlmd5 = tracks.urlmd5 and (persistent.rating >= $rating100ScaleValueFloor and persistent.rating <= $rating100ScaleValueCeil) join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\" where tracks.audio = 1";
-			} else {
-				$sql = "select tracks_persistent.url, tracks.remote from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating >= $rating100ScaleValueFloor and tracks_persistent.rating <= $rating100ScaleValueCeil)";
-			}
 			$sth = $dbh->prepare($sql);
 		}
+		main::DEBUGLOG && $log->is_debug && $log->debug('sql = '.Data::Dump::dump($sql));
 		$sth->execute();
 
 		my ($trackURL, $trackRemote);
@@ -1703,8 +1812,10 @@ sub exportRatingsToPlaylistFiles {
 		$totaltrackcount = $totaltrackcount + $trackcount;
 
 		if ($trackcount > 0) {
-			my $PLfilename = (($rating100ScaleValue/20) == 1 ? 'RL_Export_'.$filename_timestamp.'__Rated_'.($rating100ScaleValue/20).'_star.m3u.txt' : 'RL_Export_'.$filename_timestamp.'__Rated_'.($rating100ScaleValue/20).'_stars.m3u.txt');
-			$PLfilename = 'RL_Export_'.$filename_timestamp.'__AllRatedTracks.m3u.txt' if $singleFile;
+			$foundTracks = 1;
+			my $PLfilename = 'RL_Export_'.$filename_timestamp.'__UNrated__0_stars.m3u.txt';
+			$PLfilename = 'RL_Export_'.$filename_timestamp.'__Rated__'.($rating100ScaleValue/20).(($rating100ScaleValue/20) == 1 ? '_star' : '_stars').'.m3u.txt' if $rating100ScaleValue;
+			$PLfilename = 'RL_Export_'.$filename_timestamp.'__AllRatedTracks.m3u.txt' if $singleFile && $unratedDone;
 			my $filename = catfile($exportDir, $PLfilename);
 			my $output = FileHandle->new($filename, '>:utf8') or do {
 				$log->error('Could not open '.$filename.' for writing. Does the RatingsLight folder exist? Does LMS have read/write permissions (755) for the (parent) folder?');
@@ -1712,7 +1823,7 @@ sub exportRatingsToPlaylistFiles {
 				return;
 			};
 			print $output '#EXTM3U'."\n";
-			print $output '# exported with \'Ratings Light\' LMS plugin ('.$exporttimestamp.")\n";
+			print $output '# exported with the \'Ratings Light\' plugin ('.$exporttimestamp.")\n";
 			if ((defined $exportVL_id) && ($exportVL_id ne '')) {
 				my $exportVL_name = Slim::Music::VirtualLibraries->getNameForId($exportVL_id);
 				print $output '# tracks from library (view): '.$exportVL_name."\n";
@@ -1720,12 +1831,25 @@ sub exportRatingsToPlaylistFiles {
 			if ($singleFile) {
 				print $output '# contains '.$trackcount.($trackcount == 1 ? ' rated track' : ' rated tracks')."\n\n";
 			} else {
-				print $output '# contains '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' rated '.(($rating100ScaleValue/20) == 1 ? ($rating100ScaleValue/20).' star' : ($rating100ScaleValue/20).' stars')."\n\n";
+				if ($rating100ScaleValue) {
+					print $output '# contains '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' rated '.(($rating100ScaleValue/20) == 1 ? ($rating100ScaleValue/20).' star' : ($rating100ScaleValue/20).' stars')."\n\n";
+				} else {
+					print $output '# contains '.$trackcount.' UNrated'.($trackcount == 1 ? ' track' : ' tracks')." rated 0 stars\n\n";
+				}
 			}
-			if ($onlyratingsnotmatchtags) {
-				print $output "# *** This export only contains rated tracks whose ratings differ from the rating value derived from their comment tag keywords. ***\n";
-				print $output "# *** If you want to export ALL rated tracks change the preference on the Ratings Light settings page. ***\n\n";
+			if ($onlyratingsnotmatchtags || $exportTimeRange || $exportRatingChange) {
+				print $output "# *** The following export filters were applied:\n";
+				if ($onlyratingsnotmatchtags) {
+					print $output "# *** - only tracks whose ratings differ from the rating value derived from their ".($prefs->get('filetagtype') ? "comment tag keywords" : "BPM tags")."\n";
+				}
+				if ($exportTimeRange) {
+					print $output "# *** - only ".$exportTimeRangeString."\n";
+				}
+				if ($exportRatingChange) {
+					print $output "# *** - only tracks with ".($exportRatingChange == 1 ? "increased" : "decreased")." ratings\n";
+				}
 			}
+			print $output "\n\n";
 			for my $ratedTrack (@ratedTracks) {
 				my $ratedTrackURL = $ratedTrack->{'url'};
 
@@ -1740,18 +1864,18 @@ sub exportRatingsToPlaylistFiles {
 			}
 			close $output;
 		}
-		last if $singleFile;
+		last if $singleFile && $unratedDone;
 	}
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('TOTAL number of tracks exported: '.$totaltrackcount);
+	$prefs->set('lastexport', int(time())) if $foundTracks;
 	$prefs->set('status_exportingtoplaylistfiles', 0);
 	$prefs->set('exportVL_id', '');
 	main::DEBUGLOG && $log->is_debug && $log->debug('Export completed after '.(time() - $started).' seconds.');
 }
 
 sub changeExportFilePath {
-	my $trackURL = shift;
-	my $isEXTURL = shift;
+	my ($trackURL, $isEXTURL) = @_;
 	my $exportbasefilepathmatrix = $prefs->get('exportbasefilepathmatrix');
 
 	if (scalar @{$exportbasefilepathmatrix} > 0) {
@@ -1762,31 +1886,31 @@ sub changeExportFilePath {
 
 		foreach my $thispath (@{$exportbasefilepathmatrix}) {
 			my $lmsbasepath = $thispath->{'lmsbasepath'};
-			main::INFOLOG && $log->is_info && $log->info("\n\n\nisEXTURL = ".Data::Dump::dump($isEXTURL));
-			main::INFOLOG && $log->is_info && $log->info('trackURL = '.Data::Dump::dump($oldtrackURL));
-			main::INFOLOG && $log->is_info && $log->info('escaped_trackURL = '.$escaped_trackURL);
+			main::DEBUGLOG && $log->is_debug && $log->debug("\n\n\nisEXTURL = ".Data::Dump::dump($isEXTURL));
+			main::DEBUGLOG && $log->is_debug && $log->debug('trackURL = '.Data::Dump::dump($oldtrackURL));
+			main::DEBUGLOG && $log->is_debug && $log->debug('escaped_trackURL = '.$escaped_trackURL);
 			if ($isEXTURL) {
 				$lmsbasepath =~ s/\\/\//isg;
 				$escaped_trackURL =~ s/%2520/%20/isg;
 			}
-			main::INFOLOG && $log->is_info && $log->info('escaped_trackURL after EXTURL regex = '.$escaped_trackURL);
+			main::DEBUGLOG && $log->is_debug && $log->debug('escaped_trackURL after EXTURL regex = '.$escaped_trackURL);
 
 			my $escaped_lmsbasepath = escape($lmsbasepath);
-			main::INFOLOG && $log->is_info && $log->info('escaped_lmsbasepath = '.$escaped_lmsbasepath);
+			main::DEBUGLOG && $log->is_debug && $log->debug('escaped_lmsbasepath = '.$escaped_lmsbasepath);
 
 			if (($escaped_trackURL =~ $escaped_lmsbasepath) && (defined ($thispath->{'substitutebasepath'})) && (($thispath->{'substitutebasepath'}) ne '')) {
 				my $substitutebasepath = $thispath->{'substitutebasepath'};
-				main::INFOLOG && $log->is_info && $log->info('substitutebasepath = '.$substitutebasepath);
+				main::DEBUGLOG && $log->is_debug && $log->debug('substitutebasepath = '.$substitutebasepath);
 				if ($isEXTURL) {
 					$substitutebasepath =~ s/\\/\//isg;
 				}
 				my $escaped_substitutebasepath = escape($substitutebasepath);
-				main::INFOLOG && $log->is_info && $log->info('escaped_substitutebasepath = '.$escaped_substitutebasepath);
+				main::DEBUGLOG && $log->is_debug && $log->debug('escaped_substitutebasepath = '.$escaped_substitutebasepath);
 
 				if (defined $exportextension && $exportextension ne '') {
 					my ($LMSfileExtension) = $escaped_trackURL =~ /(\.[^.]*)$/;
 					$LMSfileExtension =~ s/\.//s;
-					main::INFOLOG && $log->is_info && $log->info("LMS file extension is '$LMSfileExtension'");
+					main::DEBUGLOG && $log->is_debug && $log->debug("LMS file extension is '$LMSfileExtension'");
 
 					# file extension replacement - exceptions
 					my %extensionExceptionsHash;
@@ -1797,17 +1921,17 @@ sub changeExportFilePath {
 					}
 
 					if ((scalar keys %extensionExceptionsHash > 0) && $extensionExceptionsHash{lc($LMSfileExtension)}) {
-						main::INFOLOG && $log->is_info && $log->info("The file extension '$LMSfileExtension' is not replaced because it is included in the list of exceptions.");
+						main::DEBUGLOG && $log->is_debug && $log->debug("The file extension '$LMSfileExtension' is not replaced because it is included in the list of exceptions.");
 					} else {
 						$escaped_trackURL =~ s/\.[^.]*$/\.$exportextension/isg;
 					}
 				}
 
 				$escaped_trackURL =~ s/$escaped_lmsbasepath/$escaped_substitutebasepath/isg;
-				main::INFOLOG && $log->is_info && $log->info('escaped_trackURL AFTER regex replacing = '.$escaped_trackURL);
+				main::DEBUGLOG && $log->is_debug && $log->debug('escaped_trackURL AFTER regex replacing = '.$escaped_trackURL);
 
 				$trackURL = Encode::decode('utf8', unescape($escaped_trackURL));
-				main::INFOLOG && $log->is_info && $log->info('UNescaped trackURL = '.$trackURL);
+				main::DEBUGLOG && $log->is_debug && $log->debug('UNescaped trackURL = '.$trackURL);
 
 				if ($isEXTURL) {
 					$trackURL =~ s/ /%20/isg;
@@ -1897,7 +2021,7 @@ sub adjustRatings {
 				$thisRating = ratingSanityCheck($thisRating);
 				$thisRating = adjustRating($thisRating);
 				writeRatingToDB($thisTrack->{'id'}, undef, undef, undef, $thisRating, 1);
-				$adjustedCount++;
+	$adjustedCount++;
 			}
 		}
 	}
@@ -1913,7 +2037,7 @@ sub adjustRatings {
 sub backupScheduler {
 	main::DEBUGLOG && $log->is_debug && $log->debug('Checking backup scheduler');
 
-	main::DEBUGLOG && $log->is_debug && $log->debug('Killing backup timer if any.');
+	main::DEBUGLOG && $log->is_debug && $log->debug('Killing backup timers');
 	Slim::Utils::Timers::killTimers(undef, \&backupScheduler);
 
 	if ($prefs->get('scheduledbackups')) {
@@ -2117,9 +2241,11 @@ sub handleEndElement {
 			my $trackURLmd5 = undef;
 			my $backupTrackURLmd5 = $curTrack->{'urlmd5'} unless $isTSlegacyBackupFile;
 			my $backupTrackMBID = $isTSlegacyBackupFile ? $curTrack->{'musicbrainzId'} : $curTrack->{'musicbrainzid'};
-			my $rating100ScaleValue = $curTrack->{'rating'};
+			my $rating100ScaleValue = $curTrack->{'rating'} || 0;
+			my $lastRatedValue = $curTrack->{'lastRated'};
+			my $previousRatingValue = defined($curTrack->{'prevRating'}) ? $curTrack->{'prevRating'} : undef;
 
-			if ($rating100ScaleValue) {
+			if ($rating100ScaleValue || $lastRatedValue) {
 				# check if FULL file url is valid
 				# Otherwise, try RELATIVE file URL with current media dirs
 				$fullTrackURL = Encode::decode('utf8', unescape($fullTrackURL));
@@ -2171,8 +2297,8 @@ sub handleEndElement {
 				if (!$trackURL && !$trackURLmd5 && !$backupTrackMBID) {
 					$log->warn("No valid urlmd5, url or musicbrainz id for this track. Can't restore values for file with restore URL = ".Data::Dump::dump($fullTrackURL));
 				} else {
-					main::DEBUGLOG && $log->is_debug && $log->debug("Setting rating $rating100ScaleValue for track: $trackURL\n");
-					writeRatingToDB(undef, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, 1);
+					main::DEBUGLOG && $log->is_debug && $log->debug("Setting rating $rating100ScaleValue for track: $trackURL");
+					writeRatingToDB(undef, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, 1, $lastRatedValue, $previousRatingValue);
 					$restoreCount++;
 				}
 			}
@@ -2832,8 +2958,8 @@ sub clearAllRatings {
 ###### set/get rating ######
 
 sub writeRatingToDB {
-	my ($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, $dontlogthis) = @_;
-	main::DEBUGLOG && $log->is_debug && $log->debug("trackID = ".Data::Dump::dump($trackID)."\ntrackURL = ".Data::Dump::dump($trackURL)."\ntrackURLmd5 = ".Data::Dump::dump($trackURLmd5)."\ntrack obj = ".($track ? 1 : 0)."\nrating = ".Data::Dump::dump($rating100ScaleValue)."\ndontlogthis = ".Data::Dump::dump($dontlogthis));
+	my ($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, $dontlogthis, $restoreLastRated, $restorePrevRating) = @_;
+	main::DEBUGLOG && $log->is_debug && $log->debug("trackID = ".Data::Dump::dump($trackID)."\ntrackURL = ".Data::Dump::dump($trackURL)."\ntrackURLmd5 = ".Data::Dump::dump($trackURLmd5)."\ntrack obj = ".($track ? 1 : 0)."\nrating = ".Data::Dump::dump($rating100ScaleValue)."\ndontlogthis = ".Data::Dump::dump($dontlogthis)."\nlast rated restore value = ".Data::Dump::dump($restoreLastRated)."\nprevious rating restore value = ".Data::Dump::dump($restorePrevRating));
 
 	if (($rating100ScaleValue < 0) || ($rating100ScaleValue > 100)) {
 		$rating100ScaleValue = ratingSanityCheck($rating100ScaleValue);
@@ -2854,10 +2980,16 @@ sub writeRatingToDB {
 	}
 
 	if ($track && blessed $track && (UNIVERSAL::isa($track, 'Slim::Schema::Track') || UNIVERSAL::isa($track, 'Slim::Schema::RemoteTrack'))) {
-		main::DEBUGLOG && $log->is_debug && $log->debug('Trying to set rating for: '.$track->url);
-		my $previousRating100ScaleValue = getRatingFromDB($track);
+		main::DEBUGLOG && $log->is_debug && $log->debug("Trying to set rating $rating100ScaleValue for: ".$track->url);
+		my $previousRating100ScaleValue = $restorePrevRating ? $restorePrevRating : getRatingFromDB($track);
+		if (!defined($restorePrevRating) && ($rating100ScaleValue == $previousRating100ScaleValue)) {
+			main::DEBUGLOG && $log->is_debug && $log->debug("Skipping database write - track rating not updated: requested value matches existing.");
+			return;
+		}
+
+		my $ratingTime = $restoreLastRated ? $restoreLastRated : time();
 		my $urlmd5 = $track->urlmd5;
-		my $sql = "update tracks_persistent set rating=$rating100ScaleValue where urlmd5 = \"$urlmd5\"";
+		my $sql = "update tracks_persistent set rating = $rating100ScaleValue, lastRated = $ratingTime, prevRating = $previousRating100ScaleValue where urlmd5 = \"$urlmd5\"";
 		my $dbh = Slim::Schema->dbh;
 		my $sth = $dbh->prepare($sql);
 		eval {
@@ -2873,18 +3005,18 @@ sub writeRatingToDB {
 		$sth->finish();
 
 		# confirm and log new rating value
-		my $newTrackRating = getRatingFromDB($track);
-		if (defined $newTrackRating && $newTrackRating == $rating100ScaleValue) {
-			main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")\n");
-			unless ($dontlogthis) {
-				logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue) if $prefs->get('uselogfile');
-				addToRecentlyRatedPlaylist($track) if $prefs->get('userecentlyratedplaylist');
+		unless ($dontlogthis) {
+			my $newTrackRating = getRatingFromDB($track);
+			if (defined $newTrackRating && $newTrackRating == $rating100ScaleValue) {
+				main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")");
+					logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue) if $prefs->get('uselogfile');
+					addToRecentlyRatedPlaylist($track) if $prefs->get('userecentlyratedplaylist');
+			} else {
+				main::DEBUGLOG && $log->is_debug && $log->debug("Couldn't confirm that the track was successfully rated. Won't add track to rating log file or recently rated playlist. Please check manually if the new track rating has been set.");
 			}
-		} else {
-			main::DEBUGLOG && $log->is_debug && $log->debug("Couldn't confirm that the track was successfully rated. Won't add track to rating log file or recently rated playlist. Please check manually if the new track rating has been set.\n");
 		}
 	} else {
-		$log->error("Couldn't find blessed track (local or remote). Rating failed.\n");
+		$log->error("Couldn't find blessed track (local or remote). Rating failed.");
 	}
 }
 
@@ -2907,14 +3039,14 @@ sub getRatingFromDB {
 	}
 
 	# check for dead/moved/non-library local tracks
-	main::DEBUGLOG && $log->is_debug && $log->debug('Track is remote but has no extid, probably not part of LMS library.') if ((Slim::Music::Info::isRemoteURL($track->url) == 1) && (!defined($track->extid)));
+	main::DEBUGLOG && $log->is_debug && $log->debug('Track "'.$track->title.'" is remote but has no extid, probably not part of LMS library.') if ((Slim::Music::Info::isRemoteURL($track->url) == 1) && (!defined($track->extid)) && $track->url !~ m|^dynamicplaylist://(.*)$|);
 	if ((Slim::Music::Info::isRemoteURL($track->url) != 1) && (!defined($track->filesize))) {
 		main::INFOLOG && $log->is_info && $log->info('Local track with zero filesize in db - track dead or moved??? Track URL: '.$track->url);
 		return $rating100ScaleValue;
 	}
 
 	# use sqlite instead of LMS method in case library has tracks with identical MusicBrainz IDs
-	main::DEBUGLOG && $log->is_debug && $log->debug('Trying to get rating with sqlite and url: '.$track->url);
+	main::DEBUGLOG && $log->is_debug && $log->debug('Trying to get rating with sqlite and url: '.$track->url) if $debugVerbose;
 	my $urlmd5 = $track->urlmd5 || md5_hex($track->url);
 	my $dbh = Slim::Schema->dbh;
 	my $sqlstatement = "select rating from tracks_persistent where urlmd5 = \"$urlmd5\"";
@@ -2925,7 +3057,7 @@ sub getRatingFromDB {
 		$sth->finish();
 	};
 	if ($@) { main::DEBUGLOG && $log->is_debug && $log->debug("error: $@"); }
-	main::DEBUGLOG && $log->is_debug && $log->debug("Found rating $rating100ScaleValue for url: ".$track->url);
+	main::DEBUGLOG && $log->is_debug && $log->debug("Found rating $rating100ScaleValue for url: ".$track->url) if $debugVerbose;
 	return adjustRating($rating100ScaleValue);
 }
 
@@ -2937,15 +3069,9 @@ sub getRating {
 		return;
 	}
 
-	if ($request->isNotQuery([['ratingslight'],['getrating']]) && $request->isNotQuery([['trackstat'],['getrating']])) {
+	if ($request->isNotQuery([['ratingslight'],['getrating']])) {
 		$log->error('incorrect command');
 		$request->setStatusBadDispatch();
-		return;
-	}
-
-	if ($request->isQuery([['trackstat'],['getrating']]) && $request->source !~ /iPeng/) {
-		$request->setStatusBadDispatch();
-		$log->warn('TS legacy rating is only available for iPeng clients as a temp. workaround. Please use the correct ratingslight dispatch instead.');
 		return;
 	}
 
@@ -3008,7 +3134,7 @@ sub getRatingTextLine {
 sub adjustRating {
 	my $rating100ScaleValue = shift;
 	$rating100ScaleValue = int(($rating100ScaleValue + 5)/10) * 10;
-	return $rating100ScaleValue;
+	return ratingSanityCheck($rating100ScaleValue);
 }
 
 sub ratingValidator {
@@ -3030,12 +3156,8 @@ sub ratingValidator {
 
 sub ratingSanityCheck {
 	my $rating100ScaleValue = shift;
-	if ((!defined $rating100ScaleValue) || ($rating100ScaleValue < 0)) {
-		return 0;
-	}
-	if ($rating100ScaleValue > 100) {
-		return 100;
-	}
+	return 0 if ((!defined $rating100ScaleValue) || ($rating100ScaleValue < 0));
+	return 100 if $rating100ScaleValue > 100;
 	return $rating100ScaleValue;
 }
 
@@ -3119,6 +3241,77 @@ sub refreshTitleFormats {
 
 
 # misc
+
+sub updatePersistentTable {
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn("Warning: can't update tracks_persistent table until library scan is completed");
+		return;
+	}
+	my $started = time();
+	my $dbh = Slim::Schema->dbh;
+	my $sth = $dbh->table_info();
+	my $tableExists;
+	eval {
+		while (my ($qual, $owner, $table, $type) = $sth->fetchrow_array()) {
+			if ($table eq 'tracks_persistent') {
+				$tableExists = 1;
+			}
+		}
+	};
+	if($@) {
+		$log->error("Database error: $DBI::errstr");
+	}
+	$sth->finish();
+	main::DEBUGLOG && $log->is_debug && $log->debug('No tracks_persistent table found.') if !$tableExists;
+
+	# check for new columns
+	if ($tableExists) {
+		my $sth = $dbh->prepare (q{pragma table_info(tracks_persistent)});
+		$sth->execute() or do { main::DEBUGLOG && $log->is_debug && $log->debug("Error executing"); };
+
+		my $colName;
+		my %colNames = ();
+		while ($sth->fetch()) {
+			$sth->bind_col(2, \$colName);
+			$colNames{$colName} = 1 if $colName;
+		}
+		$sth->finish();
+
+		if ($colNames{'lastRated'} && $colNames{'prevRating'}) {
+			main::DEBUGLOG && $log->is_debug && $log->debug('tracks_persistent table columns "lastRated" and "prevRating" already exist. No DB update required.');
+		} else {
+				main::DEBUGLOG && $log->is_debug && $log->debug('Creating tracks_persistent table columns "lastRated" and "prevRating"');
+				my $sqlUpdate = 'alter table tracks_persistent add column lastRated int(10);alter table tracks_persistent add column prevRating tinyint(1)';
+				executeSQLstat($sqlUpdate);
+
+				# create indices
+				main::DEBUGLOG && $log->is_debug && $log->debug('Creating indices for new columns');
+				my $dbIndex = 'create index if not exists persistentdb.trackLastRatedIndex ON tracks_persistent (lastRated);create index if not exists persistentdb.trackPrevRatingIndex ON tracks_persistent (prevRating)';
+				executeSQLstat($dbIndex);
+				main::DEBUGLOG && $log->is_debug && $log->debug('DB update completed after '.(time() - $started).' seconds.');
+		}
+	}
+}
+
+sub executeSQLstat {
+	my $sqlstatement = shift;
+	my $dbh = Slim::Schema->dbh;
+
+	for my $sql (split(/[\n\r;]/, $sqlstatement)) {
+		my $sth = $dbh->prepare($sql);
+		eval {
+			$sth->execute();
+			commit($dbh);
+		};
+		if ($@) {
+			$log->error("Database error: $DBI::errstr");
+			eval {
+				rollback($dbh);
+			};
+		}
+		$sth->finish();
+	}
+}
 
 sub refreshAll {
 	Slim::Music::Info::clearFormatDisplayCache();

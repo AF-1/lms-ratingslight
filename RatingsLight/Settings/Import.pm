@@ -65,7 +65,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(rating_keyword_prefix rating_keyword_suffix autoscan ratethisplaylistid ratethisplaylistrating playlistimport_maxtracks tagimport_dontunrate filetagtype));
+	return ($prefs, qw(rating_keyword_prefix rating_keyword_suffix autoscan ratethisplaylistid ratethisplaylistrating playlistimport_maxtracks filetagtype));
 }
 
 sub handler {
@@ -83,8 +83,7 @@ sub handler {
 		}
 		my $filetagtype = $prefs->get('filetagtype');
 		if ($filetagtype == 1) {
-			main::DEBUGLOG && $log->is_debug && $log->debug("rating keyword prefix = ".$paramRef->{'pref_rating_keyword_prefix'});
-			main::DEBUGLOG && $log->is_debug && $log->debug("rating keyword suffix = ".$paramRef->{'pref_rating_keyword_suffix'});
+			main::DEBUGLOG && $log->is_debug && $log->debug('rating keyword PREfix: '.Data::Dump::dump($paramRef->{'pref_rating_keyword_prefix'}).' ## rating keyword SUFfix: '.Data::Dump::dump($paramRef->{'pref_rating_keyword_suffix'}));
 			if (((!defined ($paramRef->{'pref_rating_keyword_prefix'})) || ($paramRef->{'pref_rating_keyword_prefix'} eq '')) && ((!defined ($paramRef->{'pref_rating_keyword_suffix'})) || ($paramRef->{'pref_rating_keyword_suffix'} eq ''))) {
 				$paramRef->{'missingkeywords'} = 1;
 				$result = $class->SUPER::handler($client, $paramRef);
