@@ -79,7 +79,7 @@ sub initPlugin {
 	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'], [0, 0, 0, undef]);
 	Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'], [0, 1, 0, undef]);
 
-	Slim::Control::Request::subscribe(\&setRefreshTimer, [['rescan'],['done']]);
+	Slim::Control::Request::subscribe(\&setTaskTimer, [['rescan'],['done']]);
 
 	Slim::Web::HTTP::CSRF->protectCommand('ratingslight');
 
@@ -116,9 +116,7 @@ sub initPlugin {
 
 sub postinitPlugin {
 	unless (!Slim::Schema::hasLibrary() || Slim::Music::Import->stillScanning) {
-		updatePersistentTable();
-		initVirtualLibraries();
-		Slim::Utils::Timers::setTimer(undef, time() + 2, \&backupScheduler);
+		delayedTasks();
 	}
 
 	regContextMenuItems();
@@ -1973,20 +1971,24 @@ sub initExportBaseFilePathMatrix {
 	}
 }
 
-sub setRefreshTimer {
-	main::DEBUGLOG && $log->is_debug && $log->debug('Killing existing timers for post-scan refresh to prevent multiple calls');
-	Slim::Utils::Timers::killOneTimer(undef, \&delayedPostScanRefresh);
-	main::DEBUGLOG && $log->is_debug && $log->debug('Scheduling a delayed post-scan refresh');
-	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + $prefs->get('postscanscheduledelay'), \&delayedPostScanRefresh);
+sub setTaskTimer {
+	main::DEBUGLOG && $log->is_debug && $log->debug('Killing existing timers for delayed tasks to prevent multiple calls');
+	Slim::Utils::Timers::killOneTimer(undef, \&delayedTasks);
+	main::DEBUGLOG && $log->is_debug && $log->debug('Scheduling delayed tasks');
+	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + $prefs->get('postscanscheduledelay'), \&delayedTasks);
 }
 
-sub delayedPostScanRefresh {
+sub delayedTasks {
 	if (Slim::Music::Import->stillScanning) {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Scan in progress. Waiting for current scan to finish.');
-		setRefreshTimer();
+		setTaskTimer();
 	} else {
-		main::DEBUGLOG && $log->is_debug && $log->debug('Starting post-scan refresh');
-		refreshAll();
+		main::DEBUGLOG && $log->is_debug && $log->debug('Starting delayed tasks');
+		updatePersistentTable();
+		Slim::Music::Info::clearFormatDisplayCache();
+		refreshTitleFormats();
+		initVirtualLibraries();
+		Slim::Utils::Timers::setTimer(undef, time() + 20, \&backupScheduler);
 	}
 }
 
@@ -3245,6 +3247,7 @@ sub refreshTitleFormats {
 sub updatePersistentTable {
 	if (Slim::Music::Import->stillScanning) {
 		$log->warn("Warning: can't update tracks_persistent table until library scan is completed");
+		setUpdatePersistentTableTimer();
 		return;
 	}
 	my $started = time();

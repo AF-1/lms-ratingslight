@@ -89,11 +89,11 @@ sub handler {
 				$result = $class->SUPER::handler($client, $paramRef);
 			} else {
 				importRatingsFromCommentTags();
-				Plugins::RatingsLight::Plugin::setRefreshTimer(1);
+				Plugins::RatingsLight::Plugin::setTaskTimer(1);
 			}
 		} elsif ($filetagtype == 0) {
 			importRatingsFromBPMTags();
-			Plugins::RatingsLight::Plugin::setRefreshTimer(1);
+			Plugins::RatingsLight::Plugin::setTaskTimer(1);
 		}
 	} elsif ($paramRef->{'rateplaylistnow'}) {
 		if ($callHandler) {
