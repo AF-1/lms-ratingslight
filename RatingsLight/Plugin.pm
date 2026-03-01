@@ -159,7 +159,8 @@ sub initPrefs {
 		postscanscheduledelay => 10,
 		browsemenus_artists => 1,
 		browsemenus_genres => 1,
-		browsemenus_tracks => 1
+		browsemenus_tracks => 1,
+		displayratinghistory => 1
 	});
 
 	createRLfolder();
