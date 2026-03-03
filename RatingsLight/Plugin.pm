@@ -707,7 +707,7 @@ sub trackInfoHandlerRating {
 		}
 	}
 
-	if ($prefs->get('displayratinghistory')) {
+	if ($prefs->get('displayratinghistory') && (($infoItem eq 'lastRated') || ($infoItem eq 'prevRating'))) {
 		my $returnVal = 0;
 		my ($persistentLastRated, $persistentPreviousRating);
 		my $urlmd5 = $track->urlmd5 || md5_hex($url);
@@ -763,6 +763,7 @@ sub trackInfoHandlerRating {
 		};
 		return $item;
 	}
+	return;
 }
 
 sub getRatingMenu {
