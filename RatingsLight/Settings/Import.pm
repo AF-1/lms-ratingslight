@@ -110,7 +110,6 @@ sub handler {
 
 sub beforeRender {
 	my ($class, $paramRef) = @_;
-	my @allplaylists = ();
 	my @localPlaylists = ();
 	my $queryresult = Slim::Control::Request::executeRequest(undef, ['playlists', '0', '500', 'tags:x']);
 	my $playlistarray = $queryresult->getResult("playlists_loop");

@@ -92,7 +92,7 @@ sub beforeRender {
 
 		my $VLID = $libraries->{$k}->{'id'};
 		main::DEBUGLOG && $log->is_debug && $log->debug("VL: ".$displayName." - VLID:".$VLID);
-		unless (starts_with($VLID, "RATINGSLIGHT_") == 0) {
+		unless ($VLID =~ /^RATINGSLIGHT_/) {
 			push @items, {
 				name => $displayName,
 				sortName => Slim::Utils::Unicode::utf8decode($name, 'utf8'),
@@ -108,12 +108,6 @@ sub beforeRender {
 	};
 	main::DEBUGLOG && $log->is_debug && $log->debug("libraries for settings page: ".Data::Dump::dump(\@items));
 	$paramRef->{virtuallibraries} = \@items;
-}
-
-sub starts_with {
-	# complete_string, start_string, position
-	return rindex($_[0], $_[1], 0);
-	# 0 for yes, -1 for no
 }
 
 1;

@@ -29,7 +29,6 @@ use base qw(Plugins::RatingsLight::Settings::BaseSettings);
 use Slim::Utils::Log;
 use Slim::Utils::Prefs;
 use Slim::Utils::Misc;
-use Slim::Utils::Strings;
 use Slim::Utils::Strings qw(string cstring);
 
 my $prefs = preferences('plugin.ratingslight');
@@ -116,8 +115,8 @@ sub handler {
 		}
 	}
 
-	# add empty field (max = 11)
-	if ((scalar @{$exportbasefilepathmatrix} + 1) < 10) {
+	# add empty field if fewer than 11 path pairs are shown
+	if ((scalar @{$exportbasefilepathmatrix} + 1) < 11) {
 		push(@{$paramRef->{exportbasefilepathmatrix}}, {lmsbasepath => '', substitutebasepath => ''});
 	}
 

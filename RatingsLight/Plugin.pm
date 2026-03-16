@@ -24,7 +24,6 @@ use strict;
 use warnings;
 use utf8;
 
-use base qw(FileHandle);
 use base qw(Slim::Plugin::Base);
 use Digest::MD5 qw(md5_hex);
 use File::Basename;
@@ -60,7 +59,7 @@ my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
 my (%restoreitem, $currentKey, $inTrack, $inValue, $backupParser, $backupParserNB, $restorestarted, $material_enabled, $debugVerbose);
-my ($opened, $restoreCount) = 0;
+my ($opened, $restoreCount) = (0, 0);
 
 sub initPlugin {
 	my $class = shift;
@@ -115,7 +114,7 @@ sub initPlugin {
 }
 
 sub postinitPlugin {
-	unless (!Slim::Schema::hasLibrary() || Slim::Music::Import->stillScanning) {
+	if (Slim::Schema::hasLibrary() && !Slim::Music::Import->stillScanning) {
 		delayedTasks();
 	}
 
@@ -314,6 +313,11 @@ sub setRating {
 	}
 
 	my $track = Slim::Schema->resultset('Track')->find($trackID);
+	if (!$track) {
+		$log->error("Can't set rating. Track not found for ID: $trackID");
+		$request->setStatusBadParams();
+		return;
+	}
 	my $trackURL = $track->url;
 
 	# check if remote track is part of online library
@@ -331,7 +335,7 @@ sub setRating {
 	my $rating100ScaleValue = 0;
 
 	if (defined($incremental) && (($incremental eq '+') || ($incremental eq '-'))) {
-		my $currentrating = $track->rating;
+		my $currentrating = getRatingFromDB($track, 1);
 		if (!defined $currentrating) {
 			$currentrating = 0;
 		}
@@ -355,7 +359,6 @@ sub setRating {
 			$rating100ScaleValue = $rating;
 		}
 	}
-	$rating100ScaleValue = ratingSanityCheck($rating100ScaleValue);
 
 	writeRatingToDB($trackID, undef, undef, $track, $rating100ScaleValue);
 
@@ -483,7 +486,7 @@ sub rateAlbumTracks_web {
 	if (scalar @albumTracks > 0) {
 		foreach my $albumtrack (@albumTracks) {
 			my $track_id = $albumtrack->id;
-			my $rating = $albumtrack->rating || 0;
+			my $rating = getRatingFromDB($albumtrack) || 0;
 			$unratedTrackCount++ if !$rating;
 			my $tracktitle = trimStringLength($albumtrack->title, 70);
 			my $artworkID = $albumtrack->album->artwork;
@@ -603,7 +606,7 @@ sub _rateAlbum {
 	if (scalar @albumTracks > 0) {
 		foreach (@albumTracks) {
 			if ($unratedOnly) {
-				my $curTrackRating = $_->rating || 0;
+				my $curTrackRating = getRatingFromDB($_, 1) || 0;
 				if ($curTrackRating > 0) {
 					main::DEBUGLOG && $log->is_debug && $log->debug('Not rating already rated track "'.$_->title.'"');
 					next;
@@ -655,7 +658,6 @@ sub trackInfoHandlerRating {
 	}
 
 	if ($infoItem eq 'rating') {
-		$prefs->get('usehalfstarratings');
 		$rating100ScaleValue = getRatingFromDB($track);
 		$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating100ScaleValue));
 
@@ -717,8 +719,8 @@ sub trackInfoHandlerRating {
 		eval {
 				my $sth = $dbh->prepare($sql);
 				$sth->execute() or do {
-					$sql = undef;
 					$log->error("Error executing: $sql");
+					$sql = undef;
 				};
 				$sth->bind_columns(undef, \$persistentLastRated, \$persistentPreviousRating);
 				$sth->fetch();
@@ -750,7 +752,7 @@ sub trackInfoHandlerRating {
 		}
 
 		if ($infoItem eq 'prevRating') {
-			$returnVal = $persistentPreviousRating;
+			$returnVal = $persistentPreviousRating ? adjustRating($persistentPreviousRating)/20 : 0;
 			$displayText = string('PLUGIN_RATINGSLIGHT_LANGSTRING_PREVIOUSRATING').': '.$returnVal;
 		}
 
@@ -852,7 +854,7 @@ sub regTrackInfoHandlerRating {
 	my $contextmenupos = ["before => 'artwork'", "after => 'favorites'"]; # 0 = artwork, 1 = fav
 	my $selPos = $prefs->get('ratingcontextmenupos') || 0;
 	my $thisPos = @{$contextmenupos}[$selPos];
-	main::DEBUGLOG && $log->is_debug && $log->error('changing contextmenu position to: '.Data::Dump::dump($thisPos)) if $refresh;
+	main::DEBUGLOG && $log->is_debug && $log->debug('changing contextmenu position to: '.Data::Dump::dump($thisPos)) if $refresh;
 
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightrating => (
 		eval($thisPos),
@@ -1286,7 +1288,7 @@ sub handleRatedWebTrackList {
 		$listheadername = ''.(@{$ratedtracks})[0]->year;
 	} elsif ($objectType eq 'decade') {
 		$listheadername = (floor(((@{$ratedtracks})[0]->year)/10) * 10 + 0).'s';
-	} elsif ($objectType eq 'composer' || $objectType eq 'artistcomposer' || $objectType eq 'artistcomposer') {
+	} elsif ($objectType eq 'composer' || $objectType eq 'artistcomposer') {
 		$listheadername = $objectName || 'this composer';
 	} elsif ($objectType eq 'playlist') {
 		$listheadername = $objectName || 'this playlist';
@@ -1484,16 +1486,16 @@ sub getActionsMenu {
 					'usecontextmenu' => 1,
 				);
 				$actions = {
-					'player' => 0,
 					'go' => {
+						'player' => 0,
 						'cmd' => [$menuitemcmd1, $menuitemcmd2],
 						'params' => {
 							'menu' => 1,
 							$thisitem->{'actionParam'} => $trackID,
 						},
 					},
-					'player' => 0,
 					'play' => {
+						'player' => 0,
 						'cmd' => [$menuitemcmd1, $menuitemcmd2],
 						'params' => {
 							'menu' => 1,
@@ -1503,12 +1505,12 @@ sub getActionsMenu {
 				};
 			} else {
 				$actions = {
-					'player' => 0,
 					'go' => {
+						'player' => 0,
 						'cmd' => [$menuitemcmd1, 'cmd:'.$menuitemcmd2, 'track_id:'.$trackID],
 					},
-					'player' => 0,
 					'play' => {
+						'player' => 0,
 						'cmd' => [$menuitemcmd1, 'cmd:'.$menuitemcmd2, 'track_id:'.$trackID],
 					}
 				};
@@ -2022,10 +2024,9 @@ sub adjustRatings {
 		foreach my $thisTrack (@ratedTracks) {
 			my $thisRating = $thisTrack->{'rating'};
 			if (($thisRating % 10 != 0) || $thisRating > 100 || $thisRating < 0) { # rating value is not LMS standard
-				$thisRating = ratingSanityCheck($thisRating);
 				$thisRating = adjustRating($thisRating);
 				writeRatingToDB($thisTrack->{'id'}, undef, undef, undef, $thisRating, 1);
-	$adjustedCount++;
+				$adjustedCount++;
 			}
 		}
 	}
@@ -2367,7 +2368,7 @@ sub initVirtualLibraries {
 			for (my $i = 10; $i <= 100; $i += 10) {
 				next if ($showratedtracksmenus < 5 && $i % 20);
 				my $ratingMin = $i - ($showratedtracksmenus == 5 ? 5 : 10);
-				my $ratingMax = $i + ($showratedtracksmenus == 5 ? 5 : 10);
+				my $ratingMax = $i + ($showratedtracksmenus == 5 ? 4 : 9);
 				push @libraries,{
 					id => 'RATINGSLIGHT_EXACTRATING'.$i,
 					name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
@@ -2769,7 +2770,7 @@ sub getFunctions {
 			$rating100ScaleValue = $digit * 20 if ($digit >= 0 && $digit <=5);
 
 			if ($digit >= 6 && $digit <= 9) {
-				my $currentRating = $curTrack->rating || 0;
+				my $currentRating = getRatingFromDB($curTrack, 1) || 0;
 				$rating100ScaleValue = $currentRating - 20 if $digit == 6;
 				$rating100ScaleValue = $currentRating + 20 if $digit == 7;
 				$rating100ScaleValue = $currentRating - 10 if $digit == 8;
@@ -2985,7 +2986,7 @@ sub writeRatingToDB {
 
 	if ($track && blessed $track && (UNIVERSAL::isa($track, 'Slim::Schema::Track') || UNIVERSAL::isa($track, 'Slim::Schema::RemoteTrack'))) {
 		main::DEBUGLOG && $log->is_debug && $log->debug("Trying to set rating $rating100ScaleValue for: ".$track->url);
-		my $previousRating100ScaleValue = $restorePrevRating ? $restorePrevRating : getRatingFromDB($track);
+		my $previousRating100ScaleValue = $restorePrevRating ? $restorePrevRating : getRatingFromDB($track, 1);
 		if (!defined($restorePrevRating) && ($rating100ScaleValue == $previousRating100ScaleValue)) {
 			main::DEBUGLOG && $log->is_debug && $log->debug("Skipping database write - track rating not updated: requested value matches existing.");
 			return;
@@ -3010,7 +3011,7 @@ sub writeRatingToDB {
 
 		# confirm and log new rating value
 		unless ($dontlogthis) {
-			my $newTrackRating = getRatingFromDB($track);
+			my $newTrackRating = getRatingFromDB($track, 1);
 			if (defined $newTrackRating && $newTrackRating == $rating100ScaleValue) {
 				main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")");
 					logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue) if $prefs->get('uselogfile');
@@ -3025,7 +3026,7 @@ sub writeRatingToDB {
 }
 
 sub getRatingFromDB {
-	my $track = shift;
+	my ($track, $raw) = @_;
 	my $rating100ScaleValue = 0;
 
 	if (Slim::Music::Import->stillScanning) {
@@ -3062,7 +3063,7 @@ sub getRatingFromDB {
 	};
 	if ($@) { main::DEBUGLOG && $log->is_debug && $log->debug("error: $@"); }
 	main::DEBUGLOG && $log->is_debug && $log->debug("Found rating $rating100ScaleValue for url: ".$track->url) if $debugVerbose;
-	return adjustRating($rating100ScaleValue);
+	return $raw ? $rating100ScaleValue : adjustRating($rating100ScaleValue);
 }
 
 sub getRating {
@@ -3091,6 +3092,11 @@ sub getRating {
 	}
 
 	my $track = Slim::Schema->find('Track', $trackID);
+	if (!$track) {
+		$log->error("Can't get rating. Track not found for ID: $trackID");
+		$request->setStatusBadParams();
+		return;
+	}
 	my $rating100ScaleValue = getRatingFromDB($track);
 
 	$request->addResult('rating', $rating100ScaleValue/20);
@@ -3108,12 +3114,11 @@ sub getRatingTextLine {
 	my $text = string('PLUGIN_RATINGSLIGHT_LANGSTRING_UNRATED');
 
 	if ($rating100ScaleValue > 0) {
-		my $detecthalfstars = ($rating100ScaleValue/2)%2;
-		my $ratingstars = $rating100ScaleValue/20;
-		my $spacechar = ' ';
+		$rating100ScaleValue = adjustRating($rating100ScaleValue);
+		my $detecthalfstars = ($rating100ScaleValue % 20 == 10) ? 1 : 0;
+		my $ratingstars = int($rating100ScaleValue / 20);
 
 		if ($detecthalfstars == 1) {
-			$ratingstars = floor($ratingstars);
 			if ($displayratingchar) {
 				$text = ($ratingchar x $ratingstars).$fractionchar;
 			} else {
@@ -3137,8 +3142,10 @@ sub getRatingTextLine {
 
 sub adjustRating {
 	my $rating100ScaleValue = shift;
+	return 0 if ((!defined $rating100ScaleValue) || ($rating100ScaleValue < 0));
+	return 100 if $rating100ScaleValue > 100;
 	$rating100ScaleValue = int(($rating100ScaleValue + 5)/10) * 10;
-	return ratingSanityCheck($rating100ScaleValue);
+	return $rating100ScaleValue;
 }
 
 sub ratingValidator {
@@ -3359,11 +3366,8 @@ sub trimStringLength {
 
 sub getClientModel {
 	my $client = shift;
-	unless (!defined($client)) {
-		my $model = Slim::Player::Client::getClient($client->id)->model;
-		return $model;
-	}
-	return '';
+	return '' unless defined $client;
+	return Slim::Player::Client::getClient($client->id)->model;
 }
 
 sub padnum {

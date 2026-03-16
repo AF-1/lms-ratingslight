@@ -2,7 +2,7 @@
 [% pagetitle = 'PLUGIN_RATINGSLIGHT_WEB_ALBUMRATE_INFOPREFIX' | string; pagetitle = pagetitle _ " (" _ albumname _ ") ";IF systemSkin == 'Classic';pagetitle = pagetitle _ "/ ";ELSE;pagetitle = pagetitle _ "> ";END;pagetitle = pagetitle _ thisname %]
 [% pwd_list = [ pagetitle ] %]
 [% PROCESS pageheader.html %]
-<style>.wrapper{padding:5px;}.titlebold{font-weight:bold;}.inputbtn{padding:2px;}.filler{height:15px;}.warning{color:red;}.rlwrapper{display: flex;align-items: center;justify-content: flex-start;}.tracktitle{font-size:[% IF systemSkin != 'Classic' %]12[% ELSE %]11[% END %]px;}.secondline{margin-top: 2px;font-size:[% IF systemSkin != 'Classic' %]11[% ELSE %]10[% END %]px;}.rltextwrapper{padding-left: 20px;vertical-align: center;}.underline-on-hover:hover{text-decoration: underline;}.selectorMarker,.mouseOver{cursor:default !important;}
+<style>.wrapper{padding:5px;}.titlebold{font-weight:bold;}.inputbtn{padding:2px;}.filler{height:15px;}.warning{color:red;}.rlwrapper{display: flex;align-items: center;justify-content: flex-start;}.tracktitle{font-size:[% IF systemSkin != 'Classic' %]12[% ELSE %]11[% END %]px;}.secondline{margin-top: 2px;font-size:[% IF systemSkin != 'Classic' %]11[% ELSE %]10[% END %]px;}.rltextwrapper{padding-left: 20px;vertical-align: middle;}.underline-on-hover:hover{text-decoration: underline;}.selectorMarker,.mouseOver{cursor:default !important;}
 @font-face {
 	font-family: 'fontawesome-light';
 	src: url('[% webroot %]plugins/RatingsLight/html/font/fontawesome-light.woff?hnb8y9') format('woff');
@@ -276,7 +276,7 @@
 				vspref.onreadystatechange = function () {
 				//console.log(vspref.responseText);
 				};
-				let response = await vspref.send(vsBody);
+				vspref.send(vsBody);
 			}
 
 			sendPrefChange().then(() => {
@@ -288,9 +288,7 @@
 			});
 		}
 
-		let albumtracks = {};
-		albumtracks = new Map();
-
+		const albumtracks = new Map();
 		[% FOREACH albumtrack IN albumtracks %]
 		albumtracks.set([% albumtrack.trackid %],[% albumtrack.rating %]);
 		[% END %]
@@ -505,7 +503,7 @@
 	[% END %]
 	[% IF albumrated %]
 	<script type="text/javascript">
-		setTimeout(location.href = "[% webroot %]clixmlbrowser/clicmd=albuminfo+items&album_id=[% albumid %]&linktitle=Information%20([% albumname %])/index.html?player=[% playerURI %]", 500);
+		setTimeout(function() { location.href = "[% webroot %]clixmlbrowser/clicmd=albuminfo+items&album_id=[% albumid %]&linktitle=Information%20([% albumname %])/index.html?player=[% playerURI %]"; }, 500);
 	</script>
 	[% END %]
 [% END %]

@@ -339,7 +339,7 @@ drop table randomweightedratingscombined;";
 			$sth->execute() or do {
 				$sql = undef;
 			};
-			if ($sql =~ /^\(*select+/oi) {
+			if ($sql =~ /^\(*select+/i) {
 				my $trackURL;
 				$sth->bind_col(1,\$trackURL);
 
@@ -386,8 +386,10 @@ sub getSeedGenres {
 			my $genrelist;
 			foreach my $thisID (@seedIDs) {
 				my $track = Slim::Schema->resultset('Track')->find($thisID);
-				my $thisgenreid = $track->genre->id;
-				main::DEBUGLOG && $log->is_debug && $log->debug('seed genrename = '.$track->genre->name.' -- genre ID: '.$thisgenreid);
+				my $genre = $track->genre;
+				next unless $genre;
+				my $thisgenreid = $genre->id;
+				main::DEBUGLOG && $log->is_debug && $log->debug('seed genrename = '.$genre->name.' -- genre ID: '.$thisgenreid);
 				push @{$genrelist},$thisgenreid;
 			}
 			my @filteredgenrelist = sort (uniq(@{$genrelist}));

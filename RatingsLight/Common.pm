@@ -58,7 +58,7 @@ sub createBackup {
 	$prefs->set('status_creatingbackup', 1);
 
 	my $backupDir = $prefs->get('rlfolderpath');
-	my ($sql, $sth) = undef;
+	my ($sql, $sth);
 	my $dbh = Slim::Schema->dbh;
 	my ($trackURL, $trackURLmd5, $trackRating, $trackLastRated, $trackPrevRating, $trackRemote, $trackExtid, $trackMBID);
 	my $started = time();
@@ -101,8 +101,8 @@ sub createBackup {
 		print $output "<RatingsLight>\n";
 		for my $ratedTrack (@ratedTracks) {
 			my $BACKUPtrackURL = $ratedTrack->{'url'};
-			if ((($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) || !defined($ratedTrack->{'remote'})) {
-				$log->warn('Warning: ignoring this track. Track is remote but not part of LMS library: '.$BACKUPtrackURL) if $ratedTrack->{'remote'};
+			if (($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) {
+				main::INFOLOG && $log->is_info && $log->info('Warning: ignoring this track. Track is remote but not part of LMS library: '.$BACKUPtrackURL);
 				$trackcount--;
 				$ignoredtracks++;
 				next;
@@ -207,7 +207,7 @@ sub importRatingsFromCommentTags {
 		# rate tracks according to comment tag keyword
 		my $rating = 1;
 
-		until ($rating > 5) {
+		while ($rating <= 5) {
 			my $rating100scalevalue = ($rating * 20);
 			my $ratingkeyword = "%%".$rating_keyword_prefix.$rating.$rating_keyword_suffix."%%";
 			my $sth = $dbh->prepare($sqlrate);
@@ -294,7 +294,7 @@ sub importRatingsFromBPMTags {
 	# rate tracks according to BPM value
 	my $rating = 1;
 
-	until ($rating > 10) {
+	while ($rating <= 10) {
 		my $rating100scalevalue = ($rating * 10);
 		my $sth = $dbh->prepare($sqlrate);
 		eval {
