@@ -1,21 +1,7 @@
 #
 # Ratings Light
-#
 # (c) 2020 AF
-#
-# GPLv3 license
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# Licensed under the GPLv3 - see LICENSE file
 #
 
 package Plugins::RatingsLight::Settings::Backup;
@@ -70,8 +56,10 @@ sub prefs {
 
 sub handler {
 	my ($class, $client, $paramRef) = @_;
-	my $result = undef;
+	my $result;
 	my $callHandler = 1;
+	$paramRef->{'pref_backuptime'} = trim($paramRef->{'pref_backuptime'} // '');
+
 	if ($paramRef->{'saveSettings'}) {
 		$result = $class->SUPER::handler($client, $paramRef);
 		$callHandler = 0;
@@ -80,37 +68,42 @@ sub handler {
 		if ($callHandler) {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
+			$callHandler = 0;
 		}
 		createBackup();
 	} elsif ($paramRef->{'restore'}) {
 		if ($callHandler) {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
+			$callHandler = 0;
 		}
 		my $selectedfile = $paramRef->{'pref_restorefile'};
-		main::DEBUGLOG && $log->is_debug && $log->debug("restorefile = ".$selectedfile);
-		if ((!defined ($paramRef->{'pref_restorefile'})) || ($paramRef->{'pref_restorefile'} eq '')) {
+		main::DEBUGLOG && $log->is_debug && $log->debug("restorefile = ".Data::Dump::dump($selectedfile));
+		if (!defined($selectedfile) || $selectedfile eq '') {
 			$paramRef->{'restoremissingfile'} = 1;
-			$result = $class->SUPER::handler($client, $paramRef);
 		} elsif ($selectedfile !~ /\.xml/i) {
 			$paramRef->{'restoremissingfile'} = 2;
-			$result = $class->SUPER::handler($client, $paramRef);
 		} else {
 			Plugins::RatingsLight::Plugin::restoreFromBackup();
 		}
-	} elsif ($callHandler) {
-		$result = $class->SUPER::handler($client, $paramRef);
 	}
 
-	my $RLfolderpath = $prefs->get('rlfolderpath');
-	$prefs->set('restorefile', $RLfolderpath);
 	$result = $class->SUPER::handler($client, $paramRef);
 	return $result;
 }
 
 sub beforeRender {
 	my ($class, $paramRef) = @_;
+	# reset restorefile pref to folder path so field shows folder instead of last used filename
+	$prefs->set('restorefile', $prefs->get('rlfolderpath'));
 	$paramRef->{lastsuccessfulbackup} = Slim::Utils::DateTime::longDateF($prefs->get('lastbackup')).", ".Slim::Utils::DateTime::timeF($prefs->get('lastbackup')) if $prefs->get('lastbackup');
+}
+
+sub trim {
+	my $str = shift;
+	$str =~ s{^\s+}{};
+	$str =~ s{\s+$}{};
+	return $str;
 }
 
 1;

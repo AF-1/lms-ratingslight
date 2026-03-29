@@ -1,3 +1,8 @@
+Ratings Light
+Copyright (c) 2020 AF
+
+---
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 

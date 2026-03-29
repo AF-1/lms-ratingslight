@@ -1,21 +1,7 @@
 #
 # Ratings Light
-#
 # (c) 2020 AF
-#
-# GPLv3 license
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# Licensed under the GPLv3 - see LICENSE file
 #
 
 package Plugins::RatingsLight::Settings::Import;
@@ -30,7 +16,6 @@ use Plugins::RatingsLight::Common ':all';
 use Slim::Utils::Log;
 use Slim::Utils::Prefs;
 use Slim::Utils::Misc;
-use Slim::Utils::Strings;
 
 my $prefs = preferences('plugin.ratingslight');
 my $log = logger('plugin.ratingslight');
@@ -84,16 +69,16 @@ sub handler {
 		my $filetagtype = $prefs->get('filetagtype');
 		if ($filetagtype == 1) {
 			main::DEBUGLOG && $log->is_debug && $log->debug('rating keyword PREfix: '.Data::Dump::dump($paramRef->{'pref_rating_keyword_prefix'}).' ## rating keyword SUFfix: '.Data::Dump::dump($paramRef->{'pref_rating_keyword_suffix'}));
-			if (((!defined ($paramRef->{'pref_rating_keyword_prefix'})) || ($paramRef->{'pref_rating_keyword_prefix'} eq '')) && ((!defined ($paramRef->{'pref_rating_keyword_suffix'})) || ($paramRef->{'pref_rating_keyword_suffix'} eq ''))) {
+			if ((!defined($paramRef->{'pref_rating_keyword_prefix'}) || $paramRef->{'pref_rating_keyword_prefix'} eq '') && (!defined($paramRef->{'pref_rating_keyword_suffix'}) || $paramRef->{'pref_rating_keyword_suffix'} eq '')) {
 				$paramRef->{'missingkeywords'} = 1;
 				$result = $class->SUPER::handler($client, $paramRef);
 			} else {
 				importRatingsFromCommentTags();
-				Plugins::RatingsLight::Plugin::setTaskTimer(1);
+				Plugins::RatingsLight::Plugin::setTaskTimer();
 			}
 		} elsif ($filetagtype == 0) {
 			importRatingsFromBPMTags();
-			Plugins::RatingsLight::Plugin::setTaskTimer(1);
+			Plugins::RatingsLight::Plugin::setTaskTimer();
 		}
 	} elsif ($paramRef->{'rateplaylistnow'}) {
 		if ($callHandler) {
@@ -105,6 +90,7 @@ sub handler {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}
 
+	$result = $class->SUPER::handler($client, $paramRef);
 	return $result;
 }
 
@@ -112,17 +98,18 @@ sub beforeRender {
 	my ($class, $paramRef) = @_;
 	my @localPlaylists = ();
 	my $queryresult = Slim::Control::Request::executeRequest(undef, ['playlists', '0', '500', 'tags:x']);
+	return unless defined $queryresult;
 	my $playlistarray = $queryresult->getResult("playlists_loop");
+	return unless defined $playlistarray;
 
 	foreach my $thisPlaylist (@{$playlistarray}) {
 		push @localPlaylists, $thisPlaylist if $thisPlaylist->{'remote'} == 0;
 	}
-	my $playlistcount = scalar (@localPlaylists);
 
-	if ($playlistcount > 0) {
+	if (scalar (@localPlaylists) > 0) {
 		my @sortedarray = sort {$a->{id} <=> $b->{id}} @localPlaylists;
 		main::DEBUGLOG && $log->is_debug && $log->debug("sorted playlists = ".Data::Dump::dump(\@sortedarray));
-		$paramRef->{playlistcount} = $playlistcount;
+		$paramRef->{playlistcount} = scalar (@localPlaylists);
 		$paramRef->{allplaylists} = \@sortedarray;
 	}
 }

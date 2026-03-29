@@ -1,21 +1,7 @@
 #
 # Ratings Light
-#
 # (c) 2020 AF
-#
-# GPLv3 license
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# Licensed under the GPLv3 - see LICENSE file
 #
 
 package Plugins::RatingsLight::Common;
@@ -34,14 +20,13 @@ use File::Basename;
 use File::Copy qw(move);
 use File::Spec::Functions qw(:ALL);
 use File::stat;
-use FindBin qw($Bin);
-use POSIX qw(strftime floor);
+use POSIX qw(strftime);
 use Time::HiRes qw(time);
 use Path::Class;
 
 use base 'Exporter';
 our %EXPORT_TAGS = (
-	all => [qw(commit rollback createBackup cleanupBackups importRatingsFromCommentTags importRatingsFromBPMTags isTimeOrEmpty getMusicDirs parse_duration pathForItem)],
+	all => [qw(createBackup cleanupBackups importRatingsFromCommentTags importRatingsFromBPMTags isTimeOrEmpty getMusicDirs parse_duration pathForItem)],
 );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
 
@@ -58,29 +43,25 @@ sub createBackup {
 	$prefs->set('status_creatingbackup', 1);
 
 	my $backupDir = $prefs->get('rlfolderpath');
-	my ($sql, $sth);
 	my $dbh = Slim::Schema->dbh;
 	my ($trackURL, $trackURLmd5, $trackRating, $trackLastRated, $trackPrevRating, $trackRemote, $trackExtid, $trackMBID);
 	my $started = time();
 	my $backuptimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
 
-	$sql = "select tracks.url, tracks.urlmd5, tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating, tracks.remote, tracks.extid, tracks_persistent.musicbrainz_id from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating > 0 or tracks_persistent.lastRated is not null)";
-	$sth = $dbh->prepare($sql);
-	$sth->execute();
-
-	$sth->bind_col(1,\$trackURL);
-	$sth->bind_col(2,\$trackURLmd5);
-	$sth->bind_col(3,\$trackRating);
-	$sth->bind_col(4,\$trackLastRated);
-	$sth->bind_col(5,\$trackPrevRating);
-	$sth->bind_col(6,\$trackRemote);
-	$sth->bind_col(7,\$trackExtid);
-	$sth->bind_col(8,\$trackMBID);
-
+	my $sth = $dbh->prepare("select tracks.url, tracks.urlmd5, tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating, tracks.remote, tracks.extid, tracks_persistent.musicbrainz_id from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating > 0 or tracks_persistent.lastRated is not null)");
 	my @ratedTracks = ();
-	while ($sth->fetch()) {
-		push (@ratedTracks, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'lastRated' => $trackLastRated, 'prevRating' => $trackPrevRating, 'remote' => $trackRemote, 'extid' => $trackExtid, 'musicbrainzid' => $trackMBID});
+	eval {
+		$sth->execute();
+		$sth->bind_columns(undef, \$trackURL, \$trackURLmd5, \$trackRating, \$trackLastRated, \$trackPrevRating, \$trackRemote, \$trackExtid, \$trackMBID);
+		while ($sth->fetch()) {
+			push (@ratedTracks, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'lastRated' => $trackLastRated, 'prevRating' => $trackPrevRating, 'remote' => $trackRemote, 'extid' => $trackExtid, 'musicbrainzid' => $trackMBID});
+		}
+	};
+	if ($@) {
+		$log->error("Database error during backup: $DBI::errstr");
+		$prefs->set('status_creatingbackup', 0);
+		return;
 	}
 	$sth->finish();
 
@@ -127,11 +108,11 @@ sub createBackup {
 		close $output;
 		main::DEBUGLOG && $log->is_debug && $log->debug('Backup completed after '.(time() - $started).' seconds.');
 
+		$prefs->set('lastbackup', int(time()));
 		cleanupBackups();
 	} else {
 		main::INFOLOG && $log->is_info && $log->info('Found no tracks with rating data in the LMS database.');
 	}
-	$prefs->set('lastbackup', int(time()));
 	$prefs->set('status_creatingbackup', 0);
 }
 
@@ -142,22 +123,23 @@ sub cleanupBackups {
 		return unless (-d $backupDir);
 		my $backupsdaystokeep = $prefs->get('backupsdaystokeep');
 		my $maxkeeptime = $backupsdaystokeep * 24 * 60 * 60; # in seconds
-		my @files;
-		opendir(my $DH, $backupDir) or die "Error opening $backupDir: $!";
-		@files = grep(/^RL_Backup_.*$/, readdir($DH));
+		opendir(my $DH, $backupDir) or do { $log->error("Error opening $backupDir: $!"); return; };
+		my @files = grep(/^RL_Backup_.*$/, readdir($DH));
 		closedir($DH);
 		main::DEBUGLOG && $log->is_debug && $log->debug('number of backup files found: '.scalar(@files));
-		my $mtime;
 		my $etime = int(time());
 		my $n = 0;
 		if (scalar(@files) > $backupFilesMin) {
 			foreach my $file (@files) {
 				my $filepath = catfile($backupDir, $file);
-				$mtime = stat($filepath)->mtime;
+				my $mtime = stat($filepath)->mtime;
 				if (($etime - $mtime) > $maxkeeptime) {
-					unlink($filepath) or die "Can't delete $file: $!";
-					$n++;
-					last if ((scalar(@files) - $n) <= $backupFilesMin);
+					if (unlink($filepath)) {
+						$n++;
+						last if ((scalar(@files) - $n) <= $backupFilesMin);
+					} else {
+						$log->error("Can't delete $file: $!");
+					}
 				}
 			}
 		} else {
@@ -180,69 +162,47 @@ sub importRatingsFromCommentTags {
 	my $rating_keyword_prefix = $prefs->get('rating_keyword_prefix');
 	my $rating_keyword_suffix = $prefs->get('rating_keyword_suffix');
 
-	my $dbh = Slim::Schema->dbh;
 	if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 		$log->warn('Error: no rating keywords found.');
 		$prefs->set('status_importingfromcommenttags', 0);
-		return
-	} else {
-		my $ratingTime = int(time());
-		my $sqlunrate = "update tracks_persistent
-			set rating = case when tracks_persistent.prevRating is null then null else 0 end, lastRated = $ratingTime, prevRating = tracks_persistent.rating
+		return;
+	}
+
+	my $dbh = Slim::Schema->dbh;
+	my $ratingTime = int(time());
+
+	# rate tracks according to comment tag keyword
+	for my $rating (1..5) {
+		my $rating100scalevalue = $rating * 20;
+		my $ratingkeyword = '%%'.$rating_keyword_prefix.$rating.$rating_keyword_suffix.'%%';
+		eval {
+			$dbh->do("update tracks_persistent
+				set rating = ?, lastRated = ?, prevRating = tracks_persistent.rating
+				where tracks_persistent.urlmd5 in (
+					select tracks.urlmd5 from tracks
+					left join comments on comments.track = tracks.id
+					where comments.value like ?
+				)", undef, $rating100scalevalue, $ratingTime, $ratingkeyword);
+		};
+		if ($@) {
+			$log->error("Database error: $DBI::errstr");
+		}
+	}
+
+	# unrate previously rated tracks if comment tag no longer contains keyword(s)
+	my $ratingkeyword_unrate = '%%'.$rating_keyword_prefix.'_'.$rating_keyword_suffix.'%%';
+	eval {
+		$dbh->do("update tracks_persistent
+			set rating = case when tracks_persistent.prevRating is null then null else 0 end, lastRated = ?, prevRating = tracks_persistent.rating
 			where (tracks_persistent.rating > 0
 				and tracks_persistent.urlmd5 in (
 					select tracks.urlmd5 from tracks
 					left join comments on comments.track = tracks.id
 					where (comments.value not like ? or comments.value is null))
-				);";
-
-		my $sqlrate = "update tracks_persistent
-			set rating = ?, lastRated = $ratingTime, prevRating = tracks_persistent.rating
-			where tracks_persistent.urlmd5 in (
-				select tracks.urlmd5 from tracks
-				left join comments on comments.track = tracks.id
-				where comments.value like ?
-			);";
-
-		# rate tracks according to comment tag keyword
-		my $rating = 1;
-
-		while ($rating <= 5) {
-			my $rating100scalevalue = ($rating * 20);
-			my $ratingkeyword = "%%".$rating_keyword_prefix.$rating.$rating_keyword_suffix."%%";
-			my $sth = $dbh->prepare($sqlrate);
-			eval {
-				$sth->bind_param(1, $rating100scalevalue);
-				$sth->bind_param(2, $ratingkeyword);
-				$sth->execute();
-				commit($dbh);
-			};
-			if ($@) {
-				$log->error("Database error: $DBI::errstr");
-				eval {
-					rollback($dbh);
-				};
-			}
-			$rating++;
-			$sth->finish();
-		}
-
-		# unrate previously rated tracks if comment tag does no longer contain keyword(s)
-		my $ratingkeyword_unrate = "%%".$rating_keyword_prefix."_".$rating_keyword_suffix."%%";
-
-		my $sth = $dbh->prepare($sqlunrate);
-		eval {
-			$sth->bind_param(1, $ratingkeyword_unrate);
-			$sth->execute();
-			commit($dbh);
-		};
-		if ($@) {
-			$log->error("Database error: $DBI::errstr");
-			eval {
-				rollback($dbh);
-			};
-		}
-		$sth->finish();
+			)", undef, $ratingTime, $ratingkeyword_unrate);
+	};
+	if ($@) {
+		$log->error("Database error: $DBI::errstr");
 	}
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('Import completed after '.(time() - $started).' seconds.');
@@ -261,56 +221,36 @@ sub importRatingsFromBPMTags {
 	my $ratingTime = int(time());
 
 	my $dbh = Slim::Schema->dbh;
-	my $sqlunrate = "update tracks_persistent
-		set rating = case when tracks_persistent.prevRating is null then null else 0 end, lastRated = $ratingTime, prevRating = tracks_persistent.rating
-		where (tracks_persistent.rating > 0
-			and tracks_persistent.urlmd5 in (
-				select tracks.urlmd5 from tracks
-				where tracks.audio == 1
-				and (tracks.bpm == 0 or tracks.bpm is null))
-			);";
-
-	my $sqlrate = "update tracks_persistent
-		set rating = ?, lastRated = $ratingTime, prevRating = tracks_persistent.rating
-		where tracks_persistent.urlmd5 in (
-			select tracks.urlmd5 from tracks
-				where tracks.audio == 1 and tracks.bpm == ?
-			);";
 
 	# unrate previously rated tracks in LMS if BPM tag value is zero or null
-	my $sth = $dbh->prepare($sqlunrate);
 	eval {
-		$sth->execute();
-		commit($dbh);
+		$dbh->do("update tracks_persistent
+			set rating = case when tracks_persistent.prevRating is null then null else 0 end, lastRated = ?, prevRating = tracks_persistent.rating
+			where (tracks_persistent.rating > 0
+				and tracks_persistent.urlmd5 in (
+					select tracks.urlmd5 from tracks
+					where tracks.audio = 1
+					and (tracks.bpm = 0 or tracks.bpm is null))
+			)", undef, $ratingTime);
 	};
 	if ($@) {
 		$log->error("Database error: $DBI::errstr");
-		eval {
-			rollback($dbh);
-		};
 	}
-	$sth->finish();
 
 	# rate tracks according to BPM value
-	my $rating = 1;
-
-	while ($rating <= 10) {
-		my $rating100scalevalue = ($rating * 10);
-		my $sth = $dbh->prepare($sqlrate);
+	for my $rating (1..10) {
+		my $rating100scalevalue = $rating * 10;
 		eval {
-			$sth->bind_param(1, $rating100scalevalue);
-			$sth->bind_param(2, $rating100scalevalue);
-			$sth->execute();
-			commit($dbh);
+			$dbh->do("update tracks_persistent
+				set rating = ?, lastRated = ?, prevRating = tracks_persistent.rating
+				where tracks_persistent.urlmd5 in (
+					select tracks.urlmd5 from tracks
+					where tracks.audio = 1 and tracks.bpm = ?
+				)", undef, $rating100scalevalue, $ratingTime, $rating100scalevalue);
 		};
 		if ($@) {
 			$log->error("Database error: $DBI::errstr");
-			eval {
-				rollback($dbh);
-			};
 		}
-		$rating++;
-		$sth->finish();
 	}
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('Import completed after '.(time() - $started).' seconds.');
@@ -385,7 +325,7 @@ sub isTimeOrEmpty {
 	my $arg = shift;
 	if (!$arg || $arg eq '') {
 		return 1;
-	} elsif ($arg =~ m/^([0\s]?[0-9]|1[0-9]|2[0-4]):([0-5][0-9])\s*(P|PM|A|AM)?$/isg) {
+	} elsif ($arg =~ m/^(0?[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$/) {
 		return 1;
 	}
 	return 0;
@@ -398,20 +338,6 @@ sub pathForItem {
 		return Slim::Utils::Misc::pathFromFileURL($path);
 	}
 	return $item;
-}
-
-sub commit {
-	my $dbh = shift;
-	if (!$dbh->{'AutoCommit'}) {
-		$dbh->commit();
-	}
-}
-
-sub rollback {
-	my $dbh = shift;
-	if (!$dbh->{'AutoCommit'}) {
-		$dbh->rollback();
-	}
 }
 
 *escape = \&URI::Escape::uri_escape_utf8;

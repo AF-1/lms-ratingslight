@@ -1,21 +1,7 @@
 #
 # Ratings Light
-#
 # (c) 2020 AF
-#
-# GPLv3 license
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# Licensed under the GPLv3 - see LICENSE file
 #
 
 package Plugins::RatingsLight::Plugin;
@@ -58,7 +44,7 @@ my $log = Slim::Utils::Log->addLogCategory({
 my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
-my (%restoreitem, $currentKey, $inTrack, $inValue, $backupParser, $backupParserNB, $restorestarted, $material_enabled, $debugVerbose);
+my (%restoreitem, $currentKey, $inTrack, $inValue, $backupFH, $backupParser, $backupParserNB, $restorestarted, $material_enabled, $debugVerbose);
 my ($opened, $restoreCount) = (0, 0);
 
 sub initPlugin {
@@ -282,9 +268,7 @@ sub setRating {
 	my $trackID = $request->getParam('_trackid');
 	if (defined($trackID) && $trackID =~ /^track_id:(.*)$/) {
 		$trackID = $1;
-	} elsif (defined($request->getParam('_trackid'))) {
-		$trackID = $request->getParam('_trackid');
-	} else {
+	} elsif (!defined($trackID)) {
 		$log->error("Can't set rating. No (valid) track ID found. Provided track ID was ".Data::Dump::dump($trackID));
 		return;
 	}
@@ -292,8 +276,8 @@ sub setRating {
 	my $rating = $request->getParam('_rating');
 	if (defined($rating) && $rating =~ /^rating:(.*)$/) {
 		$rating = ratingValidator($1, $ratingScale);
-	} elsif (defined($request->getParam('_rating'))) {
-		$rating = ratingValidator($request->getParam('_rating'), $ratingScale);
+	} elsif (defined($rating)) {
+		$rating = ratingValidator($rating, $ratingScale);
 	} else {
 		$log->error("Can't set rating. No (valid) rating value found.");
 		return;
@@ -303,11 +287,9 @@ sub setRating {
 	my $incremental = $request->getParam('_incremental');
 	if (defined($incremental) && $incremental =~ /^incremental:(.*)$/) {
 		$incremental = $1;
-	} elsif (defined($request->getParam('_incremental'))) {
-		$incremental = $request->getParam('_incremental');
 	}
 
-	if (!defined $trackID || $trackID eq '' || !defined $rating || $rating eq '') {
+	if ($trackID eq '' || $rating eq '') {
 		$request->setStatusBadParams();
 		return;
 	}
@@ -418,7 +400,7 @@ sub rateAlbumContextMenu {
 		$log->warn('Warning: not available until library scan is completed');
 		return;
 	}
-	return undef if defined($filter->{'work_id'}); # no context menu for works
+	return if defined($filter->{'work_id'}); # no context menu for works
 
 
 	my $albumID = $obj->id;
@@ -464,7 +446,6 @@ sub rateAlbumTracks_web {
 	$params->{'squeezebox_server_jsondatareq'} = 'http://' . $host . '/jsonrpc.js';
 
 	my $albumID = $params->{albumid};
-	$params->{albumid} = $albumID;
 	main::DEBUGLOG && $log->is_debug && $log->debug('albumID = '.$albumID);
 
 	my @ratingValues = $usehalfstarratings ? qw(100 90 80 70 60 50 40 30 20 10 0) : qw(100 80 60 40 20 0);
@@ -715,25 +696,29 @@ sub trackInfoHandlerRating {
 		my $urlmd5 = $track->urlmd5 || md5_hex($url);
 		my $dbh = Slim::Schema->dbh;
 
-		my $sql = "select ifnull(tracks_persistent.lastRated, 0), ifnull(tracks_persistent.prevRating, 0) from tracks_persistent where tracks_persistent.urlmd5 = \"$urlmd5\"";
 		eval {
-				my $sth = $dbh->prepare($sql);
-				$sth->execute() or do {
-					$log->error("Error executing: $sql");
-					$sql = undef;
-				};
+				my $sth = $dbh->prepare('select ifnull(tracks_persistent.lastRated, 0), ifnull(tracks_persistent.prevRating, 0) from tracks_persistent where tracks_persistent.urlmd5 = ?');
+				$sth->execute($urlmd5);
 				$sth->bind_columns(undef, \$persistentLastRated, \$persistentPreviousRating);
 				$sth->fetch();
 				$sth->finish();
-		};
+			};
 		if ($@) {
 			$log->error("Database error: $DBI::errstr");
 		}
 		main::DEBUGLOG && $log->is_debug && $log->debug('persistentLastRated = '.Data::Dump::dump($persistentLastRated).' ## persistentPreviousRating = '.Data::Dump::dump($persistentPreviousRating));
 
 		if (!defined($persistentLastRated) && !defined($persistentPreviousRating)) {
-			my $sqlTrackExists = "select count(*) from tracks_persistent where tracks_persistent.urlmd5 = \"$urlmd5\"";
-			my $trackInDB = quickSQLquery($sqlTrackExists);
+			my $trackInDB = 0;
+			eval {
+				my $sth = $dbh->prepare('select count(*) from tracks_persistent where tracks_persistent.urlmd5 = ?');
+				$sth->execute($urlmd5);
+				$trackInDB = $sth->fetchrow || 0;
+				$sth->finish();
+			};
+			if ($@) {
+				$log->error("Database error: $DBI::errstr");
+			}
 			if (!$trackInDB) {
 				$log->warn("Couldn't retrieve information for this track.\nCould be part of a (client) playlist whose track references are no longer valid after a *rescan*.\nTrack url = ".$url."\nTrack urlmd5 = ".$urlmd5);
 				return;
@@ -741,7 +726,7 @@ sub trackInfoHandlerRating {
 		}
 
 		if ($persistentLastRated == 0) {
-			main::DEBUGLOG && $log->is_debug && $log->debug('Track "'.$track->title.'" has not been rated before.'); # if $debugVerbose;
+			main::DEBUGLOG && $log->is_debug && $log->debug('Track "'.$track->title.'" has not been rated before.') if $debugVerbose;
 			return;
 		}
 
@@ -851,13 +836,16 @@ sub regTrackInfoHandlerRating {
 	Slim::Menu::TrackInfo->deregisterInfoProvider('ratingslightlastrated') if $refresh;
 	Slim::Menu::TrackInfo->deregisterInfoProvider('ratingslightpreviousrating') if $refresh;
 
-	my $contextmenupos = ["before => 'artwork'", "after => 'favorites'"]; # 0 = artwork, 1 = fav
+	my @contextmenupos = (
+		['before', 'artwork'], # 0
+		['after', 'favorites'], # 1
+	);
 	my $selPos = $prefs->get('ratingcontextmenupos') || 0;
-	my $thisPos = @{$contextmenupos}[$selPos];
-	main::DEBUGLOG && $log->is_debug && $log->debug('changing contextmenu position to: '.Data::Dump::dump($thisPos)) if $refresh;
+	my ($posKey, $posVal) = @{$contextmenupos[$selPos]};
+	main::DEBUGLOG && $log->is_debug && $log->debug('changing contextmenu position to: '.$posKey.' => '.$posVal) if $refresh;
 
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightrating => (
-		eval($thisPos),
+		$posKey => $posVal,
 		func => sub {
 			return trackInfoHandlerRating('rating', @_);
 		},
@@ -876,6 +864,9 @@ sub regTrackInfoHandlerRating {
 		},
 	));
 }
+
+
+
 
 sub regContextMenuItems {
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbyartist => (
@@ -1031,7 +1022,7 @@ sub objectInfoHandler {
 		$attr{'join'} = ['contributorTracks'];
 
 		my $composer = Slim::Schema->rs('Contributor')->search(\%cond, \%attr)->first;
-		main::DEBUGLOG && $log->is_debug && $log->debug('composer = '.Data::Dump::dump($composer)) if $debugVerbose;;
+		main::DEBUGLOG && $log->is_debug && $log->debug('composer = '.Data::Dump::dump($composer)) if $debugVerbose;
 
 		if ($composer) {
 			$objectID = $composer->id;
@@ -1058,7 +1049,7 @@ sub objectInfoHandler {
 		$attr{'join'} = ['contributorTracks'];
 
 		my $composer = Slim::Schema->rs('Contributor')->search(\%cond, \%attr)->first;
-		main::DEBUGLOG && $log->is_debug && $log->debug('composer = '.Data::Dump::dump($composer)) if $debugVerbose;;
+		main::DEBUGLOG && $log->is_debug && $log->debug('composer = '.Data::Dump::dump($composer)) if $debugVerbose;
 		if (!$composer) {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Artist is not listed a composer for any tracks.');
 			return;
@@ -1163,48 +1154,65 @@ sub getRatedTracks {
 		return 0;
 	}
 
-	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
 	my $currentLibrary = Slim::Music::VirtualLibraries->getLibraryIdForClient($client);
-	my $sqlstatement = ($countOnly == 1 ? "select count(*)" : "select tracks.id")." from tracks";
+	my $sqlstatement = ($countOnly == 1 ? 'select count(*)' : 'select tracks.id').' from tracks';
+	my @bind_params = ();
 
 	if ((defined $currentLibrary) && ($currentLibrary ne '')) {
-		$sqlstatement .= " join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\"";
+		$sqlstatement .= ' join library_track on library_track.track = tracks.id and library_track.library = ?';
+		push @bind_params, $currentLibrary;
 	}
 
-	$sqlstatement .= " join genre_track on genre_track.track = tracks.id and genre_track.genre = $objectID" if ($objectType eq 'genre');
+	if ($objectType eq 'genre') {
+		$sqlstatement .= ' join genre_track on genre_track.track = tracks.id and genre_track.genre = ?';
+		push @bind_params, $objectID;
+	} elsif ($objectType eq 'playlist') {
+		$sqlstatement .= ' join playlist_track on playlist_track.track = tracks.url and playlist_track.playlist = ?';
+		push @bind_params, $objectID;
+	} elsif ($objectType eq 'composer' || $objectType eq 'artistcomposer') {
+		$sqlstatement .= ' join contributor_track on tracks.id = contributor_track.track and contributor_track.contributor = ? and contributor_track.role = 2';
+		push @bind_params, $objectID;
+	}
 
-	$sqlstatement .= " join playlist_track on playlist_track.track = tracks.url and playlist_track.playlist = $objectID" if ($objectType eq 'playlist');
+	$sqlstatement .= ' join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and ifnull(tracks_persistent.rating, 0) > 0 where tracks.audio = 1 and tracks.id != ?';
+	push @bind_params, $currentTrackID;
 
-	$sqlstatement .= " join contributor_track on tracks.id = contributor_track.track and contributor_track.contributor = $objectID and contributor_track.role = 2" if ($objectType eq 'composer' || $objectType eq 'artistcomposer');
-
-	$sqlstatement .= " join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and ifnull(tracks_persistent.rating, 0) > 0 where tracks.audio = 1 and tracks.id != $currentTrackID";
-
-	$sqlstatement .= " and tracks.primary_artist = $objectID" if ($objectType eq 'artist');
-
-	$sqlstatement .= " and tracks.album = $objectID" if ($objectType eq 'album');
-
-	$sqlstatement .= " and tracks.year >= $objectID and tracks.year < ($objectID + 10)" if ($objectType eq 'decade');
-
-	$sqlstatement .= " and tracks.year = $objectID" if ($objectType eq 'year');
+	if ($objectType eq 'artist') {
+		$sqlstatement .= ' and tracks.primary_artist = ?';
+		push @bind_params, $objectID;
+	} elsif ($objectType eq 'album') {
+		$sqlstatement .= ' and tracks.album = ?';
+		push @bind_params, $objectID;
+	} elsif ($objectType eq 'decade') {
+		$sqlstatement .= ' and tracks.year >= ? and tracks.year < ?';
+		push @bind_params, $objectID, $objectID + 10;
+	} elsif ($objectType eq 'year') {
+		$sqlstatement .= ' and tracks.year = ?';
+		push @bind_params, $objectID;
+	}
 
 	if ($countOnly == 0) {
-		$sqlstatement .= " limit $listlimit" if ($objectType eq 'artist' || $objectType eq 'album' || $objectType eq 'playlist');
-
-		$sqlstatement .= " order by random() limit $listlimit" if ($objectType eq 'genre' || $objectType eq 'year' || $objectType eq 'decade');
+		if ($objectType eq 'artist' || $objectType eq 'album' || $objectType eq 'playlist') {
+			$sqlstatement .= ' limit ?';
+			push @bind_params, $listlimit;
+		} elsif ($objectType eq 'genre' || $objectType eq 'year' || $objectType eq 'decade') {
+			$sqlstatement .= ' order by random() limit ?';
+			push @bind_params, $listlimit;
+		}
 	}
 
 	my @ratedtracks = ();
 	my $trackCount = 0;
 	my $dbh = Slim::Schema->dbh;
-	eval{
+	eval {
 		my $sth = $dbh->prepare($sqlstatement);
-		$sth->execute() or do {$sqlstatement = undef; return \@ratedtracks;};
+		$sth->execute(@bind_params) or do { return \@ratedtracks; };
 
 		if ($countOnly == 1) {
 			$trackCount = $sth->fetchrow;
 		} else {
 			my ($trackID, $track);
-			$sth->bind_col(1,\$trackID);
+			$sth->bind_col(1, \$trackID);
 
 			while ($sth->fetch()) {
 				$track = Slim::Schema->resultset('Track')->single({'id' => $trackID});
@@ -1213,17 +1221,18 @@ sub getRatedTracks {
 		}
 		$sth->finish();
 	};
-	if ($@) {main::DEBUGLOG && $log->is_debug && $log->debug("error: $@");}
+	if ($@) {
+		$log->error("Database error in getRatedTracks: $DBI::errstr");
+	}
 
 	if ($countOnly == 1) {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Pre-check found '.$trackCount.($trackCount == 1 ? ' rated track' : ' rated tracks')." for $objectType with ID: $objectID");
 		return $trackCount;
 	} else {
-		main::DEBUGLOG && $log->is_debug && $log->debug('Fetched '.scalar (@ratedtracks).(scalar (@ratedtracks) == 1 ? ' rated track' : ' rated tracks')." for $objectType with ID: $objectID");
+		main::DEBUGLOG && $log->is_debug && $log->debug('Fetched '.scalar(@ratedtracks).(scalar(@ratedtracks) == 1 ? ' rated track' : ' rated tracks')." for $objectType with ID: $objectID");
 		return \@ratedtracks;
 	}
 }
-
 
 ### show rated tracks menus - WEB
 
@@ -1252,6 +1261,10 @@ sub handleRatedWebTrackList {
 	main::DEBUGLOG && $log->is_debug && $log->debug('objectType = '.$objectType.' ## objectID = '.$objectID.' ## trackID = '.$trackID);
 
 	my $ratedtracks = getRatedTracks(0, $client, $objectType, $objectID, $trackID, $ratedtracksweblimit);
+	if (!scalar @{$ratedtracks}) {
+		$log->warn('No rated tracks found for objectType = '.Data::Dump::dump($objectType).' ## objectID = '.Data::Dump::dump($objectID));
+		return;
+	}
 
 	my @ratedtracks_webpage = ();
 	my @alltrackids = ();
@@ -1328,6 +1341,11 @@ sub getRatedTracksMenu {
 	main::DEBUGLOG && $log->is_debug && $log->debug('paramsCopy = '.Data::Dump::dump($request->getParamsCopy())) if $debugVerbose;
 
 	my $ratedtracks = getRatedTracks(0, $client, $objectType, $thisID, $trackID, $ratedtrackscontextmenulimit);
+	if (!scalar @{$ratedtracks}) {
+		$log->warn('No rated tracks found for objectType = '.Data::Dump::dump($objectType).' ## objectID = '.Data::Dump::dump($thisID));
+		$request->setStatusDone();
+		return;
+	}
 
 	my %menuStyle = ();
 	$menuStyle{'titleStyle'} = 'mymusic';
@@ -1681,7 +1699,7 @@ sub importRatingsFromPlaylist {
 				writeRatingToDB($thisTrack->{'id'}, $thisTrack->{'url'}, undef, undef, $rating100ScaleValue, 1);
 			}
 			main::INFOLOG && $log->is_info && $log->info('Playlist (ID: '.$playlistid.') contained '.(scalar (@ratableTracks)).(scalar (@ratableTracks) == 1 ? ' track' : ' tracks').' that could be rated.');
-			refreshAll(1);
+			refreshAll();
 		} else {
 			main::INFOLOG && $log->is_info && $log->info('Playlist (ID: '.$playlistid.') contained no tracks that could be rated.');
 		}
@@ -1733,7 +1751,6 @@ sub exportRatingsToPlaylistFiles {
 	main::DEBUGLOG && $log->is_debug && $log->debug('exportVL_id = '.Data::Dump::dump($exportVL_id));
 	my $singleFile = $prefs->get('playlistexportsinglefile');
 
-	my ($sql, $sth) = undef;
 	my $dbh = Slim::Schema->dbh;
 	my $exporttimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
@@ -1754,55 +1771,68 @@ sub exportRatingsToPlaylistFiles {
 			$rating100ScaleValueFloor = 1;
 		}
 
-		$sql = "select tracks.url, tracks.remote from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5";
+		my @bind_params = ();
+		my $sql = 'select tracks.url, tracks.remote from tracks join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5';
+
+		if ($exportVL_id) {
+			$sql .= ' join library_track on library_track.track = tracks.id and library_track.library = ?';
+			push @bind_params, $exportVL_id;
+		}
+
+		$sql .= ' where tracks.audio = 1';
+
 		if ($rating100ScaleValue) {
-			$sql .=" and (tracks_persistent.rating >= $rating100ScaleValueFloor and tracks_persistent.rating <= $rating100ScaleValueCeil)";
+			$sql .= ' and tracks_persistent.rating >= ? and tracks_persistent.rating <= ?';
+			push @bind_params, $rating100ScaleValueFloor, $rating100ScaleValueCeil;
 		} else {
-			$sql .= " and ifnull(tracks_persistent.rating, 0) = 0 and ifnull(tracks_persistent.prevRating, 0) > 0";
+			$sql .= ' and ifnull(tracks_persistent.rating, 0) = 0 and ifnull(tracks_persistent.prevRating, 0) > 0';
 		}
-		$sql .= " and tracks_persistent.lastRated > ".(floor(time()) - $exportTimeRange) if $exportTimeRange;
+
+		if ($exportTimeRange) {
+			$sql .= ' and tracks_persistent.lastRated > ?';
+			push @bind_params, floor(time()) - $exportTimeRange;
+		}
+
 		if ($exportRatingChange && $rating100ScaleValue) {
-			$sql .= " and ifnull(tracks_persistent.rating, 0) > ifnull(tracks_persistent.prevRating, 0)" if $exportRatingChange == 1;
-			$sql .= " and tracks_persistent.prevRating is not null and tracks_persistent.rating is not null and tracks_persistent.rating < tracks_persistent.prevRating" if $exportRatingChange == 2;
+			$sql .= ' and ifnull(tracks_persistent.rating, 0) > ifnull(tracks_persistent.prevRating, 0)' if $exportRatingChange == 1;
+			$sql .= ' and tracks_persistent.prevRating is not null and tracks_persistent.rating is not null and tracks_persistent.rating < tracks_persistent.prevRating' if $exportRatingChange == 2;
 		}
-		$sql .= " join library_track on library_track.track = tracks.id and library_track.library = \"$exportVL_id\"" if $exportVL_id;
-		$sql .= " where tracks.audio = 1";
 
 		if ($onlyratingsnotmatchtags) {
 			if ($prefs->get('filetagtype')) {
 				# comment tags (filetagtype = 1)
 				if ((!defined $rating_keyword_prefix || $rating_keyword_prefix eq '') && (!defined $rating_keyword_suffix || $rating_keyword_suffix eq '')) {
 					$log->warn('Error: no rating keywords found.');
+					$prefs->set('status_exportingtoplaylistfiles', 0);
 					return;
-				} else {
-					my $ratingkeyword = "%%".$rating_keyword_prefix.($rating100ScaleValue/20).$rating_keyword_suffix."%%";
-					if ($rating100ScaleValue) {
-						$sql .= " and tracks.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))";
-					} else {
-						$sql .= " and tracks.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where comments.value like ?)";
-						$ratingkeyword = "%%".$rating_keyword_prefix."_".$rating_keyword_suffix."%%";
-					}
-					$sth = $dbh->prepare($sql);
-					$sth->bind_param(1, $ratingkeyword);
 				}
+				my $ratingkeyword;
+				if ($rating100ScaleValue) {
+					$sql .= ' and tracks.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))';
+					$ratingkeyword = '%%'.$rating_keyword_prefix.($rating100ScaleValue/20).$rating_keyword_suffix.'%%';
+				} else {
+					$sql .= ' and tracks.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where comments.value like ?)';
+					$ratingkeyword = '%%'.$rating_keyword_prefix.'_'.$rating_keyword_suffix.'%%';
+				}
+				push @bind_params, $ratingkeyword;
 			} else {
 				# BPM tags (filetagtype = 0)
 				if ($rating100ScaleValue) {
-					$sql .= " and tracks.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != $rating100ScaleValue or tracks.bpm is null))";
+					$sql .= ' and tracks.urlmd5 in (select tracks.urlmd5 from tracks where (tracks.bpm != ? or tracks.bpm is null))';
+					push @bind_params, $rating100ScaleValue;
 				} else {
-					$sql .= " and tracks.urlmd5 in (select tracks.urlmd5 from tracks where ifnull(tracks.bpm, 0) > 0)";
+					$sql .= ' and tracks.urlmd5 in (select tracks.urlmd5 from tracks where ifnull(tracks.bpm, 0) > 0)';
 				}
-				$sth = $dbh->prepare($sql);
 			}
-		} else {
-			$sth = $dbh->prepare($sql);
 		}
+
 		main::DEBUGLOG && $log->is_debug && $log->debug('sql = '.Data::Dump::dump($sql));
-		$sth->execute();
+		my $sth = $dbh->prepare($sql);
+		$sth->execute(@bind_params);
 
 		my ($trackURL, $trackRemote);
-		$sth->bind_col(1,\$trackURL);
-		$sth->bind_col(2,\$trackRemote);
+		$sth->bind_col(1, \$trackURL);
+		$sth->bind_col(2, \$trackRemote);
 
 		my @ratedTracks = ();
 		while ($sth->fetch()) {
@@ -1858,8 +1888,7 @@ sub exportRatingsToPlaylistFiles {
 				my $ratedTrackURL_extURL = changeExportFilePath($ratedTrackURL, 1) if ($ratedTrack->{'remote'} != 1);
 				print $output '#EXTURL:'.$ratedTrackURL_extURL."\n" if $ratedTrackURL_extURL && $ratedTrackURL_extURL ne '';
 
-				my $ratedTrackPath = pathForItem($ratedTrackURL);
-				$ratedTrackPath = Slim::Utils::Unicode::utf8decode_locale(pathForItem($ratedTrackURL)); # diff
+				my $ratedTrackPath = Slim::Utils::Unicode::utf8decode_locale(pathForItem($ratedTrackURL));
 				$ratedTrackPath = changeExportFilePath($ratedTrackPath) if ($ratedTrack->{'remote'} != 1);
 
 				print $output $ratedTrackPath."\n";
@@ -2006,18 +2035,20 @@ sub adjustRatings {
 	my $dbh = Slim::Schema->dbh;
 	my @ratedTracks = ();
 
-	my $sql = "select tracks.id, tracks_persistent.rating from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where ifnull(tracks_persistent.rating, 0) != 0";
-	my $sth = $dbh->prepare($sql);
-	$sth->execute();
-
-	my ($trackID, $trackRating);
-	$sth->bind_col(1,\$trackID);
-	$sth->bind_col(2,\$trackRating);
-
-	while ($sth->fetch()) {
-		push (@ratedTracks, {'id' => $trackID, 'rating' => $trackRating});
+	eval {
+		my $sth = $dbh->prepare('select tracks.id, tracks_persistent.rating from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where ifnull(tracks_persistent.rating, 0) != 0');
+		$sth->execute();
+		my ($trackID, $trackRating);
+		$sth->bind_col(1, \$trackID);
+		$sth->bind_col(2, \$trackRating);
+		while ($sth->fetch()) {
+			push (@ratedTracks, {'id' => $trackID, 'rating' => $trackRating});
+		}
+		$sth->finish();
+	};
+	if ($@) {
+		$log->error("Database error in adjustRatings: $DBI::errstr");
 	}
-	$sth->finish();
 
 	my $adjustedCount = 0;
 	if (scalar (@ratedTracks) > 0) {
@@ -2041,7 +2072,6 @@ sub adjustRatings {
 
 sub backupScheduler {
 	main::DEBUGLOG && $log->is_debug && $log->debug('Checking backup scheduler');
-
 	main::DEBUGLOG && $log->is_debug && $log->debug('Killing backup timers');
 	Slim::Utils::Timers::killTimers(undef, \&backupScheduler);
 
@@ -2057,13 +2087,9 @@ sub backupScheduler {
 		if (defined($backuptime) && $backuptime ne '') {
 			my $time = 0;
 			$backuptime =~ s{
-				^(0?[0-9]|1[0-9]|2[0-4]):([0-5][0-9])\s*(P|PM|A|AM)?$
+				^(0?[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$
 			}{
-				if (defined $3) {
-					$time = ($1 == 12?0:$1 * 60 * 60) + ($2 * 60) + ($3 =~ /P/?12 * 60 * 60:0);
-				} else {
-					$time = ($1 * 60 * 60) + ($2 * 60);
-				}
+				$time = ($1 * 60 * 60) + ($2 * 60);
 			}iegsx;
 			my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
 			main::DEBUGLOG && $log->is_debug && $log->debug('local time = '.Data::Dump::dump(padnum($hour).':'.padnum($min).':'.padnum($sec).' -- '.padnum($mday).'.'.padnum($mon).'.'));
@@ -2105,6 +2131,13 @@ sub restoreFromBackup {
 
 	$prefs->set('status_restoringfrombackup', 1);
 	$restoreCount = 0;
+	if ($backupFH) {
+		close($backupFH);
+		$backupFH = undef;
+	}
+	$opened = 0;
+	$backupParserNB = undef;
+	$backupParser = undef;
 	$restorestarted = time();
 	my $restorefile = $prefs->get('restorefile');
 
@@ -2140,7 +2173,7 @@ sub initRestore {
 sub restoreScanFunction {
 	my $restorefile = $prefs->get('restorefile');
 	if ($opened != 1) {
-		open(BACKUPFILE, $restorefile) || do {
+		open($backupFH, '<', $restorefile) || do {
 			$log->error('Couldn\'t open backup file: '.$restorefile);
 			$prefs->set('status_restoringfrombackup', 0);
 			return 0;
@@ -2163,7 +2196,7 @@ sub restoreScanFunction {
 		my $line;
 
 		for (my $i = 0; $i < 25;) {
-			my $singleLine = <BACKUPFILE>;
+			my $singleLine = <$backupFH>;
 			if (defined($singleLine)) {
 				$line .= $singleLine;
 				if ($singleLine =~ /(<\/track>)$/) {
@@ -2173,6 +2206,7 @@ sub restoreScanFunction {
 				last;
 			}
 		}
+		$line //= '';
 		$line =~ s/&#(\d*);/escape(chr($1))/ge;
 		$backupParserNB->parse_more($line);
 		return 1;
@@ -2191,15 +2225,17 @@ sub doneScanning {
 	$backupParserNB = undef;
 	$backupParser = undef;
 	$opened = 0;
-	close(BACKUPFILE);
+	if ($backupFH) {
+		close($backupFH);
+		$backupFH = undef;
+	}
 
 	main::INFOLOG && $log->is_info && $log->info('Restore completed after '.(time() - $restorestarted).' seconds. Restored '.$restoreCount.($restoreCount == 1 ? ' track.' : ' tracks.').' Restore count listed here may be slightly higher (e.g. +1) than the correct number stated in the backup file.');
-	sleep 1;
-	refreshAll();
-
-	$prefs->set('status_restoringfrombackup', 0);
-	$prefs->set('isTSlegacyBackupFile', 0);
+	sleep 1.5;
 	Slim::Utils::Scheduler::remove_task(\&restoreScanFunction);
+	$prefs->set('isTSlegacyBackupFile', 0);
+	$prefs->set('status_restoringfrombackup', 0);
+	refreshAll();
 }
 
 sub handleStartElement {
@@ -2236,75 +2272,84 @@ sub handleEndElement {
 		$inTrack = 0;
 
 		my $curTrack = \%restoreitem;
-		my $isRemote = $curTrack->{'remote'};
+		my $isRemote = $isTSlegacyBackupFile ? undef : $curTrack->{'remote'};
+		my ($track, $trackURL, $trackURLmd5);
+		my $fullTrackURL = $curTrack->{'url'};
+		my $relTrackURL = $isTSlegacyBackupFile ? undef : $curTrack->{'relurl'};
+		my $backupTrackURLmd5 = $isTSlegacyBackupFile ? undef : $curTrack->{'urlmd5'};
+		my $backupTrackMBID = $isTSlegacyBackupFile ? $curTrack->{'musicbrainzId'} : $curTrack->{'musicbrainzid'};
+		my $rating100ScaleValue = $curTrack->{'rating'} || 0;
+		my $lastRatedValue = $curTrack->{'lastRated'};
+		my $previousRatingValue = defined($curTrack->{'prevRating'}) ? $curTrack->{'prevRating'} : undef;
 
-		if (($selectiverestore == 0 || $isTSlegacyBackupFile) || ($selectiverestore == 1 && $isRemote == 0) || ($selectiverestore == 2 && $isRemote == 1)) {
-			my $track = undef;
-			my $trackURL = undef;
-			my $fullTrackURL = $curTrack->{'url'};
-			my $relTrackURL = $curTrack->{'relurl'} unless $isTSlegacyBackupFile;
-			my $trackURLmd5 = undef;
-			my $backupTrackURLmd5 = $curTrack->{'urlmd5'} unless $isTSlegacyBackupFile;
-			my $backupTrackMBID = $isTSlegacyBackupFile ? $curTrack->{'musicbrainzId'} : $curTrack->{'musicbrainzid'};
-			my $rating100ScaleValue = $curTrack->{'rating'} || 0;
-			my $lastRatedValue = $curTrack->{'lastRated'};
-			my $previousRatingValue = defined($curTrack->{'prevRating'}) ? $curTrack->{'prevRating'} : undef;
+		if (($selectiverestore == 0 || $isTSlegacyBackupFile) || ($selectiverestore == 1 && !$isRemote) || ($selectiverestore == 2 && $isRemote)) {
 
 			if ($rating100ScaleValue || $lastRatedValue) {
 				# check if FULL file url is valid
 				# Otherwise, try RELATIVE file URL with current media dirs
 				$fullTrackURL = Encode::decode('utf8', unescape($fullTrackURL));
-				$relTrackURL = Encode::decode('utf8', unescape($relTrackURL)) if ($relTrackURL && !$isTSlegacyBackupFile);
+				$relTrackURL = Encode::decode('utf8', unescape($relTrackURL)) if $relTrackURL;
 
 				if ($isRemote && $isRemote == 1) {
-					main::DEBUGLOG && $log->is_debug && $log->debug('is remote track');
+					main::DEBUGLOG && $log->is_debug && $log->debug('is remote track. URL = '.Data::Dump::dump($fullTrackURL));
 					$trackURL = $fullTrackURL;
 					$trackURLmd5 = $backupTrackURLmd5;
 				} else {
-					main::DEBUGLOG && $log->is_debug && $log->debug('is local track');
+					main::DEBUGLOG && $log->is_debug && $log->debug('is local track. URL = '.Data::Dump::dump($fullTrackURL));
 					my $fullTrackPath = pathForItem($fullTrackURL);
-					if (-f $fullTrackPath) {
+					if ($fullTrackPath && -f $fullTrackPath) {
 						main::DEBUGLOG && $log->is_debug && $log->debug("Found file at url \"$fullTrackPath\"");
 						$trackURL = $fullTrackURL;
 						$trackURLmd5 = $backupTrackURLmd5 unless $isTSlegacyBackupFile;
-					}
-
-					if (!$trackURL && !$trackURLmd5 && $backupTrackMBID) {
-						$track = Slim::Schema->search('Track', {'musicbrainz_id' => $backupTrackMBID })->first();
-						main::DEBUGLOG && $log->is_debug && $log->debug('Found file for musicbrainz id = '.$backupTrackMBID) if $track;
-					}
-
-					if (!$track && !$trackURL && !$trackURLmd5 && !$isTSlegacyBackupFile) {
+					} else {
 						main::DEBUGLOG && $log->is_debug && $log->debug("** Couldn't find file for FULL file url. Will try with RELATIVE file url and current LMS media folders.");
-						my $lmsmusicdirs = getMusicDirs();
-						main::DEBUGLOG && $log->is_debug && $log->debug('Valid LMS music dirs = '.Data::Dump::dump($lmsmusicdirs));
 
-						foreach (@{$lmsmusicdirs}) {
-							my $dirSep = File::Spec->canonpath("/");
-							my $mediaDirURL = Slim::Utils::Misc::fileURLFromPath($_.$dirSep);
-							main::DEBUGLOG && $log->is_debug && $log->debug('Trying LMS music dir url: '.$mediaDirURL);
+						if (!$trackURL && !$trackURLmd5 && $backupTrackMBID) {
+							$track = Slim::Schema->search('Track', {'musicbrainz_id' => $backupTrackMBID})->first();
+							main::DEBUGLOG && $log->is_debug && $log->debug('Found file for musicbrainz id = '.$backupTrackMBID) if $track;
+						}
 
-							my $newFullTrackURL = $mediaDirURL.$relTrackURL;
-							my $newFullTrackPath = pathForItem($newFullTrackURL);
-							main::DEBUGLOG && $log->is_debug && $log->debug('Trying with new full track path: '.$newFullTrackPath);
+						if (!$track && !$trackURL && !$trackURLmd5 && !$isTSlegacyBackupFile) {
+							if (!$relTrackURL) {
+								main::DEBUGLOG && $log->is_debug && $log->debug("** Couldn't find RELATIVE file url in backup data.");
+							} else {
+								my $lmsmusicdirs = getMusicDirs();
+								main::DEBUGLOG && $log->is_debug && $log->debug('Valid LMS music dirs = '.Data::Dump::dump($lmsmusicdirs));
 
-							if (-f $newFullTrackPath) {
-								$trackURL = Slim::Utils::Misc::fileURLFromPath($newFullTrackURL);
-								main::DEBUGLOG && $log->is_debug && $log->debug('Found file at new full file url: '.$trackURL);
-								main::DEBUGLOG && $log->is_debug && $log->debug('OLD full file url was: '.$fullTrackURL);
-								$trackURLmd5 = md5_hex($trackURL);
-								last;
+								foreach (@{$lmsmusicdirs}) {
+									my $dirSep = File::Spec->canonpath("/");
+									my $mediaDirURL = Slim::Utils::Misc::fileURLFromPath($_.$dirSep);
+									main::DEBUGLOG && $log->is_debug && $log->debug('Trying LMS music dir url: '.$mediaDirURL);
+
+									my $newFullTrackURL = $mediaDirURL.$relTrackURL;
+									my $newFullTrackPath = pathForItem($newFullTrackURL);
+									main::DEBUGLOG && $log->is_debug && $log->debug('Trying with new full track path: '.$newFullTrackPath);
+
+									if ($newFullTrackPath && -f $newFullTrackPath) {
+										$trackURL = Slim::Utils::Misc::fileURLFromPath($newFullTrackURL);
+										main::DEBUGLOG && $log->is_debug && $log->debug('Found file at new full file url: '.$trackURL);
+										main::DEBUGLOG && $log->is_debug && $log->debug('OLD full file url was: '.$fullTrackURL);
+										last;
+									}
+								}
 							}
 						}
 					}
 				}
 
+				# ensure urlmd5 is always set if trackURL is known
+				$trackURLmd5 = md5_hex($trackURL) if (!$trackURLmd5 && $trackURL);
+
 				if (!$trackURL && !$trackURLmd5 && !$backupTrackMBID) {
 					$log->warn("No valid urlmd5, url or musicbrainz id for this track. Can't restore values for file with restore URL = ".Data::Dump::dump($fullTrackURL));
 				} else {
-					main::DEBUGLOG && $log->is_debug && $log->debug("Setting rating $rating100ScaleValue for track: $trackURL");
-					writeRatingToDB(undef, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, 1, $lastRatedValue, $previousRatingValue);
-					$restoreCount++;
+					if ($trackURLmd5 && $trackURLmd5 !~ /^[a-f0-9]{32}$/i) {
+						$log->error("Invalid urlmd5 value, skipping track: $trackURLmd5");
+					} else {
+						main::DEBUGLOG && $log->is_debug && $log->debug("Setting rating $rating100ScaleValue for track: ".Data::Dump::dump($trackURL));
+						my $writeSuccess = writeRatingToDB(undef, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, 1, $lastRatedValue, $previousRatingValue);
+						$restoreCount++ if $writeSuccess;
+					}
 				}
 			}
 		}
@@ -2386,8 +2431,8 @@ sub initVirtualLibraries {
 			}
 		}
 
-	main::INFOLOG && $log->is_info && $log->info('Init of virtual libraries completed after '.(time() - $started).' seconds.');
-	initVLmenus();
+		main::INFOLOG && $log->is_info && $log->info('Init of virtual libraries completed after '.(time() - $started).' seconds.');
+		initVLmenus();
 	}
 }
 
@@ -2402,7 +2447,7 @@ sub validateBrowsemenusSourceVL {
 		foreach my $thisVLid (keys %{$libraries}) {
 			if ($thisVLid eq $browsemenus_sourceVL_id) {
 				$VLstillexists = 1;
-				main::DEBUGLOG && $log->is_debug && $log->debug('VL $browsemenus_sourceVL_id exists!');
+				main::DEBUGLOG && $log->is_debug && $log->debug("VL '$browsemenus_sourceVL_id' exists!");
 			}
 		}
 		if ($VLstillexists == 0) {
@@ -2704,7 +2749,7 @@ sub refreshVirtualLibraries {
 					my $browsemenus_sourceVL_name = validateBrowsemenusSourceVL();
 					my $browsemenus_sourceVL_id = $prefs->get('browsemenus_sourceVL_id');
 					my $ratingMin = $i - ($showratedtracksmenus == 5 ? 5 : 10);
-					my $ratingMax = $i + ($showratedtracksmenus == 5 ? 5 : 10);
+					my $ratingMax = $i + ($showratedtracksmenus == 5 ? 4 : 9);
 					my $thisVL = {
 						id => 'RATINGSLIGHT_EXACTRATING'.$i,
 						name => string('PLUGIN_RATINGSLIGHT_VLNAME_TRACKSRATED').' '.($i/20).' '.($i == 20 ? string('PLUGIN_RATINGSLIGHT_STAR') : string('PLUGIN_RATINGSLIGHT_STARS')).((!defined($browsemenus_sourceVL_id) || $browsemenus_sourceVL_id eq '') ? '' : $browsemenus_sourceVL_name),
@@ -2718,8 +2763,8 @@ sub refreshVirtualLibraries {
 				}
 			}
 
-		main::INFOLOG && $log->is_info && $log->info('Refreshing virtual libraries completed after '.(time() - $started).' seconds.');
-		initVLmenus();
+			main::INFOLOG && $log->is_info && $log->info('Refreshing virtual libraries completed after '.(time() - $started).' seconds.');
+			initVLmenus();
 		}
 	}
 }
@@ -2903,7 +2948,7 @@ sub logRatedTrack {
 				if (-f $fullpath_oldlogfile) {
 					unlink $fullpath_oldlogfile;
 				}
-			move $fullfilepath, $fullpath_oldlogfile;
+			move($fullfilepath, $fullpath_oldlogfile) or $log->error("Could not rotate log file: $!");
 		}
 	}
 
@@ -2915,10 +2960,11 @@ sub logRatedTrack {
 	};
 	print $output $ratingtimestamp."\n";
 
-	my $trackDetails = "Title:\t ".$track->title if $track->title;
-	$trackDetails .= "\nArtist:\t ".$track->artist->name if $track->artist;
-	$trackDetails .= "\nAlbum Artist:\t ".$track->album->contributor->name if $track->album->contributor;
-	$trackDetails .= "\nAlbum:\t ".$track->album->title."\n" if $track->album;
+	my $trackDetails = '';
+	$trackDetails .= "Title:\t ".$track->title."\n" if $track->title;
+	$trackDetails .= "Artist:\t ".$track->artist->name."\n" if $track->artist;
+	$trackDetails .= "Album Artist:\t ".$track->album->contributor->name."\n" if $track->album->contributor;
+	$trackDetails .= "Album:\t ".$track->album->title."\n" if $track->album;
 	print $output $trackDetails;
 	print $output 'Previous Rating: '.($previousRating100ScaleValue/20).' ('.$previousRating100ScaleValue.') --> New Rating: '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")\n\n";
 	close $output;
@@ -2938,20 +2984,13 @@ sub clearAllRatings {
 	$prefs->set('status_clearingallratings', 1);
 	my $started = time();
 
-	my $sqlunrateall = "update tracks_persistent set rating = null where tracks_persistent.rating >= 0;";
 	my $dbh = Slim::Schema->dbh;
-	my $sth = $dbh->prepare($sqlunrateall);
 	eval {
-		$sth->execute();
-		commit($dbh);
+		$dbh->do("update tracks_persistent set rating = null, lastRated = null, prevRating = null where tracks_persistent.rating is not null");
 	};
 	if ($@) {
 		$log->error("Database error: $DBI::errstr");
-		eval {
-			rollback($dbh);
-		};
 	}
-	$sth->finish();
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('Clearing all ratings completed after '.(time() - $started).' seconds.');
 	$prefs->set('status_clearingallratings', 0);
@@ -2993,35 +3032,31 @@ sub writeRatingToDB {
 		}
 
 		my $ratingTime = $restoreLastRated ? $restoreLastRated : time();
-		my $urlmd5 = $track->urlmd5;
-		my $sql = "update tracks_persistent set rating = $rating100ScaleValue, lastRated = $ratingTime, prevRating = $previousRating100ScaleValue where urlmd5 = \"$urlmd5\"";
 		my $dbh = Slim::Schema->dbh;
-		my $sth = $dbh->prepare($sql);
 		eval {
-			$sth->execute();
-			commit($dbh);
+			$dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where urlmd5 = ?',
+				undef, $rating100ScaleValue, $ratingTime, $previousRating100ScaleValue, $track->urlmd5);
 		};
 		if ($@) {
 			$log->warn("Database error: $DBI::errstr");
-			eval {
-				rollback($dbh);
-			};
+			return 0;
 		}
-		$sth->finish();
 
 		# confirm and log new rating value
 		unless ($dontlogthis) {
 			my $newTrackRating = getRatingFromDB($track, 1);
 			if (defined $newTrackRating && $newTrackRating == $rating100ScaleValue) {
 				main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")");
-					logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue) if $prefs->get('uselogfile');
-					addToRecentlyRatedPlaylist($track) if $prefs->get('userecentlyratedplaylist');
+				logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue) if $prefs->get('uselogfile');
+				addToRecentlyRatedPlaylist($track) if $prefs->get('userecentlyratedplaylist');
 			} else {
 				main::DEBUGLOG && $log->is_debug && $log->debug("Couldn't confirm that the track was successfully rated. Won't add track to rating log file or recently rated playlist. Please check manually if the new track rating has been set.");
 			}
 		}
+		return 1;
 	} else {
 		$log->error("Couldn't find blessed track (local or remote). Rating failed.");
+		return 0;
 	}
 }
 
@@ -3054,10 +3089,10 @@ sub getRatingFromDB {
 	main::DEBUGLOG && $log->is_debug && $log->debug('Trying to get rating with sqlite and url: '.$track->url) if $debugVerbose;
 	my $urlmd5 = $track->urlmd5 || md5_hex($track->url);
 	my $dbh = Slim::Schema->dbh;
-	my $sqlstatement = "select rating from tracks_persistent where urlmd5 = \"$urlmd5\"";
-	eval{
-		my $sth = $dbh->prepare($sqlstatement);
-		$sth->execute() or do {$sqlstatement = undef;};
+
+	eval {
+		my $sth = $dbh->prepare('select rating from tracks_persistent where urlmd5 = ?');
+		$sth->execute($urlmd5);
 		$rating100ScaleValue = $sth->fetchrow || 0;
 		$sth->finish();
 	};
@@ -3083,11 +3118,9 @@ sub getRating {
 	my $trackID = $request->getParam('_trackid');
 	if (defined($trackID) && $trackID =~ /^track_id:(.*)$/) {
 		$trackID = $1;
-	} elsif (defined($request->getParam('_trackid'))) {
-		$trackID = $request->getParam('_trackid');
-	} else {
+	} elsif (!defined($trackID)) {
 		$request->setStatusBadDispatch();
-		$log->error("Can't set rating. No (valid) track ID found. Provided track ID was ".Data::Dump::dump($trackID));
+		$log->error("Can't get rating. No (valid) track ID found. Provided track ID was ".Data::Dump::dump($trackID));
 		return;
 	}
 
@@ -3197,6 +3230,7 @@ sub getTitleFormat_Rating {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Slim::Schema->find found no blessed track object for id. Trying to retrieve track object with url: '.Data::Dump::dump($trackURL));
 			if (defined ($trackURL)) {
 				if (Slim::Music::Info::isRemoteURL($trackURL) == 1) {
+					# TODO: replace with Slim::Schema->libraryObjectForUrl($trackURL) once available in a stable LMS release
 					$track = Slim::Schema->_retrieveTrack($trackURL);
 					main::DEBUGLOG && $log->is_debug && $log->debug('Track is remote. Retrieved trackObj = '.Data::Dump::dump($track));
 				} else {
@@ -3270,7 +3304,7 @@ sub updatePersistentTable {
 			}
 		}
 	};
-	if($@) {
+	if ($@) {
 		$log->error("Database error: $DBI::errstr");
 	}
 	$sth->finish();
@@ -3278,50 +3312,54 @@ sub updatePersistentTable {
 
 	# check for new columns
 	if ($tableExists) {
-		my $sth = $dbh->prepare (q{pragma table_info(tracks_persistent)});
-		$sth->execute() or do { main::DEBUGLOG && $log->is_debug && $log->debug("Error executing"); };
-
-		my $colName;
 		my %colNames = ();
-		while ($sth->fetch()) {
-			$sth->bind_col(2, \$colName);
-			$colNames{$colName} = 1 if $colName;
+		eval {
+			my $colSth = $dbh->prepare(q{pragma table_info(tracks_persistent)});
+			$colSth->execute();
+			my $colName;
+			$colSth->bind_col(2, \$colName);
+			while ($colSth->fetch()) {
+				$colNames{$colName} = 1 if $colName;
+			}
+			$colSth->finish();
+		};
+		if ($@) {
+			$log->error("Database error reading table info: $DBI::errstr");
 		}
-		$sth->finish();
 
 		if ($colNames{'lastRated'} && $colNames{'prevRating'}) {
 			main::DEBUGLOG && $log->is_debug && $log->debug('tracks_persistent table columns "lastRated" and "prevRating" already exist. No DB update required.');
 		} else {
-				main::DEBUGLOG && $log->is_debug && $log->debug('Creating tracks_persistent table columns "lastRated" and "prevRating"');
-				my $sqlUpdate = 'alter table tracks_persistent add column lastRated int(10);alter table tracks_persistent add column prevRating tinyint(1)';
-				executeSQLstat($sqlUpdate);
-
-				# create indices
-				main::DEBUGLOG && $log->is_debug && $log->debug('Creating indices for new columns');
-				my $dbIndex = 'create index if not exists persistentdb.trackLastRatedIndex ON tracks_persistent (lastRated);create index if not exists persistentdb.trackPrevRatingIndex ON tracks_persistent (prevRating)';
-				executeSQLstat($dbIndex);
-				main::DEBUGLOG && $log->is_debug && $log->debug('DB update completed after '.(time() - $started).' seconds.');
-		}
-	}
-}
-
-sub executeSQLstat {
-	my $sqlstatement = shift;
-	my $dbh = Slim::Schema->dbh;
-
-	for my $sql (split(/[\n\r;]/, $sqlstatement)) {
-		my $sth = $dbh->prepare($sql);
-		eval {
-			$sth->execute();
-			commit($dbh);
-		};
-		if ($@) {
-			$log->error("Database error: $DBI::errstr");
+			main::DEBUGLOG && $log->is_debug && $log->debug('Creating tracks_persistent table columns "lastRated" and "prevRating"');
 			eval {
-				rollback($dbh);
+				$dbh->do('alter table tracks_persistent add column lastRated INTEGER');
 			};
+			if ($@) {
+				$log->error("Database error adding column lastRated: $DBI::errstr");
+			}
+			eval {
+				$dbh->do('alter table tracks_persistent add column prevRating INTEGER');
+			};
+			if ($@) {
+				$log->error("Database error adding column prevRating: $DBI::errstr");
+			}
+
+			# create indices
+			main::DEBUGLOG && $log->is_debug && $log->debug('Creating indices for new columns');
+			eval {
+				$dbh->do('create index if not exists persistentdb.trackLastRatedIndex ON tracks_persistent (lastRated)');
+			};
+			if ($@) {
+				$log->error("Database error creating index trackLastRatedIndex: $DBI::errstr");
+			}
+			eval {
+				$dbh->do('create index if not exists persistentdb.trackPrevRatingIndex ON tracks_persistent (prevRating)');
+			};
+			if ($@) {
+				$log->error("Database error creating index trackPrevRatingIndex: $DBI::errstr");
+			}
+			main::DEBUGLOG && $log->is_debug && $log->debug('DB update completed after '.(time() - $started).' seconds.');
 		}
-		$sth->finish();
 	}
 }
 
@@ -3333,13 +3371,17 @@ sub refreshAll {
 
 sub quickCountSQL {
 	my $sqlstatement = shift;
-
 	my $dbh = Slim::Schema->dbh;
 	my $trackCount = 0;
-	my $sth = $dbh->prepare($sqlstatement);
-	$sth->execute();
-	$trackCount = $sth->fetchrow || 0;
-	$sth->finish();
+	eval {
+		my $sth = $dbh->prepare($sqlstatement);
+		$sth->execute();
+		$trackCount = $sth->fetchrow || 0;
+		$sth->finish();
+	};
+	if ($@) {
+		$log->error("Database error in quickCountSQL: $DBI::errstr");
+	}
 	main::DEBUGLOG && $log->is_debug && $log->debug('Track count = '.$trackCount);
 	return $trackCount;
 }
@@ -3367,7 +3409,7 @@ sub trimStringLength {
 sub getClientModel {
 	my $client = shift;
 	return '' unless defined $client;
-	return Slim::Player::Client::getClient($client->id)->model;
+	return $client->model;
 }
 
 sub padnum {

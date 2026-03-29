@@ -3,7 +3,7 @@ PLUGIN_RATINGSLIGHT
 	DE	Ratings Light
 
 PLUGIN_RATINGSLIGHT_DESC
-	EN	Set, import, export, log, backup and restore track ratings. Create virtual libraries for (top) rated tracks with browse menus.
+	EN	Set, display, import, export, log, backup and restore track ratings. Create virtual sublibraries / library views for rated tracks with optional LMS browse menus.
 	DE	Setzt, importiert, exportiert, logt, sichert und stellt Titelbewertungen wieder her. Erstellt virtuelle Bibliotheken für (TOP) bewertete Titel mit Menüs.
 
 PLUGIN_RATINGSLIGHT_LOG_DESC
@@ -21,10 +21,6 @@ PLUGIN_RATINGSLIGHT_TRACK_RATED
 PLUGIN_RATINGSLIGHT_RATING
 	EN	Rating:
 	DE	Bewertung:
-
-PLUGIN_RATINGSLIGHT_UNRATEACTION
-	EN	Unrate
-	DE	Bewertung löschen
 
 PLUGIN_RATINGSLIGHT_LANGSTRING_UNRATED
 	EN	unrated
@@ -70,7 +66,7 @@ PLUGIN_RATINGSLIGHT_RATEALBUM_BUTTON
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_FAILED
 	EN	Rating album tracks failed
-	DE	Bewerung der Albumtitel fehlgeschlagen
+	DE	Bewertung der Albumtitel fehlgeschlagen
 
 PLUGIN_RATINGSLIGHT_RATEALBUM_SUCCESS
 	EN	Finished rating album tracks
@@ -141,14 +137,6 @@ PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTEBUTTONS
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTEBUTTONS_DESC
 	EN	This setting applies </i><b>exclusively</b></i> to devices with a VFD display like SB Classic, Boom or Transporter. It does not have any effect on other devices like SB Touch.<br>Rating tracks with your SB <b>Touch</b> remote requires an applet on your device (like the <i>Dark Flat Skin</i> applet).<br><br>Changing this setting will only take effect <b>after a server restart.</b><br><br>Rate the track that is currently playing on your device by <b>holding down</b> a button on your Logitech IR remote.<br><br>Press and <b>hold</b> the key until you see the new track rating on your display or a message confirming the new track rating.<br><br><b>Key map</b>:<br>keys 1 to 5 = 1 to 5 stars<br>0 = unrate<br>6 = subtract 1 star from current rating<br>7 = add 1 star to current rating<br>8 = subtract 0.5 stars from current rating<br>9 = add 0.5 stars to current rating<br><br><b>Boom (mini remote) only:</b><br><br>arrow up = add 1 star to current rating<br>arrow down = subtract 1 star from current rating
 	DE	Diese Einstellung bezieht sich </i><b>nur</b></i> auf Geräte mit einem VFD Display wie SB Classic, Boom oder Transporter. Es hat keinen Effekt auf ändere Geräte wie SB Touch.<br>Bewerten von Tracks mit der <b>SB Touch</b> Fernbedienung erfordert ein Applet auf dem Gerät (wie das <i>Dark Flat Skin</i> Applet).<br><br>Änderungen an dieser Einstellung werden erst <b>nach einem Server-Neustart</b> wirksam.<br><br>Bewerte den Titel, der gerade abgespielt wird, durch einen <b>langen</b> Tastendruck auf der Logitech IR Fernbedienung.<br><br>Drücke und <b>halte</b> die Taste, bis die neue Bewertung auf dem Display angezeigt wird.<br><br><b>Tasten:</b><br><br>1-5: 1-5 Sterne<br>0: unbewertet<br>6: einen Stern abziehen<br>7: einen Stern hinzufügen<br>8: einen halben Stern abziehen<br>9: einen halben Stern hinzufügen.<br><br>Boom (Mini Fernbedienung):<br><br>Pfeil nach oben = aktuelle Bewertung um 1 Stern erhöhen<br>Pfeil nach unten = 1 Stern von der aktuellen Bewertung abziehen
-
-PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTERATINGCONFIRMMSG
-	EN	Show confirmation message<br>for IR remote rating
-	DE	Zeige Bestätigungsnachricht für IR-Fernbedienungsbewertung
-
-PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_REMOTERATINGCONFIRMMSG_DESC
-	EN	Shows a brief message on the VFD display of your Logitech device confirming the new rating value if you rate a song <i>using IR remote rating</i>.
-	DE	Zeigt eine kurze Nachricht auf dem Display als Bestätigung, dass die Bewertung mit der IR-Fernbedienung angepasst wurde.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_TOPRATED_MINRATING
 	EN	Minimum rating for <b>top</b> rated tracks
@@ -496,8 +484,8 @@ PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME
 	DE	Geplante Sicherungszeit
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS_BACKUPTIME_DESC
-	EN	Set the time for your daily backup. If you leave this empty, no scheduled backups will occur.
-	DE	Bestimme die Zeit für deine tägliche Sicherung. Wenn du hier nichts einträgst, erfolgt keine tägliche Sicherung.
+	EN	Set the time for your daily backup (24h format, e.g. 05:30). If you leave this empty, no scheduled backups will occur.
+	DE	Bestimme die Zeit für deine tägliche Sicherung (24h-Format, z.B. 05:30). Wenn du hier nichts einträgst, erfolgt keine tägliche Sicherung.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_PRESCANBACKUP
 	EN	Backup before each library rescan
@@ -551,14 +539,6 @@ PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE_DESC
 	EN	Select a backup file (created with <i>Ratings Light</i>) to restore your ratings values from.<br><br><b>Please note:</b> Restoring from old <i>TrackStat</i> backup files will <b>only</b> work if the <b>URLs / file paths of the music files have not changed</b>.<br>Relative file path guessing is <b>only</b> supported for backups created with <i>Ratings Light</i>.
 	DE	Wähle eine Sicherungsdatei (die mit Ratings Light erstellt wurde) aus, von der deine Bewertungen wiederhergestellt werden sollen. <br>Bitte beachten: </b>Die Wiederherstellung anhand alter TrackStat-Sicherungsdateien funktioniert nur, wenn sich die <b>URLs / Dateipfade der Musikdateien nicht geändert haben</b>.<br>Das Herleiten relativer Dateipfade wird nur von Sicherungsdateien unterstützt, die mit Ratings Light erzeugt wurden.
 
-PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOW
-	EN	Restore from backup file now
-	DE	Jetzt aus Sicherungsdatei wiederherstellen
-
-PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOW_DESC
-	EN	Restore ratings from the backup file you chose above.<br><br><b>All ratings will be reset to the values of the backup file.</b>
-	DE	Stellt die Bewertungen anhand der Sicherungsdatei wieder her <br><b>Alle Bewertungen werden auf die Werte aus der Sicherungsdatei zurückgesetzt.</b>.
-
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_BUTTON
 	EN	Restore now
 	DE	Jetzt wiedeherstellen
@@ -571,7 +551,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOXMLFILE
 	EN	Please select a valid XML file created with <i>Ratings Light</i> !
 	DE	Bitte wähle eine gültige XML-Datei aus, die mit Ratings Light erzeugt wurde.
 
-PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_INPROGESS
+PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_INPROGRESS
 	EN	preparing to start restore as a background task...
 	DE	Start der Wiederherstellung als Hintergrundaufgabe vorbereiten...
 
@@ -938,7 +918,7 @@ PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNOW_MSG_ALL
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT
 	EN	Play next
-	DE	als nächstes
+	DE	Als nächstes abspielen
 
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_PLAYNEXT_MSG
 	EN	Track will be played next

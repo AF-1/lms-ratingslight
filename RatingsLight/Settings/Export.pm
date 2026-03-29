@@ -1,21 +1,7 @@
 #
 # Ratings Light
-#
 # (c) 2020 AF
-#
-# GPLv3 license
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# Licensed under the GPLv3 - see LICENSE file
 #
 
 package Plugins::RatingsLight::Settings::Export;
@@ -69,13 +55,13 @@ sub prefs {
 
 sub handler {
 	my ($class, $client, $paramRef) = @_;
-	my $result = undef;
+	my $result;
 	my $callHandler = 1;
 	if ($paramRef->{'saveSettings'}) {
 		my @exportbasefilepathmatrix;
 		my %lmsbasepathDone;
 
-		for (my $n = 0; $n <= 10; $n++) {
+		for my $n (0..10) {
 			my $lmsbasepath = trim($paramRef->{"pref_lmsbasepath_$n"} // '');
 			my $substitutebasepath = trim($paramRef->{"pref_substitutebasepath_$n"} // '');
 
@@ -133,7 +119,7 @@ sub beforeRender {
 	my %hiddenVLs = map {$_ => 1} ("Ratings Light - Rated Tracks", "Ratings Light - Top Rated Tracks");
 	main::DEBUGLOG && $log->is_debug && $log->debug("hidden libraries: ".Data::Dump::dump(\%hiddenVLs));
 
-	while (my ($k, $v) = each %{$libraries}) {
+	for my $k (keys %{$libraries}) {
 		my $count = Slim::Music::VirtualLibraries->getTrackCount($k);
 		my $name = Slim::Music::VirtualLibraries->getNameForId($k);
 		my $displayName = Slim::Utils::Unicode::utf8decode($name, 'utf8').' ('.Slim::Utils::Misc::delimitThousands($count).($count == 1 ? ' '.string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACK") : ' '.string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACKS")).')';
@@ -159,7 +145,7 @@ sub beforeRender {
 }
 
 sub trim {
-	my ($str) = @_;
+	my $str = shift;
 	$str =~ s{^\s+}{};
 	$str =~ s{\s+$}{};
 	return $str;

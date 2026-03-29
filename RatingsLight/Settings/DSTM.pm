@@ -1,21 +1,7 @@
 #
 # Ratings Light
-#
 # (c) 2020 AF
-#
-# GPLv3 license
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# Licensed under the GPLv3 - see LICENSE file
 #
 
 package Plugins::RatingsLight::Settings::DSTM;
@@ -29,7 +15,6 @@ use base qw(Plugins::RatingsLight::Settings::BaseSettings);
 use Slim::Utils::Log;
 use Slim::Utils::Prefs;
 use Slim::Utils::Misc;
-use Slim::Utils::Strings;
 
 
 my $prefs = preferences('plugin.ratingslight');
@@ -70,7 +55,7 @@ sub prefs {
 
 sub handler {
 	my ($class, $client, $paramRef) = @_;
-	my $result = undef;
+	my $result;
 	my $callHandler = 1;
 	if ($paramRef->{'saveSettings'}) {
 
@@ -102,7 +87,7 @@ sub beforeRender {
 	main::DEBUGLOG && $log->is_debug && $log->debug('genrelist (all genres) = '.Data::Dump::dump($genrelist));
 	$paramRef->{'genrelist'} = $genrelist;
 
-	my $genrelistsorted = [getSortedGenres()];
+	my $genrelistsorted = [getSortedGenres($genrelist)];
 	main::DEBUGLOG && $log->is_debug && $log->debug('genrelistsorted (just names) = '.Data::Dump::dump($genrelistsorted));
 	$paramRef->{'genrelistsorted'} = $genrelistsorted;
 }
@@ -121,10 +106,7 @@ sub getGenres {
 	my $sth = Slim::Schema->dbh->prepare($genreSQL);
 	main::DEBUGLOG && $log->is_debug && $log->debug("Executing: $genreSQL");
 	eval {
-		$sth->execute() or do {
-			$log->error("Error executing: $genreSQL");
-			$genreSQL = undef;
-		};
+		$sth->execute();
 
 		my ($id, $name, $namesearch);
 		$sth->bind_col(1, \$id);
@@ -151,7 +133,7 @@ sub getGenres {
 }
 
 sub getSortedGenres {
-	my $genres = getGenres();
+	my $genres = shift || getGenres();
 	return sort {
 		$genres->{$a}->{sort} <=> $genres->{$b}->{sort};
 	} keys %{$genres};

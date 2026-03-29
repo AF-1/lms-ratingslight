@@ -1,21 +1,7 @@
 #
 # Ratings Light
-#
 # (c) 2020 AF
-#
-# GPLv3 license
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# Licensed under the GPLv3 - see LICENSE file
 #
 
 package Plugins::RatingsLight::DontStopTheMusic;
@@ -77,7 +63,7 @@ sub dontStopTheMusic {
 	my $dstm_percentagerated = $prefs->get('dstm_percentagerated');
 	my $dstm_percentagetoprated = $prefs->get('dstm_percentagetoprated');
 	my $currentLibrary = Slim::Music::VirtualLibraries->getLibraryIdForClient($client);
-	main::DEBUGLOG && $log->is_debug && $log->debug('current client VlibID = '.$currentLibrary);
+	main::DEBUGLOG && $log->is_debug && $log->debug('current client VlibID = '.($currentLibrary // 'none'));
 
 	my $sqlstatement;
 
@@ -143,6 +129,11 @@ drop table randomweightedratingscombined;";
 	# Mix: "Rated (seed genres)"
 	if ($mixtype eq 'rated_genre') {
 		my $dstm_includegenres = getSeedGenres($client);
+		if (!$dstm_includegenres) {
+			$log->warn('DSTM: no seed genres found, cannot build genre mix');
+			$cb->($client, $tracks);
+			return;
+		}
 		$sqlstatement = "select tracks.url from tracks join genre_track on genre_track.track=tracks.id and genre_track.genre in ($dstm_includegenres) join tracks_persistent on tracks_persistent.urlmd5 = tracks.urlmd5 and tracks_persistent.rating > 0";
 		if ((defined $currentLibrary) && ($currentLibrary ne '')) {
 			$sqlstatement .= $shared_curlib_sql;
@@ -158,6 +149,11 @@ drop table randomweightedratingscombined;";
 	# Mix: "Rated (seed genres with % of top rated)"
 	if ($mixtype eq 'rated_genre_toprated') {
 		my $dstm_includegenres = getSeedGenres($client);
+		if (!$dstm_includegenres) {
+			$log->warn('DSTM: no seed genres found, cannot build genre mix');
+			$cb->($client, $tracks);
+			return;
+		}
 		$sqlstatement = "drop table if exists randomweightedratingshigh;
 drop table if exists randomweightedratingslow;
 drop table if exists randomweightedratingscombined;
@@ -228,6 +224,11 @@ drop table randomweightedratingscombined;";
 	# Mix: "Unrated (seed genres with % of rated songs)"
 	if ($mixtype eq 'unrated_rated_genre') {
 		my $dstm_includegenres = getSeedGenres($client);
+		if (!$dstm_includegenres) {
+			$log->warn('DSTM: no seed genres found, cannot build genre mix');
+			$cb->($client, $tracks);
+			return;
+		}
 		$sqlstatement = "drop table if exists randomweightedratingsrated;
 drop table if exists randomweightedratingsunrated;
 drop table if exists randomweightedratingscombined;
@@ -299,6 +300,11 @@ drop table randomweightedratingscombined;";
 	# Mix: "Unrated (unplayed, seed genres with % of rated songs)"
 	if ($mixtype eq 'unrated_rated_unplayed_genre') {
 		my $dstm_includegenres = getSeedGenres($client);
+		if (!$dstm_includegenres) {
+			$log->warn('DSTM: no seed genres found, cannot build genre mix');
+			$cb->($client, $tracks);
+			return;
+		}
 		$sqlstatement = "drop table if exists randomweightedratingsrated;
 drop table if exists randomweightedratingsunrated;
 drop table if exists randomweightedratingscombined;
@@ -333,16 +339,14 @@ drop table randomweightedratingscombined;";
 	}
 
 	my $dbh = Slim::Schema->dbh;
-	for my $sql (split(/[\n\r]/,$sqlstatement)) {
+	for my $sql (split(/[\n\r]/, $sqlstatement)) {
+		next unless $sql =~ /\S/; # skip empty/whitespace-only lines
 		eval {
 			my $sth = $dbh->prepare($sql);
-			$sth->execute() or do {
-				$sql = undef;
-			};
-			if ($sql =~ /^\(*select+/i) {
+			$sth->execute();
+			if ($sql =~ /^\(*select\s+/i) {
 				my $trackURL;
-				$sth->bind_col(1,\$trackURL);
-
+				$sth->bind_col(1, \$trackURL);
 				while ($sth->fetch()) {
 					my $track = Slim::Schema->resultset('Track')->objectForUrl($trackURL);
 					push @{$tracks}, $track;
@@ -350,8 +354,12 @@ drop table randomweightedratingscombined;";
 			}
 			$sth->finish();
 		};
+		if ($@) {
+			$log->error("Database error in DSTM: $DBI::errstr");
+		}
 	}
-	my $tracksfound = scalar @{$tracks} || 0;
+
+	my $tracksfound = scalar @{$tracks};
 	main::DEBUGLOG && $log->is_debug && $log->debug('RL DSTM - tracks found/used: '.$tracksfound);
 	# Prune previously played playlist tracks
 	my $songIndex = Slim::Player::Source::streamingSongIndex($client);
@@ -372,30 +380,28 @@ sub getSeedGenres {
 	my $seedTracks = Slim::Plugin::DontStopTheMusic::Plugin->getMixableProperties($client, $dstm_num_seedtracks);
 
 	if ($seedTracks && ref $seedTracks && scalar @{$seedTracks}) {
-		my @seedIDs = ();
 		my @seedsToUse = ();
 		foreach my $seedTrack (@{$seedTracks}) {
 			my ($trackObj) = Slim::Schema->find('Track', $seedTrack->{id});
 			if ($trackObj) {
 				push @seedsToUse, $trackObj;
-				push @seedIDs, $seedTrack->{id};
 			}
 		}
 
 		if (scalar @seedsToUse > 0) {
 			my $genrelist;
-			foreach my $thisID (@seedIDs) {
-				my $track = Slim::Schema->resultset('Track')->find($thisID);
-				my $genre = $track->genre;
+			foreach my $trackObj (@seedsToUse) {
+				my $genre = $trackObj->genre;
 				next unless $genre;
 				my $thisgenreid = $genre->id;
 				main::DEBUGLOG && $log->is_debug && $log->debug('seed genrename = '.$genre->name.' -- genre ID: '.$thisgenreid);
-				push @{$genrelist},$thisgenreid;
+				push @{$genrelist}, $thisgenreid;
 			}
-			my @filteredgenrelist = sort (uniq(@{$genrelist}));
-			my $includedgenrelist = join (',', @filteredgenrelist);
+			my @filteredgenrelist = sort(uniq(@{$genrelist}));
+			my $includedgenrelist = join(',', @filteredgenrelist);
 			return $includedgenrelist;
 		}
+		return;
 	}
 }
 

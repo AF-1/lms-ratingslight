@@ -1,21 +1,7 @@
 #
 # Ratings Light
-#
 # (c) 2020 AF
-#
-# GPLv3 license
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# Licensed under the GPLv3 - see LICENSE file
 #
 
 package Plugins::RatingsLight::Settings::Menus;
@@ -29,7 +15,6 @@ use base qw(Plugins::RatingsLight::Settings::BaseSettings);
 use Slim::Utils::Log;
 use Slim::Utils::Prefs;
 use Slim::Utils::Misc;
-use Slim::Utils::Strings;
 use Slim::Utils::Strings qw(string cstring);
 
 my $prefs = preferences('plugin.ratingslight');
@@ -68,13 +53,6 @@ sub prefs {
 	return ($prefs, qw(displayratingchar usehalfstarratings showratedtracksmenus browsemenus_artists browsemenus_genres browsemenus_tracks browsemenus_sourceVL_id ratingcontextmenupos displayratinghistory ratedtracksweblimit ratedtrackscontextmenulimit));
 }
 
-sub handler {
-	my ($class, $client, $paramRef) = @_;
-	if ($paramRef->{'saveSettings'}) { }
-	my $result = $class->SUPER::handler($client, $paramRef);
-	return $result;
-}
-
 sub beforeRender {
 	my ($class, $paramRef) = @_;
 
@@ -85,7 +63,7 @@ sub beforeRender {
 	my $currentLibrary = $prefs->get('browsemenus_sourceVL_id');
 	main::DEBUGLOG && $log->is_debug && $log->debug("current browsemenus_sourceVL_id = ".Data::Dump::dump($currentLibrary));
 
-	while (my ($k, $v) = each %{$libraries}) {
+	for my $k (keys %{$libraries}) {
 		my $count = Slim::Music::VirtualLibraries->getTrackCount($k);
 		my $name = $libraries->{$k}->{'name'};
 		my $displayName = Slim::Utils::Unicode::utf8decode($name, 'utf8').' ('.Slim::Utils::Misc::delimitThousands($count).($count == 1 ? ' '.string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACK") : ' '.string("PLUGIN_RATINGSLIGHT_LANGSTRING_TRACKS")).')';
