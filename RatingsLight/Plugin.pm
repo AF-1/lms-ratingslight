@@ -217,7 +217,14 @@ sub initPrefs {
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 20}, 'dstm_num_seedtracks');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 200}, 'dstm_playedtrackstokeep');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 50}, 'dstm_batchsizenewtracks');
-	$prefs->setValidate('file', 'restorefile');
+	$prefs->setValidate(sub {
+		my $val = $_[1];
+		return 1 if !$val || $val eq ''; # empty is ok
+		return 1 if -d $val; # directory is ok (filepicker default)
+		return 1 if -f $val && $val =~ /\.xml$/i; # xml file is ok
+		return 0;
+	}, 'restorefile');
+
 
 	$prefs->setChange(\&Plugins::RatingsLight::Importer::toggleUseImporter, 'autoscan');
 	$prefs->setChange(\&initVLibsTimer, 'browsemenus_sourceVL_id', 'showratedtracksmenus', 'browsemenus_artists', 'browsemenus_genres', 'browsemenus_tracks');
@@ -2279,7 +2286,7 @@ sub handleEndElement {
 		my $backupTrackURLmd5 = $isTSlegacyBackupFile ? undef : $curTrack->{'urlmd5'};
 		my $backupTrackMBID = $isTSlegacyBackupFile ? $curTrack->{'musicbrainzId'} : $curTrack->{'musicbrainzid'};
 		my $rating100ScaleValue = $curTrack->{'rating'} || 0;
-		my $lastRatedValue = $curTrack->{'lastRated'};
+		my $lastRatedValue = toIntTimestamp($curTrack->{'lastRated'});
 		my $previousRatingValue = defined($curTrack->{'prevRating'}) ? $curTrack->{'prevRating'} : undef;
 
 		if (($selectiverestore == 0 || $isTSlegacyBackupFile) || ($selectiverestore == 1 && !$isRemote) || ($selectiverestore == 2 && $isRemote)) {
@@ -3030,8 +3037,7 @@ sub writeRatingToDB {
 			main::DEBUGLOG && $log->is_debug && $log->debug("Skipping database write - track rating not updated: requested value matches existing.");
 			return;
 		}
-
-		my $ratingTime = $restoreLastRated ? $restoreLastRated : time();
+		my $ratingTime = $restoreLastRated ? toIntTimestamp($restoreLastRated) : int(time());
 		my $dbh = Slim::Schema->dbh;
 		eval {
 			$dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where urlmd5 = ?',

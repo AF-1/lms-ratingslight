@@ -26,7 +26,7 @@ use Path::Class;
 
 use base 'Exporter';
 our %EXPORT_TAGS = (
-	all => [qw(createBackup cleanupBackups importRatingsFromCommentTags importRatingsFromBPMTags isTimeOrEmpty getMusicDirs parse_duration pathForItem)],
+	all => [qw(createBackup cleanupBackups importRatingsFromCommentTags importRatingsFromBPMTags isTimeOrEmpty getMusicDirs parse_duration pathForItem toIntTimestamp)],
 );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
 
@@ -90,7 +90,7 @@ sub createBackup {
 			}
 			my $urlmd5 = $ratedTrack->{'urlmd5'};
 			my $rating100ScaleValue = $ratedTrack->{'rating'} || '';
-			my $lastRatedValue = $ratedTrack->{'lastRated'} || '';
+			my $lastRatedValue = toIntTimestamp($ratedTrack->{'lastRated'}) // '';
 			my $previousRatingValue = defined($ratedTrack->{'prevRating'}) ? $ratedTrack->{'prevRating'} : '';
 			my $remote = $ratedTrack->{'remote'};
 			my $BACKUPrelFilePath = ($remote == 0 ? getRelFilePath($BACKUPtrackURL) : '');
@@ -338,6 +338,14 @@ sub pathForItem {
 		return Slim::Utils::Misc::pathFromFileURL($path);
 	}
 	return $item;
+}
+
+sub toIntTimestamp {
+	my $val = shift;
+	return undef unless defined $val && $val ne '';
+	$val =~ s/,/./;
+	return undef unless $val =~ /^\d+(?:\.\d+)?$/;
+	return int($val + 0.5);
 }
 
 *escape = \&URI::Escape::uri_escape_utf8;
