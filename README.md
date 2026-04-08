@@ -19,7 +19,7 @@ Ratings Light
 	* in your browser using web skins like *(Dark) Default* or *Material*
 	* on your Logitech devices or piCorePlayer (context menu)
 	* using the IR remote of your (Logitech) device
-	* in supported apps and plugins
+	* in supported apps and plugins like *xTune* or *LyrPlay*
 	* supports **incremental** rating changes
 
 * **import** track ratings
@@ -30,12 +30,13 @@ Ratings Light
 	   * auto-import after a (re)scan is possible
 
 * **export** rated tracks to playlist files (as a backup or to import ratings in other apps)
-* create **virtual libraries for (top) rated tacks** with *browse menus*[^1]
+* create **virtual libraries for (top) rated tacks** with optional *browse menus*[^1]
 * *create* (scheduled) **backups** of your ratings and *restore* your ratings from backups
 * keep track of your **recently rated songs** with a dedicated *playlist* or a plain text *log file*
 * **show rated songs** for any *artist, album, genre, year* or *playlist* from the **context menu**
 * includes mixes for the **Don't Stop The Music** plugin
 * *display track ratings* in *LMS menus* (web UI and text) or on older devices using the *Now Playing screensaver* or the *Music Information Screen* plugin
+* stores **previous track rating** and **timestamp of last rating change** (version 3+)
 * most features should work with **online library tracks** (see [FAQ](#faq))
 
 Some features are not enabled by default.<br>You can enable them here: `LMS > Settings > Advanced > Ratings Light`
@@ -212,7 +213,7 @@ If you want to keep detailed track of your rating actions and don't need a playa
 
 <details><summary>»<b>Can I use <i>Ratings Light</i> together with <i>TrackStat</i>?</b>«</summary><br><p>You really shouldn't. If you rate tracks with <i>Ratings Light</i>, these rating changes will be lost the next time you restart your server because TrackStat will reset the LMS database ratings to the TrackStat database values.</p></details><br>
 
-<details><summary>»<b>Does <i>Ratings Light</i> work with <i>iPeng</i>?</b>«</summary><br><p>Displaying and changing track ratings in iPeng is already possible via the <b>context menu</b>.<br>iPeng <b>additionally</b> offers the possibility to display and change track ratings directly in the <b>top left menu bar</b>. iPeng has no official support for <i>Ratings Light</i> yet.<br>However, you'll find a workaround in the <i>Menus</i> section of the RL settings that should allow you to display and change track ratings directly in iPeng's top left menu bar (requires an LMS restart).</p></details><br>
+<details><summary>»<b>Which <i>apps</i> or <i>web skins</i> work with Ratings Light?</b>«</summary><br><p>Track ratings can be viewed and updated in most built-in web skins, Material Skin and apps like xTune or LyrPlay. If a plugin or skin lacks native rating UI, updates are still possible via the track <b>context menu</b>.</p></details><br>
 
 <details><summary>»<b>Can this plugin be <i>displayed in my language</i>?</b>«</summary><br><p>If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.</p></details>
 <br><br><br>
