@@ -138,6 +138,8 @@ In short, <i>Ratings Light</i> has usually <i>nothing</i> to do with <i>displayi
 
 <details><summary>»<b>Does <i>Ratings Light</i> work with <i>online</i> tracks?</b>«</summary><br><p>It should work with online tracks that have been <b>added to your LMS library as part of an album</b>. LMS does not import single online tracks or tracks of online playlists as library tracks and therefore they cannot be processed by Ratings Light. That's a restriction imposed by LMS.</p></details><br>
 
+<details><summary>»<b>Which <i>apps</i> or <i>web skins</i> work with Ratings Light?</b>«</summary><br><p>Track ratings can be viewed and updated in most built-in web skins, Material Skin and apps like xTune or LyrPlay. If a plugin or skin lacks native rating UI, updates are still possible via the track <b>context menu</b>.<br>You can, for example, use the [**Dark Flat Skin**](https://github.com/AF-1/jivelite-darkflatskin) applet on <i>jivelite</i> players like pCorePlayer, SB Touch and SqueezePlay to rate tracks directly from the NowPlaying screen (via click or touch).</p></details><br>
+
 <details><summary>»<b>I have <i>renamed / moved</i> some audio files. How can I preserve my ratings for these tracks?</b>«</summary><br><p>
 You can use backups. Go to the plugin's settings page (backup section) immediately before you rescan your library and confirm that <i>Backup before each library rescan</i> is <b>en</b>abled. Just to be safe on the safe side, create a manual backup as well.<br>Then rescan your library. With the rescan completed, go to the plugin's settings page and restore the rating values from the pre-scan backup. RL will try to restore the ratings for moved/renamed tracks using (relative) path guessing and MusicBrainz IDs. Of course, there's no guarantee that it will restore 100% but that's as good as it gets.
 </p></details><br>
@@ -177,8 +179,6 @@ The keys are the same for all supported devices except for the<br>
 
 <details><summary>»<b>Does <i>Ratings Light</i> auto-rate tracks when I play or skip them?</b>«</summary><br><p>No. Please use the <a href="https://github.com/AF-1/#-alternative-play-count"><b>Alternative Play Count</b></a> plugin for that. It can auto-rate tracks and offers you an alternative, the <b>dynamic played/skipped value</b> that reflects your <b>recent</b> listening habits/decisions but does not mess with your tracking ratings.</p></details><br>
 
-<details><summary>»<b>How do I migrate ratings from <i>TrackStat</i> to <i>Ratings Light</i>?</b>«</summary><br><p>You don't have to. Since ratings are stored in an LMS database (see FAQ above), you just <b>un</b>install <i>TrackStat</i> and install <i>Ratings Light</i>. TrackStat had its own database table (with identical columns though) but <i>ratings</i> should be in sync. You can even import ratings for <i>local</i> tracks from old TrackStat backup files.</p></details><br>
-
 <details><summary>»<b>How does <i>importing ratings from file tags</i> work?</b>«</summary><br><p><i>Ratings Light</i> does <b>not scan files</b>, it has no scanner module. LMS scans your music files and stores the data found in the file tags in the <b>LMS</b> database. RL does <b>not</b> create or use its own database table.<br>
 <i>Importing rating values from file tags</i> with RL therefore means that RL reads the file tag values stored in the LMS database, converts them to rating values and saves them to the LMS persistent database. It does <b>not scan</b> your files.<br><br>
 If you have tracks with <b>dedicated rating tags</b> which are not supported and imported by LMS, you can use the <a href="https://github.com/AF-1/#-custom-tag-importer"><i>Custom Tag Importer</i></a> plugin to scan these tags and set LMS track ratings accordingly.<br><br>
@@ -212,8 +212,6 @@ The <b>recently rated playlist</b> keeps a record of all tracks with changed rat
 If you want to keep detailed track of your rating actions and don't need a playable list, I suggest you use the <b>log file</b>.</p></details><br>
 
 <details><summary>»<b>Can I use <i>Ratings Light</i> together with <i>TrackStat</i>?</b>«</summary><br><p>You really shouldn't. If you rate tracks with <i>Ratings Light</i>, these rating changes will be lost the next time you restart your server because TrackStat will reset the LMS database ratings to the TrackStat database values.</p></details><br>
-
-<details><summary>»<b>Which <i>apps</i> or <i>web skins</i> work with Ratings Light?</b>«</summary><br><p>Track ratings can be viewed and updated in most built-in web skins, Material Skin and apps like xTune or LyrPlay. If a plugin or skin lacks native rating UI, updates are still possible via the track <b>context menu</b>.</p></details><br>
 
 <details><summary>»<b>Can this plugin be <i>displayed in my language</i>?</b>«</summary><br><p>If you want localized strings in your language, please read <a href="https://github.com/AF-1/sobras/wiki/Adding-localization-to-LMS-plugins"><b>this</b></a>.</p></details>
 <br><br><br>
