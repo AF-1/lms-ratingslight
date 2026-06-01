@@ -2997,7 +2997,7 @@ sub clearAllRatings {
 
 	my $dbh = Slim::Schema->dbh;
 	eval {
-		$dbh->do("update tracks_persistent set rating = null, lastRated = null, prevRating = null where tracks_persistent.rating is not null");
+		$dbh->do("update tracks_persistent set rating = null, lastRated = null, prevRating = null where tracks_persistent.rating is not null or prevRating is not null");
 	};
 	if ($@) {
 		$log->error("Database error: $DBI::errstr");

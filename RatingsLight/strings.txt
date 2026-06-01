@@ -179,16 +179,16 @@ PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_RATINGSLIGHT_PARENTFOLDERPATH_DESC
 	DE	Wähle einen Dateipfad zum übergeordneten Verzeichnis des 'Ratings Light'-Ordners. Dort werden exportierte Wiedergabelisten, Sicherungen und Protokolle gespeichert.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_NOW
-	EN	Clear all ratings
-	DE	Alle Bewertungen löschen
+	EN	Clear all rating data
+	DE	Alle Bewertungsdaten löschen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_NOW_DESC
-	EN	This will clear <b>all</b> ratings in your database!
-	DE	Dadurch werden <b>ALLE</b> Bewertungen aus der Datenbank gelöscht
+	EN	This will clear <b>all</b> rating data (ratings, previous ratings) in your database!
+	DE	Dadurch werden <b>ALLE</b> Bewertungsdaten (Bewertungen, vorherige Bewertungen) aus der Datenbank gelöscht!
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_NOW_BUTTON
-	EN	Clear ratings now
-	DE	Bewertungen jetzt löschen
+	EN	Clear rating data now
+	DE	Bewertungsdaten jetzt löschen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_CLEARALLRATINGS_INPROGRESS
 	EN	clearing...
@@ -576,12 +576,12 @@ PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE_REMOTEONLY
 	DE	Nur Titel aus Online-Musiksammlungen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_CLEARALLBEFORE
-	EN	Clear all ratings before restore
-	DE	Lösche zuerst alle Bewertungen
+	EN	Clear all rating data before restore
+	DE	Lösche zuerst alle Bewertungsdaten
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_CLEARALLBEFORE_DESC
-	EN	This will clear all ratings in the database before starting the restore process. All rating values in your database will be reset to the values from the backup. In other words, ratings not contained in the backup will be lost.
-	DE	Dadurch werden alle Bewertungen aus der Datenbank gelöscht, bevor die Wiederherstellung gestartet wird. Alle Bewertungen in der Datenbank werden zurückgesetzt. Das heißt, alle Bewertungen, die nicht im Backup enthalten sind, gehen so verloren.
+	EN	This will clear all rating data in the database (ratings, previous ratings) before starting the restore process. All rating values in your database will be reset to the values from the backup. In other words, rating data not contained in the backup will be lost.
+	DE	Dadurch werden alle Bewertungsdaten (Bewertungen, vorherige Bewertungen) aus der Datenbank gelöscht, bevor die Wiederherstellung gestartet wird. Alle Bewertungen werden auf die Werte aus dem Backup zurückgesetzt. Das heißt, Bewertungsdaten, die nicht im Backup enthalten sind, gehen so verloren.
 
 
 PLUGIN_RATINGSLIGHT_MENUS_RATED_TRACKS_MENU_FOLDER
