@@ -61,7 +61,7 @@ sub initPlugin {
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbum', '_albumid', '_rating', '_unratedonly'], [1, 1, 1, \&_rateAlbumTracks]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratedtracksmenu'], [0, 1, 1, \&getRatedTracksMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'actionsmenu'], [0, 1, 1, \&getActionsMenu]);
-	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent'], [0, 0, 0, undef]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent', '_urlmd5'], [0, 0, 0, undef]);
 	Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'], [0, 1, 0, undef]);
 
 	Slim::Control::Request::subscribe(\&setTaskTimer, [['rescan'],['done']]);
@@ -308,6 +308,7 @@ sub setRating {
 		return;
 	}
 	my $trackURL = $track->url;
+	my $trackURLmd5 = $track->urlmd5 || md5_hex($trackURL);
 
 	# check if remote track is part of online library
 	if ((Slim::Music::Info::isRemoteURL($trackURL) == 1) && (!defined($track->extid))) {
@@ -349,10 +350,10 @@ sub setRating {
 		}
 	}
 
-	writeRatingToDB($trackID, undef, undef, $track, $rating100ScaleValue);
+	writeRatingToDB($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue);
 
-	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackID, $rating100ScaleValue/20, $rating100ScaleValue]);
-	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackID, $rating100ScaleValue/20, $rating100ScaleValue]);
+	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackID, $rating100ScaleValue/20, $rating100ScaleValue, $trackURLmd5]);
+	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackID, $rating100ScaleValue/20, $rating100ScaleValue, $trackURLmd5]);
 
 	$request->addResult('rating', $rating100ScaleValue/20);
 	$request->addResult('ratingpercentage', $rating100ScaleValue);
@@ -378,7 +379,10 @@ sub VFD_deviceRating {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Track dead or moved??? Track URL: '.$track->url);
 		return;
 	}
-	writeRatingToDB($trackID, $track->url, undef, $track, $rating100ScaleValue);
+
+	my $trackURLmd5 = $track->urlmd5 || md5_hex($trackURL);
+
+	writeRatingToDB($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue);
 
 	my $cbtext = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating100ScaleValue));
 	if ($callback) {
@@ -393,8 +397,8 @@ sub VFD_deviceRating {
 			'line' => [string('PLUGIN_RATINGSLIGHT_TRACK_RATED'), $cbtext]
 		}, 3);
 	}
-	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $track->url, $trackID, $rating100ScaleValue/20, $rating100ScaleValue]);
-	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $track->url, $trackID, $rating100ScaleValue/20, $rating100ScaleValue]);
+	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackID, $rating100ScaleValue/20, $rating100ScaleValue, $trackURLmd5]);
+	Slim::Control::Request::notifyFromArray(undef, ['ratingslightchangedratingupdate', $trackURL, $trackID, $rating100ScaleValue/20, $rating100ScaleValue, $trackURLmd5]);
 	refreshAll();
 }
 
@@ -601,7 +605,7 @@ sub _rateAlbum {
 				}
 			}
 			main::DEBUGLOG && $log->is_debug && $log->debug('Setting rating of track "'.$_->title.'" to '.$albumRatingValue);
-			writeRatingToDB($_->id, undef, undef, $_, $albumRatingValue);
+			writeRatingToDB($_->id, $_->url, $_->urlmd5, $_, $albumRatingValue);
 		}
 	}
 	refreshAll();
