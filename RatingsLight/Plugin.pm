@@ -715,7 +715,7 @@ sub trackInfoHandlerRating {
 				$sth->finish();
 			};
 		if ($@) {
-			$log->error("Database error: $DBI::errstr");
+			$log->error("Database error: $@");
 		}
 		main::DEBUGLOG && $log->is_debug && $log->debug('persistentLastRated = '.Data::Dump::dump($persistentLastRated).' ## persistentPreviousRating = '.Data::Dump::dump($persistentPreviousRating));
 
@@ -728,7 +728,7 @@ sub trackInfoHandlerRating {
 				$sth->finish();
 			};
 			if ($@) {
-				$log->error("Database error: $DBI::errstr");
+				$log->error("Database error: $@");
 			}
 			if (!$trackInDB) {
 				$log->warn("Couldn't retrieve information for this track.\nCould be part of a (client) playlist whose track references are no longer valid after a *rescan*.\nTrack url = ".$url."\nTrack urlmd5 = ".$urlmd5);
@@ -1233,7 +1233,7 @@ sub getRatedTracks {
 		$sth->finish();
 	};
 	if ($@) {
-		$log->error("Database error in getRatedTracks: $DBI::errstr");
+		$log->error("Database error in getRatedTracks: $@");
 	}
 
 	if ($countOnly == 1) {
@@ -2058,7 +2058,7 @@ sub adjustRatings {
 		$sth->finish();
 	};
 	if ($@) {
-		$log->error("Database error in adjustRatings: $DBI::errstr");
+		$log->error("Database error in adjustRatings: $@");
 	}
 
 	my $adjustedCount = 0;
@@ -2108,14 +2108,18 @@ sub backupScheduler {
 			my $currenttime = $hour * 60 * 60 + $min * 60;
 
 			if (($day ne $mday) && $currenttime > $time) {
-				main::DEBUGLOG && $log->is_debug && $log->debug('Starting scheduled backup');
-				eval {
-					Slim::Utils::Scheduler::add_task(\&createBackup);
-				};
-				if ($@) {
-					$log->error("Scheduled backup failed: $@");
+				if (Slim::Music::Import->stillScanning) {
+					main::DEBUGLOG && $log->is_debug && $log->debug('Scan in progress. Postponing scheduled backup.');
+				} else {
+					main::DEBUGLOG && $log->is_debug && $log->debug('Starting scheduled backup');
+					eval {
+						Slim::Utils::Scheduler::add_task(\&createBackup);
+					};
+					if ($@) {
+						$log->error("Scheduled backup failed: $@");
+					}
+					$prefs->set('backup_lastday',$mday);
 				}
-				$prefs->set('backup_lastday',$mday);
 			} else {
 				my $timeleft = $time - $currenttime;
 				if ($day eq $mday) {
@@ -3000,7 +3004,7 @@ sub clearAllRatings {
 		$dbh->do("update tracks_persistent set rating = null, lastRated = null, prevRating = null where tracks_persistent.rating is not null or prevRating is not null");
 	};
 	if ($@) {
-		$log->error("Database error: $DBI::errstr");
+		$log->error("Database error: $@");
 	}
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('Clearing all ratings completed after '.(time() - $started).' seconds.');
@@ -3048,7 +3052,7 @@ sub writeRatingToDB {
 				undef, $rating100ScaleValue, $ratingTime, $previousRating100ScaleValue, $track->urlmd5);
 		};
 		if ($@) {
-			$log->warn("Database error: $DBI::errstr");
+			$log->warn("Database error: $@");
 			return 0;
 		}
 
@@ -3315,7 +3319,7 @@ sub updatePersistentTable {
 		}
 	};
 	if ($@) {
-		$log->error("Database error: $DBI::errstr");
+		$log->error("Database error: $@");
 	}
 	$sth->finish();
 	main::DEBUGLOG && $log->is_debug && $log->debug('No tracks_persistent table found.') if !$tableExists;
@@ -3334,7 +3338,7 @@ sub updatePersistentTable {
 			$colSth->finish();
 		};
 		if ($@) {
-			$log->error("Database error reading table info: $DBI::errstr");
+			$log->error("Database error reading table info: $@");
 		}
 
 		if ($colNames{'lastRated'} && $colNames{'prevRating'}) {
@@ -3345,13 +3349,13 @@ sub updatePersistentTable {
 				$dbh->do('alter table tracks_persistent add column lastRated INTEGER');
 			};
 			if ($@) {
-				$log->error("Database error adding column lastRated: $DBI::errstr");
+				$log->error("Database error adding column lastRated: $@");
 			}
 			eval {
 				$dbh->do('alter table tracks_persistent add column prevRating INTEGER');
 			};
 			if ($@) {
-				$log->error("Database error adding column prevRating: $DBI::errstr");
+				$log->error("Database error adding column prevRating: $@");
 			}
 
 			# create indices
@@ -3360,13 +3364,13 @@ sub updatePersistentTable {
 				$dbh->do('create index if not exists persistentdb.trackLastRatedIndex ON tracks_persistent (lastRated)');
 			};
 			if ($@) {
-				$log->error("Database error creating index trackLastRatedIndex: $DBI::errstr");
+				$log->error("Database error creating index trackLastRatedIndex: $@");
 			}
 			eval {
 				$dbh->do('create index if not exists persistentdb.trackPrevRatingIndex ON tracks_persistent (prevRating)');
 			};
 			if ($@) {
-				$log->error("Database error creating index trackPrevRatingIndex: $DBI::errstr");
+				$log->error("Database error creating index trackPrevRatingIndex: $@");
 			}
 			main::DEBUGLOG && $log->is_debug && $log->debug('DB update completed after '.(time() - $started).' seconds.');
 		}
@@ -3390,7 +3394,7 @@ sub quickCountSQL {
 		$sth->finish();
 	};
 	if ($@) {
-		$log->error("Database error in quickCountSQL: $DBI::errstr");
+		$log->error("Database error in quickCountSQL: $@");
 	}
 	main::DEBUGLOG && $log->is_debug && $log->debug('Track count = '.$trackCount);
 	return $trackCount;

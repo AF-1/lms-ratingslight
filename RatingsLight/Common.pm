@@ -59,7 +59,7 @@ sub createBackup {
 		}
 	};
 	if ($@) {
-		$log->error("Database error during backup: $DBI::errstr");
+		$log->error("Database error during backup: $@");
 		$prefs->set('status_creatingbackup', 0);
 		return;
 	}
@@ -185,7 +185,7 @@ sub importRatingsFromCommentTags {
 				)", undef, $rating100scalevalue, $ratingTime, $ratingkeyword);
 		};
 		if ($@) {
-			$log->error("Database error: $DBI::errstr");
+			$log->error("Database error: $@");
 		}
 	}
 
@@ -202,7 +202,7 @@ sub importRatingsFromCommentTags {
 			)", undef, $ratingTime, $ratingkeyword_unrate);
 	};
 	if ($@) {
-		$log->error("Database error: $DBI::errstr");
+		$log->error("Database error: $@");
 	}
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('Import completed after '.(time() - $started).' seconds.');
@@ -234,7 +234,7 @@ sub importRatingsFromBPMTags {
 			)", undef, $ratingTime);
 	};
 	if ($@) {
-		$log->error("Database error: $DBI::errstr");
+		$log->error("Database error: $@");
 	}
 
 	# rate tracks according to BPM value
@@ -249,7 +249,7 @@ sub importRatingsFromBPMTags {
 				)", undef, $rating100scalevalue, $ratingTime, $rating100scalevalue);
 		};
 		if ($@) {
-			$log->error("Database error: $DBI::errstr");
+			$log->error("Database error: $@");
 		}
 	}
 

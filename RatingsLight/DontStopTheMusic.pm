@@ -355,7 +355,7 @@ drop table randomweightedratingscombined;";
 			$sth->finish();
 		};
 		if ($@) {
-			$log->error("Database error in DSTM: $DBI::errstr");
+			$log->error("Database error in DSTM: $@");
 		}
 	}
 

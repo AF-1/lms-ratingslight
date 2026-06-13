@@ -125,7 +125,7 @@ sub getGenres {
 		$sth->finish();
 	};
 	if ($@) {
-		$log->error("Database error: $DBI::errstr");
+		$log->error("Database error: $@");
 	}
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('genre list before render = '.Data::Dump::dump($genres));
