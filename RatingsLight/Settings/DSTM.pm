@@ -16,15 +16,11 @@ use Slim::Utils::Log;
 use Slim::Utils::Prefs;
 use Slim::Utils::Misc;
 
-
 my $prefs = preferences('plugin.ratingslight');
 my $log = logger('plugin.ratingslight');
 
-my $plugin;
-
 sub new {
-	my $class = shift;
-	$plugin = shift;
+	my ($class, $plugin) = @_;
 	$class->SUPER::new($plugin);
 }
 

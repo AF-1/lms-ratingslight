@@ -21,7 +21,6 @@ use Slim::Plugin::DontStopTheMusic::Plugin;
 my $log = logger('plugin.ratingslight');
 my $prefs = preferences('plugin.ratingslight');
 
-
 sub init {
 	Slim::Plugin::DontStopTheMusic::Plugin->registerHandler('PLUGIN_RATINGSLIGHT_DSTM_RATED', sub {
 		dontStopTheMusic('rated', @_);

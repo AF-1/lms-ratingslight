@@ -40,12 +40,12 @@ my $log = Slim::Utils::Log->addLogCategory({
 	'defaultLevel' => 'ERROR',
 	'description' => 'PLUGIN_RATINGSLIGHT',
 });
-
 my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
 my (%restoreitem, $currentKey, $inTrack, $inValue, $backupFH, $backupParser, $backupParserNB, $restorestarted, $material_enabled, $debugVerbose);
-my ($opened, $restoreCount) = (0, 0);
+my ($opened, $restoreCount, $restoreErrors) = (0, 0, 0);
+my ($restoreTotalCount, $restoreProcessedCount);
 
 sub initPlugin {
 	my $class = shift;
@@ -170,8 +170,9 @@ sub initPrefs {
 	$prefs->set('status_importingfromcommenttags', 0);
 	$prefs->set('status_importingfromBPMtags', 0);
 	$prefs->set('status_batchratingplaylisttracks', 0);
-	$prefs->set('status_creatingbackup', 0);
-	$prefs->set('status_restoringfrombackup', 0);
+	$prefs->set('status_backuprestore', '0'); # 0 = idle, 1 = backup in progress, 2 = restore in progress
+	$prefs->set('backuprestoreprogresspercentage', '0');
+	$prefs->set('backuprestoreresult', '0'); # 0 = no result, 1 = backup success, 2 = backup error, 3 = restore success, 4 = restore error
 	$prefs->set('status_clearingallratings', 0);
 	$prefs->set('status_adjustingratings', 0);
 	$prefs->set('isTSlegacyBackupFile', 0);
@@ -454,7 +455,7 @@ sub rateAlbumTracks_web {
 
 	my $usehalfstarratings = $prefs->get('usehalfstarratings');
 	my $host = $params->{host} || (Slim::Utils::Network::serverAddr() . ':' . preferences('server')->get('httpport'));
-	$params->{'squeezebox_server_jsondatareq'} = 'http://' . $host . '/jsonrpc.js';
+	$params->{'squeezebox_server_jsondatareq'} = '/jsonrpc.js';
 
 	my $albumID = $params->{albumid};
 	main::DEBUGLOG && $log->is_debug && $log->debug('albumID = '.$albumID);
@@ -703,52 +704,50 @@ sub trackInfoHandlerRating {
 
 	if ($prefs->get('displayratinghistory') && (($infoItem eq 'lastRated') || ($infoItem eq 'prevRating'))) {
 		my $returnVal = 0;
-		my ($persistentLastRated, $persistentPreviousRating);
-		my $urlmd5 = $track->urlmd5 || md5_hex($url);
+		my ($persistentRating, $persistentLastRated, $persistentPreviousRating);
 		my $dbh = Slim::Schema->dbh;
-
-		eval {
-				my $sth = $dbh->prepare('select ifnull(tracks_persistent.lastRated, 0), ifnull(tracks_persistent.prevRating, 0) from tracks_persistent where tracks_persistent.urlmd5 = ?');
-				$sth->execute($urlmd5);
-				$sth->bind_columns(undef, \$persistentLastRated, \$persistentPreviousRating);
-				$sth->fetch();
-				$sth->finish();
-			};
-		if ($@) {
-			$log->error("Database error: $@");
-		}
-		main::DEBUGLOG && $log->is_debug && $log->debug('persistentLastRated = '.Data::Dump::dump($persistentLastRated).' ## persistentPreviousRating = '.Data::Dump::dump($persistentPreviousRating));
-
-		if (!defined($persistentLastRated) && !defined($persistentPreviousRating)) {
-			my $trackInDB = 0;
-			eval {
-				my $sth = $dbh->prepare('select count(*) from tracks_persistent where tracks_persistent.urlmd5 = ?');
-				$sth->execute($urlmd5);
-				$trackInDB = $sth->fetchrow || 0;
-				$sth->finish();
-			};
-			if ($@) {
-				$log->error("Database error: $@");
+		my @urlmd5Candidates;
+		if ($track->urlmd5) {
+			push @urlmd5Candidates, $track->urlmd5;
+		} else {
+			push @urlmd5Candidates, md5_hex($url);
+			if (Slim::Utils::Misc->can('safe_md5_hex')) {
+				push @urlmd5Candidates, Slim::Utils::Misc::safe_md5_hex($url);
 			}
-			if (!$trackInDB) {
-				$log->warn("Couldn't retrieve information for this track.\nCould be part of a (client) playlist whose track references are no longer valid after a *rescan*.\nTrack url = ".$url."\nTrack urlmd5 = ".$urlmd5);
+		}
+
+		my $matchedUrlmd5;
+		eval {
+				my $sth = $dbh->prepare('select tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating from tracks_persistent where tracks_persistent.urlmd5 = ?');
+				for my $urlmd5Candidate (@urlmd5Candidates) {
+					$sth->execute($urlmd5Candidate);
+					$sth->bind_columns(undef, \$persistentRating, \$persistentLastRated, \$persistentPreviousRating);
+					if ($sth->fetch()) {
+						$matchedUrlmd5 = $urlmd5Candidate;
+						last;
+					}
+				}
+				$sth->finish();
+			};
+		main::DEBUGLOG && $log->is_debug && $log->debug('persistentRating = '.Data::Dump::dump($persistentRating).' ## persistentLastRated = '.Data::Dump::dump($persistentLastRated).' ## persistentPreviousRating = '.Data::Dump::dump($persistentPreviousRating));
+
+		if (!defined($persistentLastRated)) {
+			if (!defined($matchedUrlmd5)) {
+				$log->warn("Couldn't retrieve information for this track.\nCould be part of a (client) playlist whose track references are no longer valid after a *rescan*.\nTrack url = ".$url."\nTrack urlmd5 = ".Data::Dump::dump($track->urlmd5));
 				return;
 			}
-		}
-
-		if ($persistentLastRated == 0) {
-			main::DEBUGLOG && $log->is_debug && $log->debug('Track "'.$track->title.'" has not been rated before.') if $debugVerbose;
+			main::DEBUGLOG && $log->is_debug && $log->debug('Track "'.$track->title.'" has no rating history recorded.') if $debugVerbose;
 			return;
 		}
 
 		my $displayText = '';
 		if ($infoItem eq 'lastRated') {
-			$returnVal = Slim::Utils::DateTime::longDateF($persistentLastRated).", ".Slim::Utils::DateTime::timeF($persistentLastRated);
+			$returnVal = defined($persistentLastRated) ? Slim::Utils::DateTime::longDateF($persistentLastRated).", ".Slim::Utils::DateTime::timeF($persistentLastRated) : string('PLUGIN_RATINGSLIGHT_LANGSTRING_UNKNOWN');
 			$displayText = string('PLUGIN_RATINGSLIGHT_LANGSTRING_LASTRATED').': '.$returnVal;
 		}
 
 		if ($infoItem eq 'prevRating') {
-			$returnVal = $persistentPreviousRating ? adjustRating($persistentPreviousRating)/20 : 0;
+			$returnVal = defined($persistentPreviousRating) ? adjustRating($persistentPreviousRating)/20 : string('PLUGIN_RATINGSLIGHT_LANGSTRING_UNKNOWN');
 			$displayText = string('PLUGIN_RATINGSLIGHT_LANGSTRING_PREVIOUSRATING').': '.$returnVal;
 		}
 
@@ -756,7 +755,7 @@ sub trackInfoHandlerRating {
 			type => 'text',
 			name => $displayText,
 			trackid => $track->id,
-			urlmd5 => $urlmd5,
+			urlmd5 => $matchedUrlmd5 // $urlmd5Candidates[0],
 			infoitem => $infoItem,
 		};
 		return $item;
@@ -875,9 +874,6 @@ sub regTrackInfoHandlerRating {
 		},
 	));
 }
-
-
-
 
 sub regContextMenuItems {
 	Slim::Menu::TrackInfo->registerInfoProvider(ratingslightmoreratedtracksbyartist => (
@@ -2036,7 +2032,7 @@ sub delayedTasks {
 	}
 }
 
-sub adjustRatings {
+sub adjustRatingsInDb {
 	if ($prefs->get('status_adjustingratings') == 1) {
 		$log->warn('RL is already adjusting ratings, please wait for the process to finish');
 		return;
@@ -2058,7 +2054,7 @@ sub adjustRatings {
 		$sth->finish();
 	};
 	if ($@) {
-		$log->error("Database error in adjustRatings: $@");
+		$log->error("Database error: $@");
 	}
 
 	my $adjustedCount = 0;
@@ -2113,7 +2109,7 @@ sub backupScheduler {
 				} else {
 					main::DEBUGLOG && $log->is_debug && $log->debug('Starting scheduled backup');
 					eval {
-						Slim::Utils::Scheduler::add_task(\&createBackup);
+						createBackup();
 					};
 					if ($@) {
 						$log->error("Scheduled backup failed: $@");
@@ -2139,13 +2135,17 @@ sub restoreFromBackup {
 		return;
 	}
 
-	if ($prefs->get('status_restoringfrombackup') == 1) {
-		$log->warn('Restore is already in progress, please wait for the previous restore to finish');
+	if ($prefs->get('status_backuprestore')) {
+		$log->warn('A restore is already in progress, please wait for it to finish');
 		return;
 	}
 
-	$prefs->set('status_restoringfrombackup', 1);
+	$prefs->set('status_backuprestore', 2);
+	$prefs->set('backuprestoreprogresspercentage', 0);
+	$prefs->set('backuprestoreresult', 0);
 	$restoreCount = 0;
+	$restoreErrors = 0;
+	$restoreProcessedCount = 0;
 	if ($backupFH) {
 		close($backupFH);
 		$backupFH = undef;
@@ -2159,12 +2159,43 @@ sub restoreFromBackup {
 	if ($restorefile) {
 		clearAllRatings(1) if $prefs->get('clearallbeforerestore');
 		main::INFOLOG && $log->is_info && $log->info('Starting restore from backup file');
+		$restoreTotalCount = _getRLBackupTrackCount($restorefile);
 		initRestore();
 		Slim::Utils::Scheduler::add_task(\&restoreScanFunction);
 	} else {
 		$log->error('Error: No backup file specified');
-		$prefs->set('status_restoringfrombackup', 0);
+		$prefs->set('backuprestoreresult', 4);
+		$prefs->set('status_backuprestore', 0);
 	}
+}
+
+sub _getRLBackupTrackCount {
+	my $xmlFile = shift;
+	my $count;
+
+	open(my $fh, '<', $xmlFile) or return 0;
+	for (1..15) {
+		my $line = <$fh>;
+		last unless defined $line;
+		if ($line =~ /<trackcount>(\d+)<\/trackcount>/) {
+			$count = $1;
+			last;
+		}
+	}
+	close($fh);
+
+	if (!defined $count) {
+		main::DEBUGLOG && $log->is_debug && $log->debug('No trackcount element found in backup file - falling back to counting <track> occurrences (older backup format)');
+		open(my $fh2, '<', $xmlFile) or return 0;
+		$count = 0;
+		while (my $line = <$fh2>) {
+			my $matches = () = $line =~ /<track>/g;
+			$count += $matches;
+		}
+		close($fh2);
+	}
+
+	return $count || 0;
 }
 
 sub initRestore {
@@ -2190,7 +2221,8 @@ sub restoreScanFunction {
 	if ($opened != 1) {
 		open($backupFH, '<', $restorefile) || do {
 			$log->error('Couldn\'t open backup file: '.$restorefile);
-			$prefs->set('status_restoringfrombackup', 0);
+			$prefs->set('backuprestoreresult', 4);
+			$prefs->set('status_backuprestore', 0);
 			return 0;
 		};
 		$opened = 1;
@@ -2223,12 +2255,19 @@ sub restoreScanFunction {
 		}
 		$line //= '';
 		$line =~ s/&#(\d*);/escape(chr($1))/ge;
-		$backupParserNB->parse_more($line);
-		return 1;
+		eval { $backupParserNB->parse_more($line) };
+		if ($@) {
+			$log->error("Error parsing backup file: $@");
+			$restoreErrors++;
+			doneScanning();
+			return 0;
+		}
+		return defined($backupParserNB) ? 1 : 0;
 	}
 
 	$log->warn('No backupParserNB defined!');
-	$prefs->set('status_restoringfrombackup', 0);
+	$prefs->set('backuprestoreresult', 4);
+	$prefs->set('status_backuprestore', 0);
 	return 0;
 }
 
@@ -2246,10 +2285,10 @@ sub doneScanning {
 	}
 
 	main::INFOLOG && $log->is_info && $log->info('Restore completed after '.(time() - $restorestarted).' seconds. Restored '.$restoreCount.($restoreCount == 1 ? ' track.' : ' tracks.').' Restore count listed here may be slightly higher (e.g. +1) than the correct number stated in the backup file.');
-	sleep 1.5;
-	Slim::Utils::Scheduler::remove_task(\&restoreScanFunction);
 	$prefs->set('isTSlegacyBackupFile', 0);
-	$prefs->set('status_restoringfrombackup', 0);
+	$prefs->set('backuprestoreprogresspercentage', 100);
+	$prefs->set('backuprestoreresult', $restoreErrors > 0 ? 4 : 3);
+	$prefs->set('status_backuprestore', 0);
 	refreshAll();
 }
 
@@ -2293,13 +2332,13 @@ sub handleEndElement {
 		my $relTrackURL = $isTSlegacyBackupFile ? undef : $curTrack->{'relurl'};
 		my $backupTrackURLmd5 = $isTSlegacyBackupFile ? undef : $curTrack->{'urlmd5'};
 		my $backupTrackMBID = $isTSlegacyBackupFile ? $curTrack->{'musicbrainzId'} : $curTrack->{'musicbrainzid'};
-		my $rating100ScaleValue = $curTrack->{'rating'} || 0;
+		my $rating100ScaleValue = (!defined($curTrack->{'rating'}) || $curTrack->{'rating'} eq '' || $curTrack->{'rating'} !~ /^\d+$/) ? undef : $curTrack->{'rating'} + 0;
 		my $lastRatedValue = toIntTimestamp($curTrack->{'lastRated'});
-		my $previousRatingValue = defined($curTrack->{'prevRating'}) ? $curTrack->{'prevRating'} : undef;
+		my $previousRatingValue = (!defined($curTrack->{'prevRating'}) || $curTrack->{'prevRating'} eq '' || $curTrack->{'prevRating'} !~ /^\d+$/) ? undef : $curTrack->{'prevRating'} + 0;
 
 		if (($selectiverestore == 0 || $isTSlegacyBackupFile) || ($selectiverestore == 1 && !$isRemote) || ($selectiverestore == 2 && $isRemote)) {
 
-			if ($rating100ScaleValue || $lastRatedValue) {
+			if (defined($rating100ScaleValue) || defined($lastRatedValue)) {
 				# check if FULL file url is valid
 				# Otherwise, try RELATIVE file URL with current media dirs
 				$fullTrackURL = Encode::decode('utf8', unescape($fullTrackURL));
@@ -2352,21 +2391,53 @@ sub handleEndElement {
 					}
 				}
 
-				# ensure urlmd5 is always set if trackURL is known
-				$trackURLmd5 = md5_hex($trackURL) if (!$trackURLmd5 && $trackURL);
+				# ensure urlmd5 is always set if trackURL is known, and try urlmd5 fallback candidates against the database
+				if ($trackURL) {
+					my @urlmd5Candidates;
+					push @urlmd5Candidates, $trackURLmd5 if $trackURLmd5;
+					my $freshUrlmd5 = md5_hex($trackURL);
+					push @urlmd5Candidates, $freshUrlmd5 unless grep { $_ eq $freshUrlmd5 } @urlmd5Candidates;
+					if (Slim::Utils::Misc->can('safe_md5_hex')) {
+						my $freshSafeUrlmd5 = Slim::Utils::Misc::safe_md5_hex($trackURL);
+						push @urlmd5Candidates, $freshSafeUrlmd5 unless grep { $_ eq $freshSafeUrlmd5 } @urlmd5Candidates;
+					}
+
+					if (!$track) {
+						for my $urlmd5Candidate (@urlmd5Candidates) {
+							$track = Slim::Schema->rs('Track')->single({'urlmd5' => $urlmd5Candidate});
+							if ($track) {
+								$trackURLmd5 = $urlmd5Candidate;
+								last;
+							}
+						}
+					}
+
+					$trackURLmd5 = $urlmd5Candidates[0] unless $trackURLmd5;
+				}
 
 				if (!$trackURL && !$trackURLmd5 && !$backupTrackMBID) {
 					$log->warn("No valid urlmd5, url or musicbrainz id for this track. Can't restore values for file with restore URL = ".Data::Dump::dump($fullTrackURL));
+					$restoreErrors++;
 				} else {
 					if ($trackURLmd5 && $trackURLmd5 !~ /^[a-f0-9]{32}$/i) {
 						$log->error("Invalid urlmd5 value, skipping track: $trackURLmd5");
+						$restoreErrors++;
 					} else {
-						main::DEBUGLOG && $log->is_debug && $log->debug("Setting rating $rating100ScaleValue for track: ".Data::Dump::dump($trackURL));
-						my $writeSuccess = writeRatingToDB(undef, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, 1, $lastRatedValue, $previousRatingValue);
-						$restoreCount++ if $writeSuccess;
+						main::DEBUGLOG && $log->is_debug && $log->debug("Setting rating ".($rating100ScaleValue // 'NULL')." for track: ".Data::Dump::dump($trackURL));
+						my $writeSuccess = writeRatingToDB(undef, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, 1, $lastRatedValue, $previousRatingValue, 1);
+						if ($writeSuccess) {
+							$restoreCount++;
+						} else {
+							$restoreErrors++;
+						}
 					}
 				}
 			}
+		}
+
+		$restoreProcessedCount++;
+		if ($restoreTotalCount) {
+			$prefs->set('backuprestoreprogresspercentage', sprintf("%.0f", ($restoreProcessedCount / $restoreTotalCount) * 100));
 		}
 		%restoreitem = ();
 	}
@@ -2835,7 +2906,7 @@ sub getFunctions {
 				$rating100ScaleValue = $currentRating + 20 if $digit == 7;
 				$rating100ScaleValue = $currentRating - 10 if $digit == 8;
 				$rating100ScaleValue = $currentRating + 10 if $digit == 9;
-				$rating100ScaleValue = ratingSanityCheck($rating100ScaleValue);
+				$rating100ScaleValue = adjustRating($rating100ScaleValue, 1);
 			}
 			main::DEBUGLOG && $log->is_debug && $log->debug('IR command: button = '.$button.' ## digit = '.$digit.' ## trackURL = '.$curTrack->url.' ## track ID = '.$curTrack->id.' ## rating = '.$rating100ScaleValue);
 			VFD_deviceRating($client, undef, undef, $curTrack->id, $curTrack->url, $curTrack, $rating100ScaleValue);
@@ -3017,11 +3088,11 @@ sub clearAllRatings {
 ###### set/get rating ######
 
 sub writeRatingToDB {
-	my ($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, $dontlogthis, $restoreLastRated, $restorePrevRating) = @_;
-	main::DEBUGLOG && $log->is_debug && $log->debug("trackID = ".Data::Dump::dump($trackID)."\ntrackURL = ".Data::Dump::dump($trackURL)."\ntrackURLmd5 = ".Data::Dump::dump($trackURLmd5)."\ntrack obj = ".($track ? 1 : 0)."\nrating = ".Data::Dump::dump($rating100ScaleValue)."\ndontlogthis = ".Data::Dump::dump($dontlogthis)."\nlast rated restore value = ".Data::Dump::dump($restoreLastRated)."\nprevious rating restore value = ".Data::Dump::dump($restorePrevRating));
+	my ($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, $dontlogthis, $restoreLastRated, $restorePrevRating, $isRestoreCall) = @_;
+	main::DEBUGLOG && $log->is_debug && $log->debug("trackID = ".Data::Dump::dump($trackID)."\ntrackURL = ".Data::Dump::dump($trackURL)."\ntrackURLmd5 = ".Data::Dump::dump($trackURLmd5)."\ntrack obj = ".($track ? 1 : 0)."\nrating = ".Data::Dump::dump($rating100ScaleValue)."\ndontlogthis = ".Data::Dump::dump($dontlogthis)."\nlast rated restore value = ".Data::Dump::dump($restoreLastRated)."\nprevious rating restore value = ".Data::Dump::dump($restorePrevRating)."\nisRestoreCall = ".Data::Dump::dump($isRestoreCall));
 
-	if (($rating100ScaleValue < 0) || ($rating100ScaleValue > 100)) {
-		$rating100ScaleValue = ratingSanityCheck($rating100ScaleValue);
+	if (defined($rating100ScaleValue) && (($rating100ScaleValue < 0) || ($rating100ScaleValue > 100))) {
+		$rating100ScaleValue = adjustRating($rating100ScaleValue, 1);
 	}
 
 	# use trackID, trackURLmd5 or trackURL to find track obj
@@ -3039,13 +3110,14 @@ sub writeRatingToDB {
 	}
 
 	if ($track && blessed $track && (UNIVERSAL::isa($track, 'Slim::Schema::Track') || UNIVERSAL::isa($track, 'Slim::Schema::RemoteTrack'))) {
-		main::DEBUGLOG && $log->is_debug && $log->debug("Trying to set rating $rating100ScaleValue for: ".$track->url);
-		my $previousRating100ScaleValue = $restorePrevRating ? $restorePrevRating : getRatingFromDB($track, 1);
-		if (!defined($restorePrevRating) && ($rating100ScaleValue == $previousRating100ScaleValue)) {
+		main::DEBUGLOG && $log->is_debug && $log->debug("Trying to set rating ".($rating100ScaleValue // 'NULL')." for: ".$track->url);
+		my $previousRating100ScaleValue = defined($restorePrevRating) ? $restorePrevRating : ($isRestoreCall ? undef : getRatingFromDB($track, 1));
+		if (!$isRestoreCall && defined($rating100ScaleValue) && ($rating100ScaleValue == $previousRating100ScaleValue)) {
 			main::DEBUGLOG && $log->is_debug && $log->debug("Skipping database write - track rating not updated: requested value matches existing.");
-			return;
+			return 1;
 		}
-		my $ratingTime = $restoreLastRated ? toIntTimestamp($restoreLastRated) : int(time());
+
+		my $ratingTime = defined($restoreLastRated) ? toIntTimestamp($restoreLastRated) : ($isRestoreCall ? undef : int(time()));
 		my $dbh = Slim::Schema->dbh;
 		eval {
 			$dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where urlmd5 = ?',
@@ -3152,8 +3224,7 @@ sub getRating {
 }
 
 sub getRatingTextLine {
-	my $rating100ScaleValue = shift;
-	my $appended = shift;
+	my ($rating100ScaleValue, $appended) = @_;
 	my $nobreakspace = HTML::Entities::decode_entities('&#xa0;'); # "NO-BREAK SPACE" - HTML Entity (hex): &#xa0;
 	my $displayratingchar = $prefs->get('displayratingchar'); # 0 = common text star *, 1 = "blackstar" - HTML Entity (hex): &#x2605
 	my $ratingchar = $displayratingchar ? HTML::Entities::decode_entities('&#x2605;') : ' *';
@@ -3188,10 +3259,10 @@ sub getRatingTextLine {
 }
 
 sub adjustRating {
-	my $rating100ScaleValue = shift;
+	my ($rating100ScaleValue, $sanityCheckOnly) = @_;
 	return 0 if ((!defined $rating100ScaleValue) || ($rating100ScaleValue < 0));
 	return 100 if $rating100ScaleValue > 100;
-	$rating100ScaleValue = int(($rating100ScaleValue + 5)/10) * 10;
+	$rating100ScaleValue = int(($rating100ScaleValue + 5)/10) * 10 unless $sanityCheckOnly;
 	return $rating100ScaleValue;
 }
 
@@ -3210,13 +3281,6 @@ sub ratingValidator {
 		return undef;
 	}
 	return $rating;
-}
-
-sub ratingSanityCheck {
-	my $rating100ScaleValue = shift;
-	return 0 if ((!defined $rating100ScaleValue) || ($rating100ScaleValue < 0));
-	return 100 if $rating100ScaleValue > 100;
-	return $rating100ScaleValue;
 }
 
 
@@ -3244,8 +3308,7 @@ sub getTitleFormat_Rating {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Slim::Schema->find found no blessed track object for id. Trying to retrieve track object with url: '.Data::Dump::dump($trackURL));
 			if (defined ($trackURL)) {
 				if (Slim::Music::Info::isRemoteURL($trackURL) == 1) {
-					# TODO: replace with Slim::Schema->libraryObjectForUrl($trackURL) once available in a stable LMS release
-					$track = Slim::Schema->_retrieveTrack($trackURL);
+					$track = Slim::Schema->can('libraryObjectForUrl') ? Slim::Schema->libraryObjectForUrl($trackURL) : Slim::Schema->_retrieveTrack($trackURL);
 					main::DEBUGLOG && $log->is_debug && $log->debug('Track is remote. Retrieved trackObj = '.Data::Dump::dump($track));
 				} else {
 					$track = Slim::Schema->rs('Track')->single({'url' => $trackURL});
@@ -3258,14 +3321,9 @@ sub getTitleFormat_Rating {
 	}
 
 	if ($track) {
-		my $rating100ScaleValue = 0;
-		$rating100ScaleValue = getRatingFromDB($track);
+		my $rating100ScaleValue = getRatingFromDB($track);
 		if ($rating100ScaleValue > 4) {
-			if ($appended) {
-				$ratingtext = getRatingTextLine($rating100ScaleValue, 'appended');
-			} else {
-				$ratingtext = getRatingTextLine($rating100ScaleValue);
-			}
+			$ratingtext = getRatingTextLine($rating100ScaleValue, $appended ? 'appended' : () );
 		}
 	}
 	return $ratingtext;

@@ -21,11 +21,8 @@ use Slim::Utils::Strings;
 my $prefs = preferences('plugin.ratingslight');
 my $log = logger('plugin.ratingslight');
 
-my $plugin;
-
 sub new {
-	my $class = shift;
-	$plugin = shift;
+	my ($class, $plugin) = @_;
 	$class->SUPER::new($plugin);
 }
 
@@ -70,7 +67,11 @@ sub handler {
 			$result = $class->SUPER::handler($client, $paramRef);
 			$callHandler = 0;
 		}
-		createBackup();
+		if (Slim::Music::Import->stillScanning) {
+			$log->warn('Cannot start a backup while an LMS scan is in progress');
+		} else {
+			createBackup();
+		}
 	} elsif ($paramRef->{'restore'}) {
 		my $selectedfile = $paramRef->{'pref_restorefile'};
 		if ($callHandler) {
@@ -83,6 +84,8 @@ sub handler {
 			$paramRef->{'restoremissingfile'} = 1;
 		} elsif ($selectedfile !~ /\.xml/i) {
 			$paramRef->{'restoremissingfile'} = 2;
+		} elsif (Slim::Music::Import->stillScanning) {
+			$log->warn('Cannot start a restore while an LMS scan is in progress');
 		} else {
 			$prefs->set('restorefile', $selectedfile);
 			Plugins::RatingsLight::Plugin::restoreFromBackup();
@@ -97,6 +100,9 @@ sub beforeRender {
 	my ($class, $paramRef) = @_;
 	$paramRef->{'restorefilefolder'} = $prefs->get('rlfolderpath');
 	$paramRef->{lastsuccessfulbackup} = Slim::Utils::DateTime::longDateF($prefs->get('lastbackup')).", ".Slim::Utils::DateTime::timeF($prefs->get('lastbackup')) if $prefs->get('lastbackup');
+	$paramRef->{'squeezebox_server_jsondatareq'} = '/jsonrpc.js';
+	$paramRef->{'activebackuprestore'} = 1 if $prefs->get('status_backuprestore');
+	$paramRef->{'activelmsscan'} = 1 if (!Slim::Schema::hasLibrary() || Slim::Music::Import->stillScanning);
 }
 
 sub trim {

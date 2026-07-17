@@ -20,11 +20,8 @@ use Slim::Utils::Strings;
 my $prefs = preferences('plugin.ratingslight');
 my $log = logger('plugin.ratingslight');
 
-my $plugin;
-
 sub new {
-	my $class = shift;
-	$plugin = shift;
+	my ($class, $plugin) = @_;
 	$class->SUPER::new($plugin,1); # 1 = default page, skip addPageFunction registration
 }
 
@@ -70,7 +67,7 @@ sub handler {
 		if ($callHandler) {
 			$result = $class->SUPER::handler($client, $paramRef);
 		}
-		Plugins::RatingsLight::Plugin::adjustRatings();
+		Plugins::RatingsLight::Plugin::adjustRatingsInDb();
 	} elsif ($callHandler) {
 		$result = $class->SUPER::handler($client, $paramRef);
 	}

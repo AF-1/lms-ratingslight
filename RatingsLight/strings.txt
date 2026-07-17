@@ -26,6 +26,9 @@ PLUGIN_RATINGSLIGHT_LANGSTRING_UNRATED
 	EN	unrated
 	DE	unbewertet
 
+PLUGIN_RATINGSLIGHT_LANGSTRING_UNKNOWN
+	EN	unknown
+
 PLUGIN_RATINGSLIGHT_LANGSTRING_LASTRATED
 	EN	Last Rated
 
@@ -468,8 +471,8 @@ PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_BUTTON
 	DE	Jetzt sichern
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_INPROGRESS
-	EN	creating backup...
-	DE	erzeuge Sicherung...
+	EN	creating backup
+	DE	erzeuge Sicherung
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SCHEDULED_BACKUPS
 	EN	Scheduled backups
@@ -552,8 +555,28 @@ PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOXMLFILE
 	DE	Bitte wähle eine gültige XML-Datei aus, die mit Ratings Light erzeugt wurde.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_INPROGRESS
-	EN	preparing to start restore as a background task...
-	DE	Start der Wiederherstellung als Hintergrundaufgabe vorbereiten...
+	EN	restoring
+	DE	wiederherstellen
+
+PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SUCCESS
+	EN	Backup successful
+	DE	Sicherung erfolgreich
+
+PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_ERROR
+	EN	Backup failed - please check the server log
+	DE	Sicherung fehlgeschlagen - bitte Server-Log prüfen
+
+PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SUCCESS
+	EN	Restore successful
+	DE	Wiederherstellung erfolgreich
+
+PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_ERROR
+	EN	Restore failed - please check the server log
+	DE	Wiederherstellung fehlgeschlagen - bitte Server-Log prüfen
+
+PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_LMSSCANINPROGRESS
+	EN	Active LMS scan detected - backup/restore temporarily disabled
+	DE	Aktiver LMS-Scan erkannt - Sicherung/Wiederherstellung vorübergehend deaktiviert
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTIVERESTORE
 	EN	Choose what to restore

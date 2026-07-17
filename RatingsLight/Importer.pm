@@ -17,13 +17,12 @@ use Plugins::RatingsLight::Common ':all';
 
 my $log = logger('plugin.ratingslight');
 my $prefs = preferences('plugin.ratingslight');
-my $serverPrefs = preferences('server');
 
 sub initPlugin {
 	main::DEBUGLOG && $log->is_debug && $log->debug('importer module init');
 	if ($prefs->get('prescanbackup')) {
 		main::DEBUGLOG && $log->is_debug && $log->debug('creating pre-scan backup before scan process starts');
-		createBackup();
+		createBackup(1);
 	}
 	toggleUseImporter();
 }

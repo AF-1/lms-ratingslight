@@ -23,6 +23,7 @@ use File::stat;
 use POSIX qw(strftime);
 use Time::HiRes qw(time);
 use Path::Class;
+use FileHandle;
 
 use base 'Exporter';
 our %EXPORT_TAGS = (
@@ -34,86 +35,116 @@ my $log = logger('plugin.ratingslight');
 my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
+my ($backupQueue, $backupOutput, $backupStarted, $backupQueueOriginalSize, $backupTotalCount, $ignoredTracksCount);
+
 sub createBackup {
-	my $status_creatingbackup = $prefs->get('status_creatingbackup');
-	if ($status_creatingbackup == 1) {
-		$log->warn('A backup is already in progress, please wait for the previous backup to finish');
+	my $importerCall = shift;
+
+	if ($prefs->get('status_backuprestore')) {
+		$log->warn('A backup is already in progress, please wait for it to finish');
 		return;
 	}
-	$prefs->set('status_creatingbackup', 1);
+	$prefs->set('status_backuprestore', 1);
+	$prefs->set('backuprestoreprogresspercentage', 0);
+	$prefs->set('backuprestoreresult', 0);
 
 	my $backupDir = $prefs->get('rlfolderpath');
 	my $dbh = Slim::Schema->dbh;
 	my ($trackURL, $trackURLmd5, $trackRating, $trackLastRated, $trackPrevRating, $trackRemote, $trackExtid, $trackMBID);
-	my $started = time();
+	$backupStarted = time();
 	my $backuptimestamp = strftime "%Y-%m-%d %H:%M:%S", localtime time;
 	my $filename_timestamp = strftime "%Y%m%d-%H%M", localtime time;
 
-	my $sth = $dbh->prepare("select tracks.url, tracks.urlmd5, tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating, tracks.remote, tracks.extid, tracks_persistent.musicbrainz_id from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating > 0 or tracks_persistent.lastRated is not null)");
-	my @ratedTracks = ();
+	$backupQueue = [];
+	$ignoredTracksCount = 0;
 	eval {
+		my $sth = $dbh->prepare("select tracks.url, tracks.urlmd5, tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating, tracks.remote, tracks.extid, tracks_persistent.musicbrainz_id from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating > 0 or tracks_persistent.lastRated is not null)");
 		$sth->execute();
 		$sth->bind_columns(undef, \$trackURL, \$trackURLmd5, \$trackRating, \$trackLastRated, \$trackPrevRating, \$trackRemote, \$trackExtid, \$trackMBID);
 		while ($sth->fetch()) {
-			push (@ratedTracks, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'lastRated' => $trackLastRated, 'prevRating' => $trackPrevRating, 'remote' => $trackRemote, 'extid' => $trackExtid, 'musicbrainzid' => $trackMBID});
+			push (@{$backupQueue}, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'lastRated' => $trackLastRated, 'prevRating' => $trackPrevRating, 'remote' => $trackRemote, 'extid' => $trackExtid, 'musicbrainzid' => $trackMBID});
 		}
+		$sth->finish();
 	};
 	if ($@) {
 		$log->error("Database error during backup: $@");
-		$prefs->set('status_creatingbackup', 0);
+		$prefs->set('backuprestoreresult', 2);
+		$prefs->set('status_backuprestore', 0);
 		return;
 	}
-	$sth->finish();
 
-	if (@ratedTracks) {
+	if (@{$backupQueue}) {
+		$backupQueueOriginalSize = scalar(@{$backupQueue});
+		$backupTotalCount = scalar(grep { !(($_->{'remote'} == 1) && (!defined($_->{'extid'}))) } @{$backupQueue});
 		my $filename = catfile($backupDir, 'RL_Backup_'.$filename_timestamp.'.xml');
-		my $output = FileHandle->new($filename, '>:utf8') or do {
+		$backupOutput = FileHandle->new($filename, '>:utf8') or do {
 			$log->error('Could not open '.$filename.' for writing. Does the RatingsLight folder exist? Does LMS have read/write permissions (755) for the (parent) folder?');
-			$prefs->set('status_creatingbackup', 0);
+			$prefs->set('backuprestoreresult', 2);
+			$prefs->set('status_backuprestore', 0);
 			return;
 		};
-		my $trackcount = scalar(@ratedTracks);
-		my $ignoredtracks = 0;
-		main::DEBUGLOG && $log->is_debug && $log->debug('Found '.$trackcount.($trackcount == 1 ? ' track' : ' tracks').' with rating data in the LMS persistent database');
+		main::DEBUGLOG && $log->is_debug && $log->debug('Found '.$backupTotalCount.' track(s) with rating data in the LMS persistent database');
 
-		print $output "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
-		print $output "<!-- Backup of Rating Data -->\n";
-		print $output "<!-- ".$backuptimestamp." -->\n";
-		print $output "<RatingsLight>\n";
-		for my $ratedTrack (@ratedTracks) {
-			my $BACKUPtrackURL = $ratedTrack->{'url'};
-			if (($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) {
-				main::INFOLOG && $log->is_info && $log->info('Warning: ignoring this track. Track is remote but not part of LMS library: '.$BACKUPtrackURL);
-				$trackcount--;
-				$ignoredtracks++;
-				next;
-			}
-			my $urlmd5 = $ratedTrack->{'urlmd5'};
-			my $rating100ScaleValue = $ratedTrack->{'rating'} || '';
-			my $lastRatedValue = toIntTimestamp($ratedTrack->{'lastRated'}) // '';
-			my $previousRatingValue = defined($ratedTrack->{'prevRating'}) ? $ratedTrack->{'prevRating'} : '';
-			my $remote = $ratedTrack->{'remote'};
-			my $BACKUPrelFilePath = ($remote == 0 ? getRelFilePath($BACKUPtrackURL) : '');
-			$BACKUPtrackURL = escape($BACKUPtrackURL);
-			$BACKUPrelFilePath = $BACKUPrelFilePath ? escape($BACKUPrelFilePath) : '';
-			my $BACKUPtrackMBID = $ratedTrack->{'musicbrainzid'} || '';
-			print $output "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<urlmd5>".$urlmd5."</urlmd5>\n\t\t<relurl>".$BACKUPrelFilePath."</relurl>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<lastRated>".$lastRatedValue."</lastRated>\n\t\t<prevRating>".$previousRatingValue."</prevRating>\n\t\t<remote>".$remote."</remote>\n\t\t<musicbrainzid>".$BACKUPtrackMBID."</musicbrainzid>\n\t</track>\n";
+		print $backupOutput "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
+		print $backupOutput "<!-- Backup of Rating Data -->\n";
+		print $backupOutput "<!-- ".$backuptimestamp." -->\n";
+		print $backupOutput "<RatingsLight>\n";
+		print $backupOutput "\t<trackcount>".$backupTotalCount."</trackcount>\n";
+
+		if ($importerCall) {
+			while (writeBackupChunk()) {}
+		} else {
+			Slim::Utils::Scheduler::add_task(\&writeBackupChunk);
 		}
-		print $output "</RatingsLight>\n";
-
-		if ($ignoredtracks > 0) {
-			print $output "<!-- WARNING: ".$ignoredtracks.($ignoredtracks == 1 ? " track was" : " tracks were")." ignored. Check server.log for more information. -->\n";
-		}
-		print $output "<!-- This backup contains ".$trackcount.($trackcount == 1 ? " track" : " tracks")." -->\n";
-		close $output;
-		main::DEBUGLOG && $log->is_debug && $log->debug('Backup completed after '.(time() - $started).' seconds.');
-
-		$prefs->set('lastbackup', int(time()));
-		cleanupBackups();
 	} else {
 		main::INFOLOG && $log->is_info && $log->info('Found no tracks with rating data in the LMS database.');
+		$prefs->set('backuprestoreresult', 1);
+		$prefs->set('status_backuprestore', 0);
 	}
-	$prefs->set('status_creatingbackup', 0);
+}
+
+sub writeBackupChunk {
+	if (my $ratedTrack = shift(@{$backupQueue})) {
+		my $BACKUPtrackURL = $ratedTrack->{'url'};
+		if (($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) {
+			main::INFOLOG && $log->is_info && $log->info('Warning: ignoring this track. Track is remote but not part of LMS library: '.$BACKUPtrackURL);
+			$ignoredTracksCount++;
+			_advanceBackupProgress();
+			return 1;
+		}
+		my $urlmd5 = $ratedTrack->{'urlmd5'};
+		my $rating100ScaleValue = $ratedTrack->{'rating'} // '';
+		my $lastRatedValue = toIntTimestamp($ratedTrack->{'lastRated'}) // '';
+		my $previousRatingValue = $ratedTrack->{'prevRating'} // '';
+		my $remote = $ratedTrack->{'remote'};
+		my $BACKUPrelFilePath = ($remote == 0 ? getRelFilePath($BACKUPtrackURL) : '');
+		$BACKUPtrackURL = escape($BACKUPtrackURL);
+		$BACKUPrelFilePath = $BACKUPrelFilePath ? escape($BACKUPrelFilePath) : '';
+		my $BACKUPtrackMBID = $ratedTrack->{'musicbrainzid'} || '';
+		print $backupOutput "\t<track>\n\t\t<url>".$BACKUPtrackURL."</url>\n\t\t<urlmd5>".$urlmd5."</urlmd5>\n\t\t<relurl>".$BACKUPrelFilePath."</relurl>\n\t\t<rating>".$rating100ScaleValue."</rating>\n\t\t<lastRated>".$lastRatedValue."</lastRated>\n\t\t<prevRating>".$previousRatingValue."</prevRating>\n\t\t<remote>".$remote."</remote>\n\t\t<musicbrainzid>".$BACKUPtrackMBID."</musicbrainzid>\n\t</track>\n";
+		_advanceBackupProgress();
+		return 1;
+	}
+
+	print $backupOutput "</RatingsLight>\n";
+	if ($ignoredTracksCount > 0) {
+		print $backupOutput "<!-- WARNING: ".$ignoredTracksCount.($ignoredTracksCount == 1 ? " track was" : " tracks were")." ignored. Check server.log for more information. -->\n";
+	}
+	close $backupOutput;
+	$backupOutput = undef;
+	main::DEBUGLOG && $log->is_debug && $log->debug('Backup completed after '.(time() - $backupStarted).' seconds.');
+
+	$prefs->set('lastbackup', int(time()));
+	cleanupBackups();
+	$prefs->set('backuprestoreprogresspercentage', 100);
+	$prefs->set('backuprestoreresult', 1);
+	$prefs->set('status_backuprestore', 0);
+	return 0;
+}
+
+sub _advanceBackupProgress {
+	return unless $backupQueueOriginalSize;
+	$prefs->set('backuprestoreprogresspercentage', sprintf("%.0f", (($backupQueueOriginalSize - scalar(@{$backupQueue})) / $backupQueueOriginalSize) * 100));
 }
 
 sub cleanupBackups {
@@ -171,6 +202,22 @@ sub importRatingsFromCommentTags {
 	my $dbh = Slim::Schema->dbh;
 	my $ratingTime = int(time());
 
+	# unrate previously rated tracks if comment tag no longer contains keyword(s)
+	my $ratingkeyword_unrate = '%%'.$rating_keyword_prefix.'_'.$rating_keyword_suffix.'%%';
+	eval {
+		$dbh->do("update tracks_persistent
+			set rating = 0, lastRated = ?, prevRating = tracks_persistent.rating
+			where (tracks_persistent.rating > 0
+				and tracks_persistent.urlmd5 in (
+					select tracks.urlmd5 from tracks
+					left join comments on comments.track = tracks.id
+					where (comments.value not like ? or comments.value is null))
+			)", undef, $ratingTime, $ratingkeyword_unrate);
+	};
+	if ($@) {
+		$log->error("Database error: $@");
+	}
+
 	# rate tracks according to comment tag keyword
 	for my $rating (1..5) {
 		my $rating100scalevalue = $rating * 20;
@@ -187,22 +234,6 @@ sub importRatingsFromCommentTags {
 		if ($@) {
 			$log->error("Database error: $@");
 		}
-	}
-
-	# unrate previously rated tracks if comment tag no longer contains keyword(s)
-	my $ratingkeyword_unrate = '%%'.$rating_keyword_prefix.'_'.$rating_keyword_suffix.'%%';
-	eval {
-		$dbh->do("update tracks_persistent
-			set rating = case when tracks_persistent.prevRating is null then null else 0 end, lastRated = ?, prevRating = tracks_persistent.rating
-			where (tracks_persistent.rating > 0
-				and tracks_persistent.urlmd5 in (
-					select tracks.urlmd5 from tracks
-					left join comments on comments.track = tracks.id
-					where (comments.value not like ? or comments.value is null))
-			)", undef, $ratingTime, $ratingkeyword_unrate);
-	};
-	if ($@) {
-		$log->error("Database error: $@");
 	}
 
 	main::DEBUGLOG && $log->is_debug && $log->debug('Import completed after '.(time() - $started).' seconds.');
@@ -225,7 +256,7 @@ sub importRatingsFromBPMTags {
 	# unrate previously rated tracks in LMS if BPM tag value is zero or null
 	eval {
 		$dbh->do("update tracks_persistent
-			set rating = case when tracks_persistent.prevRating is null then null else 0 end, lastRated = ?, prevRating = tracks_persistent.rating
+			set rating = 0, lastRated = ?, prevRating = tracks_persistent.rating
 			where (tracks_persistent.rating > 0
 				and tracks_persistent.urlmd5 in (
 					select tracks.urlmd5 from tracks

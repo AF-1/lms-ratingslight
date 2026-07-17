@@ -1,12 +1,15 @@
-<script TYPE="text/javascript">
-	function inprogress(elementid) {
-		document.getElementById(elementid).className = "inprogress";
-	}
-</script>
-
 <style>
-@-webkit-keyframes Pulse{from{color:#630030;-webkit-text-shadow:0 0 2px transparent}50%{color:#e33100;-webkit-text-shadow:0 0 5px #e33100}to{color:#630030;-webkit-text-shadow:0 0 2px transparent}}@keyframes Pulse{from{color:#630030;text-shadow:0 0 2px transparent}50%{color:#e33100;text-shadow:0 0 5px #e33100}to{color:#630030;text-shadow:0 0 2px transparent}}.inprogress{padding-left:15px;-webkit-animation-name:Pulse;animation-name:Pulse;-webkit-animation-duration:2s;animation-duration:2s;-webkit-animation-iteration-count:infinite;animation-iteration-count:infinite}
-.status{visibility:hidden;}
+.rlbackuprestorestatuswrapper{padding-left:294px;}
+#rlbackuprestoreprogresswrapper{display:none;width:200px;margin:8px 0 10px 294px;background-color:gray;}
+#rlbackuprestoreprogressbar{width:0%;height:4px;background-color:#04AA6D;}
+:root{--rl-status-main-color:red;--rl-status-text-shadow-color:rgba(0,0,0,0)}
+.rlstatus{color:var(--rl-status-main-color) !important;font-size:calc(1em + 2px);}
+.rlsuccess{color:green !important;font-size:calc(1em + 2px);}
+.rlerror{color:red !important;font-size:calc(1em + 2px);}
+.rlscanstatus:after{font-size:180%;content:' .';animation:rldots 1.8s steps(5,end)infinite}
+@keyframes rldots{0%,20%{color:var(--rl-status-text-shadow-color);text-shadow:.25em 0 0 var(--rl-status-text-shadow-color),.5em 0 0 var(--rl-status-text-shadow-color)}40%{color:var(--rl-status-main-color);text-shadow:.25em 0 0 var(--rl-status-text-shadow-color),.5em 0 0 var(--rl-status-text-shadow-color)}60%{text-shadow:.25em 0 0 var(--rl-status-main-color),.5em 0 0 var(--rl-status-text-shadow-color)}80%,100%{text-shadow:.25em 0 0 var(--rl-status-main-color),.5em 0 0 var(--rl-status-main-color)}}
+.rlstatuswrapper{padding-left:294px;color:red;font-size:calc(1em + 2px);}
+.hide{visibility:hidden;}
 .error{color:red;}
 .recommended{padding-left:15px;color:red;}
 </style>
@@ -16,14 +19,20 @@
 
 [% PROCESS plugins/RatingsLight/settings/subpage_chooser.html %]
 
+<div id="rllmsscanstatus" class="rlstatuswrapper rllmsscan[% IF !activelmsscan %] hide[% END %]">[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_LMSSCANINPROGRESS" | string %]</div>
+<div class="rlbackuprestorestatuswrapper">
+	<span id="rlbackuprestorestatus"></span>
+</div>
+<div id="rlbackuprestoreprogresswrapper"><div id="rlbackuprestoreprogressbar"></div></div>
+<br>
+
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP" desc="" %]
 [% IF lastsuccessfulbackup %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_LASTBACKUP" desc="" %][% lastsuccessfulbackup %][% END %]<br>
 [% END %]
 
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP" desc="PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_DESC" %]
-	<input name="backup" type="submit" class="stdclick" onclick="inprogress('backupstatus');" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_BUTTON" | string %]">
-	<span class='status' id='backupstatus'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_INPROGRESS" | string %]</span>
+	<input name="backup" type="submit" class="stdclick" id="rlbackupbutton" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_BUTTON" | string %]"[% IF activebackuprestore || activelmsscan %] disabled[% END %]>
 [% END %]
 <br>
 
@@ -68,9 +77,8 @@
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE" desc="" %]
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE_DESC" %]
 	<input type="text" class="stdedit selectFile_xml" name="pref_restorefile" id="restorefile" value="[% restorefilefolder %]" size="40"><br><br>
-	<input name="restore" type="submit" class="stdclick" onclick="inprogress('restorestatus');" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_BUTTON" | string %]">
-	<span class='status' id='restorestatus'>[% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_INPROGRESS" | string %]</span>
-	<span class='[% IF restoremissingfile %]error[% ELSE %]status[% END %]'>[% IF restoremissingfile == 1 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_MISSINGFILE" | string %][% ELSIF restoremissingfile == 2 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOXMLFILE" | string %][% ELSE %][% END %]</span>
+	<input name="restore" type="submit" class="stdclick" id="rlrestorebutton" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_BUTTON" | string %]"[% IF activebackuprestore || activelmsscan %] disabled[% END %]>
+	[% IF restoremissingfile %]<span class='error'>[% IF restoremissingfile == 1 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_MISSINGFILE" | string %][% ELSIF restoremissingfile == 2 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOXMLFILE" | string %][% END %]</span>[% END %]
 [% END %]
 <br>
 
@@ -96,3 +104,109 @@
 [% END %]
 
 [% PROCESS settings/footer.html %]
+
+<script type="text/javascript">
+	var rlStatusInterval;
+	var rlLmsScanInterval;
+
+	function rlSetButtonsDisabled(disabled) {
+		document.getElementById('rlbackupbutton').disabled = disabled;
+		var restoreButton = document.getElementById('rlrestorebutton');
+		if (restoreButton) {
+			restoreButton.disabled = disabled;
+		}
+	}
+
+	function rlShowStatus(text, cssClasses) {
+		var el = document.getElementById('rlbackuprestorestatus');
+		el.innerHTML = text;
+		el.classList.remove('rlstatus', 'rlscanstatus', 'rlsuccess', 'rlerror');
+		if (cssClasses) {
+			cssClasses.split(' ').forEach(function(c) { el.classList.add(c); });
+		}
+	}
+
+	function rlGetPrefVal(prefName, val) {
+		const serverjsonurl = "[% squeezebox_server_jsondatareq %]";
+		let prefValue = (val !== undefined) ? val : '?';
+		let vsBody;
+
+		if (prefName == 'rescanprogress') {
+			vsBody = JSON.stringify({
+				id: 1,
+				method: 'slim.request',
+				params: ['', ['rescanprogress', 'rescan']]
+			});
+		} else {
+			vsBody = JSON.stringify({
+				id: 1,
+				method: 'slim.request',
+				params: ['', ['pref', 'plugin.ratingslight:' + prefName, prefValue]]
+			});
+		}
+
+		async function rlGetPrefValFromServer() {
+			let response = await fetch(serverjsonurl, {
+				method: "post",
+				headers: { "Content-Type": "application/json", "Origin": window.location.hostname },
+				body: vsBody
+			});
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+			return await response.json();
+		}
+
+		rlGetPrefValFromServer().then((jsonData) => {
+			if (prefName == 'rescanprogress') {
+				if (jsonData.result["rescan"] == 1) {
+					rlSetButtonsDisabled(true);
+					document.getElementById('rllmsscanstatus').classList.remove('hide');
+				} else {
+					document.getElementById('rllmsscanstatus').classList.add('hide');
+					clearInterval(rlLmsScanInterval);
+					rlGetPrefVal('status_backuprestore');
+					rlStatusInterval = setInterval(function() { rlGetPrefVal('status_backuprestore'); }, 3000);
+				}
+			} else if (prefName == 'status_backuprestore') {
+				let value = Object.values(jsonData.result)[0];
+				if (value == 0) {
+					rlSetButtonsDisabled(false);
+					document.getElementById('rlbackuprestoreprogresswrapper').style.display = 'none';
+					clearInterval(rlStatusInterval);
+					rlGetPrefVal('backuprestoreresult');
+				} else {
+					rlSetButtonsDisabled(true);
+					rlShowStatus(value == 1 ? '[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_MANUAL_BACKUP_INPROGRESS" | string %]' : '[% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_INPROGRESS" | string %]', 'rlstatus rlscanstatus');
+					document.getElementById('rlbackuprestoreprogresswrapper').style.display = 'block';
+					rlGetPrefVal('backuprestoreprogresspercentage');
+				}
+			} else if (prefName == 'backuprestoreprogresspercentage') {
+				let value = Object.values(jsonData.result)[0];
+				document.getElementById('rlbackuprestoreprogressbar').style.width = value + '%';
+			} else if (prefName == 'backuprestoreresult') {
+				let value = Object.values(jsonData.result)[0];
+				if (value == 1) {
+					rlShowStatus('[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_SUCCESS" | string %]', 'rlsuccess');
+					setTimeout(rlGetPrefVal, 3000, 'backuprestoreresult', '0');
+				} else if (value == 2) {
+					rlShowStatus('[% "PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_ERROR" | string %]', 'rlerror');
+					setTimeout(rlGetPrefVal, 3000, 'backuprestoreresult', '0');
+				} else if (value == 3) {
+					rlShowStatus('[% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SUCCESS" | string %]', 'rlsuccess');
+					setTimeout(rlGetPrefVal, 3000, 'backuprestoreresult', '0');
+				} else if (value == 4) {
+					rlShowStatus('[% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_ERROR" | string %]', 'rlerror');
+					setTimeout(rlGetPrefVal, 3000, 'backuprestoreresult', '0');
+				}
+			}
+		}).catch(function(error) {
+			console.log(error);
+		});
+	}
+
+	window.addEventListener("load", () => {
+		rlGetPrefVal('rescanprogress');
+		rlLmsScanInterval = setInterval(function() { rlGetPrefVal('rescanprogress'); }, 10000);
+	});
+</script>

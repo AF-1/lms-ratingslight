@@ -19,14 +19,10 @@ use Slim::Utils::Strings qw(string);
 
 my $prefs = preferences('plugin.ratingslight');
 my $log = logger('plugin.ratingslight');
-
-my $plugin;
 my %subPages = ();
 
 sub new {
-	my $class = shift;
-	$plugin = shift;
-	my $default = shift;
+	my ($class, $plugin, $default) = @_;
 
 	if (!defined($default) || !$default) {
 		Slim::Web::Pages->addPageFunction($class->page, $class);
