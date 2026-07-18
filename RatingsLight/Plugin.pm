@@ -454,7 +454,6 @@ sub rateAlbumTracks_web {
 	my ($client, $params, $callback, $httpClient, $response) = @_;
 
 	my $usehalfstarratings = $prefs->get('usehalfstarratings');
-	my $host = $params->{host} || (Slim::Utils::Network::serverAddr() . ':' . preferences('server')->get('httpport'));
 	$params->{'squeezebox_server_jsondatareq'} = '/jsonrpc.js';
 
 	my $albumID = $params->{albumid};
