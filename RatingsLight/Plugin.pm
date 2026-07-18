@@ -716,18 +716,21 @@ sub trackInfoHandlerRating {
 		}
 
 		my $matchedUrlmd5;
-		eval {
-				my $sth = $dbh->prepare('select tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating from tracks_persistent where tracks_persistent.urlmd5 = ?');
-				for my $urlmd5Candidate (@urlmd5Candidates) {
-					$sth->execute($urlmd5Candidate);
-					$sth->bind_columns(undef, \$persistentRating, \$persistentLastRated, \$persistentPreviousRating);
-					if ($sth->fetch()) {
-						$matchedUrlmd5 = $urlmd5Candidate;
-						last;
-					}
+		my $sth = $dbh->prepare('select tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating from tracks_persistent where tracks_persistent.urlmd5 = ?');
+		for my $urlmd5Candidate (@urlmd5Candidates) {
+			eval {
+				$sth->execute($urlmd5Candidate);
+				$sth->bind_columns(undef, \$persistentRating, \$persistentLastRated, \$persistentPreviousRating);
+				if ($sth->fetch()) {
+					$matchedUrlmd5 = $urlmd5Candidate;
 				}
-				$sth->finish();
 			};
+			$sth->finish();
+			if ($@) {
+				$log->error("Database error: $@");
+			}
+			last if $matchedUrlmd5;
+		}
 		main::DEBUGLOG && $log->is_debug && $log->debug('persistentRating = '.Data::Dump::dump($persistentRating).' ## persistentLastRated = '.Data::Dump::dump($persistentLastRated).' ## persistentPreviousRating = '.Data::Dump::dump($persistentPreviousRating));
 
 		if (!defined($persistentLastRated)) {
