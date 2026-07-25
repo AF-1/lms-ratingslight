@@ -78,7 +78,7 @@
 [% WRAPPER setting title="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE" desc="PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE_DESC" %]
 	<input type="text" class="stdedit selectFile_xml" name="pref_restorefile" id="restorefile" value="[% restorefilefolder %]" size="40"><br><br>
 	<input name="restore" type="submit" class="stdclick" id="rlrestorebutton" value="[% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_BUTTON" | string %]"[% IF activebackuprestore || activelmsscan %] disabled[% END %]>
-	[% IF restoremissingfile %]<span class='error'>[% IF restoremissingfile == 1 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_MISSINGFILE" | string %][% ELSIF restoremissingfile == 2 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOXMLFILE" | string %][% END %]</span>[% END %]
+	[% IF restoremissingfile %]<span class='error' style='padding-left:10px;'>[% IF restoremissingfile == 1 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_MISSINGFILE" | string %][% ELSIF restoremissingfile == 2 %][% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_NOXMLFILE" | string %][% END %]</span>[% END %]
 [% END %]
 <br>
 

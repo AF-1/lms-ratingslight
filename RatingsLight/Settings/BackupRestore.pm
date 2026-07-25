@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 - see LICENSE file
 #
 
-package Plugins::RatingsLight::Settings::Backup;
+package Plugins::RatingsLight::Settings::BackupRestore;
 
 use strict;
 use warnings;
@@ -31,7 +31,7 @@ sub name {
 }
 
 sub page {
-	return Slim::Web::HTTP::CSRF->protectURI('plugins/RatingsLight/settings/backup.html');
+	return Slim::Web::HTTP::CSRF->protectURI('plugins/RatingsLight/settings/backuprestore.html');
 }
 
 sub currentPage {
@@ -39,16 +39,11 @@ sub currentPage {
 }
 
 sub pages {
-	my %page = (
-		'name' => name(),
-		'page' => page(),
-	);
-	my @pages = (\%page);
-	return \@pages;
+	return [{ 'name' => name(), 'page' => page() }];
 }
 
 sub prefs {
-	return ($prefs, qw(autodeletebackups scheduledbackups backuptime prescanbackup backupsdaystokeep backupfilesmin restorefile selectiverestore clearallbeforerestore));
+	return ($prefs, qw(autodeletebackups scheduledbackups backuptime prescanbackup backupsdaystokeep backupfilesmin selectiverestore clearallbeforerestore));
 }
 
 sub handler {
@@ -73,16 +68,21 @@ sub handler {
 			createBackup();
 		}
 	} elsif ($paramRef->{'restore'}) {
-		my $selectedfile = $paramRef->{'pref_restorefile'};
+		my $folderPath = $prefs->get('rlfolderpath');
+		my $selectedfile = $paramRef->{'pref_restorefile'} // '';
+		$selectedfile = '' if $folderPath && $selectedfile eq $folderPath;
 		if ($callHandler) {
 			$paramRef->{'saveSettings'} = 1;
 			$result = $class->SUPER::handler($client, $paramRef);
 			$callHandler = 0;
 		}
 		main::DEBUGLOG && $log->is_debug && $log->debug('restorefile = '.Data::Dump::dump($selectedfile));
-		if (!defined($selectedfile) || $selectedfile eq '') {
+
+		my $validfile = ($selectedfile ne '' && $selectedfile =~ /\.xml$/i && Plugins::RatingsLight::Plugin::hasValidBackupRootElement($selectedfile, 'RatingsLight', 'TrackStat')) ? 1 : 0;
+
+		if ($selectedfile eq '') {
 			$paramRef->{'restoremissingfile'} = 1;
-		} elsif ($selectedfile !~ /\.xml/i) {
+		} elsif (!$validfile) {
 			$paramRef->{'restoremissingfile'} = 2;
 		} elsif (Slim::Music::Import->stillScanning) {
 			$log->warn('Cannot start a restore while an LMS scan is in progress');

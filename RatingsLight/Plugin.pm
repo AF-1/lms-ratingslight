@@ -45,7 +45,7 @@ my $serverPrefs = preferences('server');
 
 my (%restoreitem, $currentKey, $inTrack, $inValue, $backupFH, $backupParser, $backupParserNB, $restorestarted, $material_enabled, $debugVerbose);
 my ($opened, $restoreCount, $restoreErrors) = (0, 0, 0);
-my ($restoreTotalCount, $restoreProcessedCount);
+my ($restoreTotalCount, $restoreProcessedCount, $restoreDone);
 
 sub initPlugin {
 	my $class = shift;
@@ -76,13 +76,13 @@ sub initPlugin {
 
 	if (main::WEBUI) {
 		require Plugins::RatingsLight::Settings::Basic;
-		require Plugins::RatingsLight::Settings::Backup;
+		require Plugins::RatingsLight::Settings::BackupRestore;
 		require Plugins::RatingsLight::Settings::Import;
 		require Plugins::RatingsLight::Settings::Export;
 		require Plugins::RatingsLight::Settings::Menus;
 		require Plugins::RatingsLight::Settings::DSTM;
 		Plugins::RatingsLight::Settings::Basic->new($class);
-		Plugins::RatingsLight::Settings::Backup->new($class);
+		Plugins::RatingsLight::Settings::BackupRestore->new($class);
 		Plugins::RatingsLight::Settings::Import->new($class);
 		Plugins::RatingsLight::Settings::Export->new($class);
 		Plugins::RatingsLight::Settings::Menus->new($class);
@@ -2200,6 +2200,28 @@ sub _getRLBackupTrackCount {
 	return $count || 0;
 }
 
+sub hasValidBackupRootElement {
+	my ($file, @rootElements) = @_;
+	return 0 unless $file && -f $file;
+
+	open(my $fh, '<', $file) or return 0;
+	my $found = 0;
+	for (1..10) {
+		my $line = <$fh>;
+		last unless defined $line;
+		for my $rootElement (@rootElements) {
+			if ($line =~ /<\Q$rootElement\E[\s>]/) {
+				$found = 1;
+				last;
+			}
+		}
+		last if $found;
+	}
+	close($fh);
+
+	return $found;
+}
+
 sub initRestore {
 	if (defined($backupParserNB)) {
 		eval {$backupParserNB->parse_done};
@@ -2230,6 +2252,7 @@ sub restoreScanFunction {
 		$opened = 1;
 		$inTrack = 0;
 		$inValue = 0;
+		$restoreDone = 0;
 		%restoreitem = ();
 		$currentKey = undef;
 
@@ -2255,6 +2278,7 @@ sub restoreScanFunction {
 				last;
 			}
 		}
+		my $reachedEOF = eof($backupFH);
 		$line //= '';
 		$line =~ s/&#(\d*);/escape(chr($1))/ge;
 		eval { $backupParserNB->parse_more($line) };
@@ -2264,7 +2288,17 @@ sub restoreScanFunction {
 			doneScanning();
 			return 0;
 		}
-		return defined($backupParserNB) ? 1 : 0;
+		if ($restoreDone) {
+			doneScanning();
+			return 0;
+		}
+		if ($reachedEOF) {
+			$log->error('Backup file ended unexpectedly before the closing </RatingsLight> tag was found - the file may be incomplete, corrupted, or not a valid backup file.');
+			$restoreErrors++;
+			doneScanning();
+			return 0;
+		}
+		return 1;
 	}
 
 	$log->warn('No backupParserNB defined!');
@@ -2300,6 +2334,7 @@ sub handleStartElement {
 	if ($inTrack) {
 		$currentKey = $element;
 		$inValue = 1;
+		$restoreitem{$currentKey} = '';
 	}
 	if ($element eq 'track') {
 		$inTrack = 1;
@@ -2314,7 +2349,7 @@ sub handleCharElement {
 	my ($p, $value) = @_;
 
 	if ($inValue && $currentKey) {
-		$restoreitem{$currentKey} = $value;
+		$restoreitem{$currentKey} .= $value;
 	}
 }
 
@@ -2445,8 +2480,7 @@ sub handleEndElement {
 	}
 
 	if ($element eq 'RatingsLight' || $element eq 'TrackStat') {
-		doneScanning();
-		return 0;
+		$restoreDone = 1;
 	}
 }
 
@@ -2794,8 +2828,8 @@ sub initVLmenus {
 			},
 			weight => 88,
 			cache => 0,
-			icon => 'plugins/RatingsLight/html/images/ratedtracksmenuicon_svg.png',
-			jiveIcon => 'plugins/RatingsLight/html/images/ratedtracksmenuicon_svg.png',
+			icon => 'plugins/RatingsLight/html/images/rl_icon_svg.png',
+			jiveIcon => 'plugins/RatingsLight/html/images/rl_icon_svg.png',
 		});
 		main::INFOLOG && $log->is_info && $log->info('Init of VL browse menus completed after '.(time() - $started).' seconds.');
 	} else {

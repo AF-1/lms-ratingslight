@@ -158,14 +158,14 @@ sub cleanupBackups {
 		my @files = grep(/^RL_Backup_.*$/, readdir($DH));
 		closedir($DH);
 		main::DEBUGLOG && $log->is_debug && $log->debug('number of backup files found: '.scalar(@files));
+		my %mtimes = map { $_ => stat(catfile($backupDir, $_))->mtime } @files;
+		my @sortedFiles = sort { $mtimes{$a} <=> $mtimes{$b} } @files;
 		my $etime = int(time());
 		my $n = 0;
 		if (scalar(@files) > $backupFilesMin) {
-			foreach my $file (@files) {
-				my $filepath = catfile($backupDir, $file);
-				my $mtime = stat($filepath)->mtime;
-				if (($etime - $mtime) > $maxkeeptime) {
-					if (unlink($filepath)) {
+			foreach my $file (@sortedFiles) {
+				if (($etime - $mtimes{$file}) > $maxkeeptime) {
+					if (unlink(catfile($backupDir, $file))) {
 						$n++;
 						last if ((scalar(@files) - $n) <= $backupFilesMin);
 					} else {
