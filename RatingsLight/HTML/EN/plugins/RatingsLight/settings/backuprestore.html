@@ -6,6 +6,7 @@
 .rlstatus{color:var(--rl-status-main-color) !important;font-size:calc(1em + 2px);}
 .rlsuccess{color:green !important;font-size:calc(1em + 2px);}
 .rlerror{color:red !important;font-size:calc(1em + 2px);}
+.rlwarning{color:#b8860b !important;font-size:calc(1em + 2px);}
 .rlscanstatus:after{font-size:180%;content:' .';animation:rldots 1.8s steps(5,end)infinite}
 @keyframes rldots{0%,20%{color:var(--rl-status-text-shadow-color);text-shadow:.25em 0 0 var(--rl-status-text-shadow-color),.5em 0 0 var(--rl-status-text-shadow-color)}40%{color:var(--rl-status-main-color);text-shadow:.25em 0 0 var(--rl-status-text-shadow-color),.5em 0 0 var(--rl-status-text-shadow-color)}60%{text-shadow:.25em 0 0 var(--rl-status-main-color),.5em 0 0 var(--rl-status-text-shadow-color)}80%,100%{text-shadow:.25em 0 0 var(--rl-status-main-color),.5em 0 0 var(--rl-status-main-color)}}
 .rlstatuswrapper{padding-left:294px;color:red;font-size:calc(1em + 2px);}
@@ -120,7 +121,7 @@
 	function rlShowStatus(text, cssClasses) {
 		var el = document.getElementById('rlbackuprestorestatus');
 		el.innerHTML = text;
-		el.classList.remove('rlstatus', 'rlscanstatus', 'rlsuccess', 'rlerror');
+		el.classList.remove('rlstatus', 'rlscanstatus', 'rlsuccess', 'rlerror', 'rlwarning');
 		if (cssClasses) {
 			cssClasses.split(' ').forEach(function(c) { el.classList.add(c); });
 		}
@@ -197,6 +198,9 @@
 					setTimeout(rlGetPrefVal, 3000, 'backuprestoreresult', '0');
 				} else if (value == 4) {
 					rlShowStatus('[% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_ERROR" | string %]', 'rlerror');
+					setTimeout(rlGetPrefVal, 3000, 'backuprestoreresult', '0');
+				} else if (value == 5) {
+					rlShowStatus('[% "PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_PARTIAL" | string %]', 'rlwarning');
 					setTimeout(rlGetPrefVal, 3000, 'backuprestoreresult', '0');
 				}
 			}

@@ -14,6 +14,7 @@ use Slim::Utils::Log;
 use Slim::Schema;
 use Slim::Utils::DateTime;
 use Slim::Utils::Prefs;
+use Slim::Utils::OSDetect;
 use Slim::Utils::Strings qw(string);
 use Slim::Utils::Text;
 use File::Basename;
@@ -27,7 +28,7 @@ use FileHandle;
 
 use base 'Exporter';
 our %EXPORT_TAGS = (
-	all => [qw(createBackup cleanupBackups importRatingsFromCommentTags importRatingsFromBPMTags isTimeOrEmpty getMusicDirs parse_duration pathForItem toIntTimestamp)],
+	all => [qw(createBackup cleanupBackups importRatingsFromCommentTags importRatingsFromBPMTags isTimeOrEmpty getMusicDirs parse_duration pathForItem toIntTimestamp escape unescape getBackupCodepage)],
 );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
 
@@ -85,10 +86,16 @@ sub createBackup {
 		};
 		main::DEBUGLOG && $log->is_debug && $log->debug('Found '.$backupTotalCount.' track(s) with rating data in the LMS persistent database');
 
+		my $osDetails = Slim::Utils::OSDetect::details();
+		my $backupCodepage = getBackupCodepage();
 		print $backupOutput "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
 		print $backupOutput "<!-- Backup of Rating Data -->\n";
 		print $backupOutput "<!-- ".$backuptimestamp." -->\n";
+		print $backupOutput "<!-- Created on OS: ".($osDetails->{'osName'} || $^O)."; OS family: ".($osDetails->{'os'} || 'unknown')." -->\n";
+		print $backupOutput "<!-- OS-Arch: ".($osDetails->{'osArch'} || 'unknown')."; Perl-Arch: ".($osDetails->{'binArch'} || 'unknown')."; FS: ".($osDetails->{'fsType'} || 'unknown')."; Perl $] -->\n";
 		print $backupOutput "<RatingsLight>\n";
+		print $backupOutput "\t<backupos>".($osDetails->{'os'} || $^O)."</backupos>\n";
+		print $backupOutput "\t<backupcodepage>".($backupCodepage || '')."</backupcodepage>\n";
 		print $backupOutput "\t<trackcount>".$backupTotalCount."</trackcount>\n";
 
 		if ($importerCall) {
@@ -132,7 +139,7 @@ sub writeBackupChunk {
 	}
 	close $backupOutput;
 	$backupOutput = undef;
-	main::DEBUGLOG && $log->is_debug && $log->debug('Backup completed after '.(time() - $backupStarted).' seconds.');
+	main::INFOLOG && $log->is_info && $log->info('Backup completed after '.(time() - $backupStarted).' seconds.');
 
 	$prefs->set('lastbackup', int(time()));
 	cleanupBackups();
@@ -288,6 +295,18 @@ sub importRatingsFromBPMTags {
 	$prefs->set('status_importingfromBPMtags', 0);
 }
 
+sub getBackupCodepage {
+	return undef unless main::ISWINDOWS;
+	my $codepage;
+	eval {
+		require Win32;
+		my $cp = Win32::GetACP();
+		$codepage = 'cp'.$cp if $cp;
+	};
+	main::DEBUGLOG && $log->is_debug && $log->debug('Could not determine Windows codepage: '.$@) if $@;
+	return $codepage;
+}
+
 sub getRelFilePath {
 	main::DEBUGLOG && $log->is_debug && $log->debug('Getting relative file url/path.');
 	my $fullTrackURL = shift;
@@ -306,6 +325,7 @@ sub getRelFilePath {
 			$relFilePath = file($fullTrackPath)->relative($_);
 			$relFilePath = Slim::Utils::Misc::fileURLFromPath($relFilePath);
 			$relFilePath =~ s/^(file:)?\/+//isg;
+			$relFilePath =~ s/^\.\///;
 			main::DEBUGLOG && $log->is_debug && $log->debug('Saving RELATIVE file path: '.$relFilePath);
 			last;
 		}
@@ -380,5 +400,6 @@ sub toIntTimestamp {
 }
 
 *escape = \&URI::Escape::uri_escape_utf8;
+*unescape = \&URI::Escape::uri_unescape;
 
 1;

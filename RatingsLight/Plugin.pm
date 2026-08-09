@@ -31,6 +31,7 @@ use Slim::Utils::Strings qw(string);
 use Slim::Utils::Text;
 use Time::HiRes qw(time);
 use XML::Parser;
+use Unicode::Normalize;
 
 use Plugins::RatingsLight::Common ':all';
 use Plugins::RatingsLight::Importer;
@@ -43,9 +44,11 @@ my $log = Slim::Utils::Log->addLogCategory({
 my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
-my (%restoreitem, $currentKey, $inTrack, $inValue, $backupFH, $backupParser, $backupParserNB, $restorestarted, $material_enabled, $debugVerbose);
-my ($opened, $restoreCount, $restoreErrors) = (0, 0, 0);
-my ($restoreTotalCount, $restoreProcessedCount, $restoreDone);
+my (%restoreitem, $currentKey, $inTrack, $inValue, $backupFH, $backupParser, $backupParserNB);
+my ($restorestarted, $restoreTotalCount, $restoreProcessedCount, $restoreDone, $opened);
+my ($restoreCount, $restoreErrors, $unidentifiableCount, $unmatchedCount, $backupSourceOS, $backupSourceCodepage, $preferCodepageFirst) = (0, 0, 0, 0, undef, undef, 0);
+my @unmatchedTrackURLs;
+my ($material_enabled, $debugVerbose);
 
 sub initPlugin {
 	my $class = shift;
@@ -55,6 +58,7 @@ sub initPlugin {
 
 	Slim::Control::Request::addDispatch(['ratingslight', 'setrating', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'setratingpercent', '_trackid', '_rating', '_incremental'], [1, 0, 1, \&setRating]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'setratingpercentnoclient', '_trackid', '_rating', '_incremental'], [0, 0, 1, \&setRating]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'getrating', '_trackid'], [0, 1, 0, \&getRating]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbumoptions', '_albumid'], [1, 1, 1, \&rateAlbumTracksOptions_jive]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratingmenu', '_trackid', '_isalbum', '_unratedonly'], [0, 1, 1, \&getRatingMenu]);
@@ -246,7 +250,7 @@ sub initPrefs {
 }
 
 
-### set ratings
+## set ratings
 
 sub setRating {
 	my $request = shift;
@@ -256,20 +260,21 @@ sub setRating {
 		return;
 	}
 
-	if ($request->isNotCommand([['ratingslight'],['setrating']]) && $request->isNotCommand([['ratingslight'],['setratingpercent']])) {
+	my $isNoClientCommand = $request->isCommand([['ratingslight'],['setratingpercentnoclient']]);
+	if ($request->isNotCommand([['ratingslight'],['setrating']]) && $request->isNotCommand([['ratingslight'],['setratingpercent']]) && !$isNoClientCommand) {
 		$request->setStatusBadDispatch();
 		$log->warn('incorrect command');
 		return;
 	}
 
 	my $client = $request->client();
-	if (!defined $client) {
+	if (!defined($client) && !$isNoClientCommand) {
 		$request->setStatusNeedsClient();
 		return;
 	}
 
 	my $ratingScale;
-	if ($request->isCommand([['ratingslight'],['setratingpercent']])) {
+	if ($request->isCommand([['ratingslight'],['setratingpercent']]) || $isNoClientCommand) {
 		$ratingScale = "percent";
 	}
 
@@ -403,7 +408,9 @@ sub VFD_deviceRating {
 	refreshAll();
 }
 
-# rate album tracks
+
+## rate album tracks
+
 sub rateAlbumContextMenu {
 	my ($client, $url, $obj, $remoteMeta, $tags, $filter) = @_;
 	$tags ||= {};
@@ -613,7 +620,7 @@ sub _rateAlbum {
 }
 
 
-### rating menu
+## rating menu
 
 sub trackInfoHandlerRating {
 	my ($infoItem, $client, $url, $track, $remoteMeta, $tags) = @_;
@@ -840,7 +847,7 @@ sub getRatingMenu {
 }
 
 
-### common subs
+## common subs
 
 sub regTrackInfoHandlerRating {
 	my $refresh = shift;
@@ -1243,7 +1250,8 @@ sub getRatedTracks {
 	}
 }
 
-### show rated tracks menus - WEB
+
+## show rated tracks menus - WEB
 
 sub handleRatedWebTrackList {
 	my ($client, $params, $callback, $httpClient, $response) = @_;
@@ -1325,7 +1333,7 @@ sub handleRatedWebTrackList {
 }
 
 
-### show rated tracks menus - JIVE
+## show rated tracks menus - JIVE
 
 sub getRatedTracksMenu {
 	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
@@ -1556,7 +1564,7 @@ sub getActionsMenu {
 }
 
 
-### show rated tracks menus - VF devices
+## show rated tracks menus - VF devices
 # only objectType trackArtist + trackAlbum
 
 sub VFD_ratedtracks {
@@ -2136,18 +2144,23 @@ sub restoreFromBackup {
 		$log->warn('Warning: access to rating values blocked until library scan is completed');
 		return;
 	}
-
 	if ($prefs->get('status_backuprestore')) {
 		$log->warn('A restore is already in progress, please wait for it to finish');
 		return;
 	}
 
+	@unmatchedTrackURLs = ();
 	$prefs->set('status_backuprestore', 2);
 	$prefs->set('backuprestoreprogresspercentage', 0);
 	$prefs->set('backuprestoreresult', 0);
 	$restoreCount = 0;
 	$restoreErrors = 0;
+	$unidentifiableCount = 0;
+	$unmatchedCount = 0;
 	$restoreProcessedCount = 0;
+	$backupSourceOS = undef;
+	$backupSourceCodepage = undef;
+	$preferCodepageFirst = 0;
 	if ($backupFH) {
 		close($backupFH);
 		$backupFH = undef;
@@ -2162,6 +2175,9 @@ sub restoreFromBackup {
 		clearAllRatings(1) if $prefs->get('clearallbeforerestore');
 		main::INFOLOG && $log->is_info && $log->info('Starting restore from backup file');
 		$restoreTotalCount = _getRLBackupTrackCount($restorefile);
+		($backupSourceOS, $backupSourceCodepage) = _getRLBackupSourceInfo($restorefile);
+		my $currentOSDetails = Slim::Utils::OSDetect::details();
+		$preferCodepageFirst = (defined $backupSourceOS && $backupSourceOS eq 'Windows' && ($currentOSDetails->{'os'} || '') ne 'Windows') ? 1 : 0;
 		initRestore();
 		Slim::Utils::Scheduler::add_task(\&restoreScanFunction);
 	} else {
@@ -2169,6 +2185,32 @@ sub restoreFromBackup {
 		$prefs->set('backuprestoreresult', 4);
 		$prefs->set('status_backuprestore', 0);
 	}
+}
+
+sub _getRLBackupSourceInfo {
+	my $xmlFile = shift;
+	my ($sourceOS, $sourceCodepage);
+
+	open(my $fh, '<', $xmlFile) or do {
+		$log->warn("Could not open backup file to detect its source OS: $xmlFile ($!)");
+		return (undef, undef);
+	};
+	for (1..15) {
+		my $line = <$fh>;
+		last unless defined $line;
+		if ($line =~ /<backupos>(.*?)<\/backupos>/) {
+			$sourceOS = $1 || undef;
+		}
+		if ($line =~ /<backupcodepage>(.*?)<\/backupcodepage>/) {
+			$sourceCodepage = $1 || undef;
+		}
+		last if defined $sourceOS && defined $sourceCodepage;
+	}
+	close($fh);
+
+	main::INFOLOG && $log->is_info && $log->info('Backup source OS: '.($sourceOS || 'unknown (pre-dates this field)').', codepage: '.($sourceCodepage || 'n/a'));
+
+	return ($sourceOS, $sourceCodepage);
 }
 
 sub _getRLBackupTrackCount {
@@ -2264,21 +2306,22 @@ sub restoreScanFunction {
 	}
 
 	if (defined $backupParserNB) {
-		local $/ = '>';
-		my $line;
-
-		for (my $i = 0; $i < 25;) {
-			my $singleLine = <$backupFH>;
-			if (defined($singleLine)) {
-				$line .= $singleLine;
-				if ($singleLine =~ /(<\/track>)$/) {
-					$i++;
+		my ($line, $reachedEOF);
+		{
+			local $/ = '>';
+			for (my $i = 0; $i < 25;) {
+				my $singleLine = <$backupFH>;
+				if (defined($singleLine)) {
+					$line .= $singleLine;
+					if ($singleLine =~ /(<\/track>)$/) {
+						$i++;
+					}
+				} else {
+					last;
 				}
-			} else {
-				last;
 			}
+			$reachedEOF = eof($backupFH);
 		}
-		my $reachedEOF = eof($backupFH);
 		$line //= '';
 		$line =~ s/&#(\d*);/escape(chr($1))/ge;
 		eval { $backupParserNB->parse_more($line) };
@@ -2320,10 +2363,37 @@ sub doneScanning {
 		$backupFH = undef;
 	}
 
-	main::INFOLOG && $log->is_info && $log->info('Restore completed after '.(time() - $restorestarted).' seconds. Restored '.$restoreCount.($restoreCount == 1 ? ' track.' : ' tracks.').' Restore count listed here may be slightly higher (e.g. +1) than the correct number stated in the backup file.');
+	my $skippedCount = $unidentifiableCount + $unmatchedCount;
+	my $elapsedSeconds = time() - $restorestarted;
+	my $itemsWord = $restoreCount == 1 ? 'track' : 'tracks';
+	my $wikiURL = 'https://github.com/AF-1/sobras/wiki/Restoring-backups-across-operating-systems';
+
+	if ($restoreErrors) {
+		my $errorMsg = "Rating restore completed after $elapsedSeconds seconds with errors. Restored $restoreCount $itemsWord, $restoreErrors item(s) failed to import due to a parsing or database error";
+		$errorMsg .= " and $skippedCount item(s) were skipped (unmatched or unidentifiable)" if $skippedCount;
+		$errorMsg .= " - check the server log for details. More info: $wikiURL\n\n";
+		$log->error($errorMsg);
+	} elsif ($skippedCount) {
+		if (!$restoreCount) {
+			$log->error("Rating restore matched 0 of $restoreTotalCount track(s) in the backup to a track in the current library - nothing was restored.");
+		}
+		if ($unidentifiableCount) {
+			$log->error("Rating restore: $unidentifiableCount of $restoreTotalCount track(s) had no usable identifier (no urlmd5, url or musicbrainz id) in the backup entry itself and were skipped - this usually indicates a corrupted or unusually old backup file. Enable INFO level logging before the next restore for a per-track list.");
+		}
+		if ($unmatchedCount) {
+			writeUnmatchedTracksToFile();
+			$log->error("Rating restore: $unmatchedCount of $restoreTotalCount track(s) had a valid identifier in the backup but no matching track was found in the current library and those values were skipped - this can happen if those tracks were since deleted, moved or renamed. See RL_Restore-Unmatched-Tracks.txt in the RatingsLight folder for the full list.");
+		}
+		$log->error("Rating restore completed after $elapsedSeconds seconds with $skippedCount of $restoreTotalCount track(s) skipped. More info: $wikiURL\n\n");
+	} else {
+		main::INFOLOG && $log->is_info && $log->info("Rating restore completed after $elapsedSeconds seconds. Restored $restoreCount $itemsWord.\n\n");
+	}
+	@unmatchedTrackURLs = ();
+
 	$prefs->set('isTSlegacyBackupFile', 0);
 	$prefs->set('backuprestoreprogresspercentage', 100);
-	$prefs->set('backuprestoreresult', $restoreErrors > 0 ? 4 : 3);
+	$prefs->set('backuprestoreresult', ($restoreErrors > 0 || ($skippedCount && !$restoreCount)) ? 4 : ($skippedCount ? 5 : 3));
+	$prefs->set('restorefile', '');
 	$prefs->set('status_backuprestore', 0);
 	refreshAll();
 }
@@ -2364,9 +2434,8 @@ sub handleEndElement {
 
 		my $curTrack = \%restoreitem;
 		my $isRemote = $isTSlegacyBackupFile ? undef : $curTrack->{'remote'};
-		my ($track, $trackURL, $trackURLmd5);
-		my $fullTrackURL = $curTrack->{'url'};
-		my $relTrackURL = $isTSlegacyBackupFile ? undef : $curTrack->{'relurl'};
+		my $fullTrackURLraw = $curTrack->{'url'};
+		my $relTrackURLraw = $isTSlegacyBackupFile ? undef : $curTrack->{'relurl'};
 		my $backupTrackURLmd5 = $isTSlegacyBackupFile ? undef : $curTrack->{'urlmd5'};
 		my $backupTrackMBID = $isTSlegacyBackupFile ? $curTrack->{'musicbrainzId'} : $curTrack->{'musicbrainzid'};
 		my $rating100ScaleValue = (!defined($curTrack->{'rating'}) || $curTrack->{'rating'} eq '' || $curTrack->{'rating'} !~ /^\d+$/) ? undef : $curTrack->{'rating'} + 0;
@@ -2376,97 +2445,159 @@ sub handleEndElement {
 		if (($selectiverestore == 0 || $isTSlegacyBackupFile) || ($selectiverestore == 1 && !$isRemote) || ($selectiverestore == 2 && $isRemote)) {
 
 			if (defined($rating100ScaleValue) || defined($lastRatedValue)) {
-				# check if FULL file url is valid
-				# Otherwise, try RELATIVE file URL with current media dirs
-				$fullTrackURL = Encode::decode('utf8', unescape($fullTrackURL));
-				$relTrackURL = Encode::decode('utf8', unescape($relTrackURL)) if $relTrackURL;
+				my $fullTrackURL = Encode::decode('utf8', unescape($fullTrackURLraw));
 
-				if ($isRemote && $isRemote == 1) {
-					main::DEBUGLOG && $log->is_debug && $log->debug('is remote track. URL = '.Data::Dump::dump($fullTrackURL));
-					$trackURL = $fullTrackURL;
-					$trackURLmd5 = $backupTrackURLmd5;
-				} else {
-					main::DEBUGLOG && $log->is_debug && $log->debug('is local track. URL = '.Data::Dump::dump($fullTrackURL));
-					my $fullTrackPath = pathForItem($fullTrackURL);
-					if ($fullTrackPath && -f $fullTrackPath) {
-						main::DEBUGLOG && $log->is_debug && $log->debug("Found file at url \"$fullTrackPath\"");
-						$trackURL = $fullTrackURL;
-						$trackURLmd5 = $backupTrackURLmd5 unless $isTSlegacyBackupFile;
-					} else {
-						main::DEBUGLOG && $log->is_debug && $log->debug("** Couldn't find file for FULL file url. Will try with RELATIVE file url and current LMS media folders.");
+				# encode_locale() matches whatever byte encoding this LMS instance itself used when it scanned
+				# local files (UTF-8 on Linux/macOS, the active ANSI codepage on Windows) - falls back to plain
+				# UTF-8 encoding on LMS versions that lack this function
+				my $encodeForLocalPath = Slim::Utils::Unicode->can('encode_locale') ? \&Slim::Utils::Unicode::encode_locale : sub { return Encode::encode('utf8', $_[0]); };
 
-						if (!$trackURL && !$trackURLmd5 && $backupTrackMBID) {
-							$track = Slim::Schema->search('Track', {'musicbrainz_id' => $backupTrackMBID})->first();
-							main::DEBUGLOG && $log->is_debug && $log->debug('Found file for musicbrainz id = '.$backupTrackMBID) if $track;
-						}
+				# a Windows source backup names its own codepage; without that field, still try the common
+				# Western default unless the source is positively known to be non-Windows (Darwin/Linux)
+				my $sourceCodepage = $backupSourceCodepage || ((!defined $backupSourceOS || $backupSourceOS eq 'Windows') ? 'cp1252' : undef);
 
-						if (!$track && !$trackURL && !$trackURLmd5 && !$isTSlegacyBackupFile) {
-							if (!$relTrackURL) {
-								main::DEBUGLOG && $log->is_debug && $log->debug("** Couldn't find RELATIVE file url in backup data.");
-							} else {
-								my $lmsmusicdirs = getMusicDirs();
-								main::DEBUGLOG && $log->is_debug && $log->debug('Valid LMS music dirs = '.Data::Dump::dump($lmsmusicdirs));
+				# builds NFC and NFD variants from already-decoded text, re-encoded for this machine's locale;
+				# $isFullURL also runs the result back through fileURLFromPath/pathFromFileURL for full URLs
+				my $buildNfcNfdVariants = sub {
+					my ($decodedText, $isFullURL) = @_;
+					return (undef, undef) unless defined $decodedText;
+					my $nfc = $encodeForLocalPath->(Unicode::Normalize::NFC($decodedText));
+					my $nfd = $encodeForLocalPath->(Unicode::Normalize::NFD($decodedText));
+					if ($isFullURL) {
+						$nfc = Slim::Utils::Misc::fileURLFromPath(Slim::Utils::Misc::pathFromFileURL($nfc));
+						$nfd = Slim::Utils::Misc::fileURLFromPath(Slim::Utils::Misc::pathFromFileURL($nfd));
+					}
+					return ($nfc, $nfd);
+				};
 
-								foreach (@{$lmsmusicdirs}) {
-									my $dirSep = File::Spec->canonpath("/");
-									my $mediaDirURL = Slim::Utils::Misc::fileURLFromPath($_.$dirSep);
-									main::DEBUGLOG && $log->is_debug && $log->debug('Trying LMS music dir url: '.$mediaDirURL);
+				my ($fullTrackURLnfc, $fullTrackURLnfd, $fullTrackURLcpNfc, $fullTrackURLcpNfd);
+				if ($fullTrackURLraw) {
+					my $fullTrackURLrawBytes = unescape(unescape($fullTrackURLraw));
 
-									my $newFullTrackURL = $mediaDirURL.$relTrackURL;
-									my $newFullTrackPath = pathForItem($newFullTrackURL);
-									main::DEBUGLOG && $log->is_debug && $log->debug('Trying with new full track path: '.$newFullTrackPath);
+					($fullTrackURLnfc, $fullTrackURLnfd) = $buildNfcNfdVariants->(Encode::decode('utf8', $fullTrackURLrawBytes), 1);
 
-									if ($newFullTrackPath && -f $newFullTrackPath) {
-										$trackURL = Slim::Utils::Misc::fileURLFromPath($newFullTrackURL);
-										main::DEBUGLOG && $log->is_debug && $log->debug('Found file at new full file url: '.$trackURL);
-										main::DEBUGLOG && $log->is_debug && $log->debug('OLD full file url was: '.$fullTrackURL);
-										last;
-									}
-								}
-							}
+					# a Windows source may have written its own file:// URL using the active ANSI codepage
+					# instead of UTF-8 (e.g. a single 0xE3 byte for one accented character) - decode with that
+					# codepage instead of UTF-8, then build the same NFC/NFD variants as above
+					if ($sourceCodepage) {
+						my $fullTrackURLcpDecoded = eval { Encode::decode($sourceCodepage, $fullTrackURLrawBytes) };
+						main::DEBUGLOG && $log->is_debug && $log->debug("Could not decode full track URL as $sourceCodepage: $@") if $@;
+						($fullTrackURLcpNfc, $fullTrackURLcpNfd) = $buildNfcNfdVariants->($fullTrackURLcpDecoded, 1) if defined $fullTrackURLcpDecoded;
+					}
+				}
+
+				my ($relTrackURL, $relTrackURLnfc, $relTrackURLnfd, $relTrackURLcpNfc, $relTrackURLcpNfd);
+				if ($relTrackURLraw) {
+					$relTrackURL = Encode::decode('utf8', unescape($relTrackURLraw));
+					$relTrackURL =~ s/^\.\///;
+
+					# second unescape pass fully resolves double-encoded backup entries down to raw bytes;
+					# NFC/NFD-normalizes to cover both migration directions (macOS decomposes, most other
+					# filesystems compose), re-encoded for this machine's locale for a consistent fileURLFromPath() call
+					my $relTrackURLrawBytes = unescape(unescape($relTrackURLraw));
+					my $relTrackURLdecoded = Encode::decode('utf8', $relTrackURLrawBytes);
+					$relTrackURLdecoded =~ s/^\.\///;
+
+					($relTrackURLnfc, $relTrackURLnfd) = $buildNfcNfdVariants->($relTrackURLdecoded, 0);
+
+					# same Windows-codepage fallback as above, applied to the relative path
+					if ($sourceCodepage) {
+						my $relTrackURLcpDecoded = eval { Encode::decode($sourceCodepage, $relTrackURLrawBytes) };
+						main::DEBUGLOG && $log->is_debug && $log->debug("Could not decode relative track URL as $sourceCodepage: $@") if $@;
+						if (defined $relTrackURLcpDecoded) {
+							$relTrackURLcpDecoded =~ s/^\.\///;
+							($relTrackURLcpNfc, $relTrackURLcpNfd) = $buildNfcNfdVariants->($relTrackURLcpDecoded, 0);
 						}
 					}
 				}
 
-				# ensure urlmd5 is always set if trackURL is known, and try urlmd5 fallback candidates against the database
-				if ($trackURL) {
-					my @urlmd5Candidates;
-					push @urlmd5Candidates, $trackURLmd5 if $trackURLmd5;
-					my $freshUrlmd5 = md5_hex($trackURL);
+				# build every plausible current URL for this track (the full backup URL + one reconstruction per configured media folder for local tracks) and check them against the tracks_persistent table
+				my @candidateURLs;
+				my %seenFullURL;
+				for my $candidate ($preferCodepageFirst ? ($fullTrackURLcpNfc, $fullTrackURLcpNfd, $fullTrackURL, $fullTrackURLnfc, $fullTrackURLnfd) : ($fullTrackURL, $fullTrackURLnfc, $fullTrackURLnfd, $fullTrackURLcpNfc, $fullTrackURLcpNfd)) {
+					next unless $candidate;
+					next if $seenFullURL{$candidate}++;
+					push @candidateURLs, $candidate;
+				}
+
+				if (!($isRemote && $isRemote == 1) && $relTrackURL) {
+					my $lmsmusicdirs = getMusicDirs();
+					my $dirSep = File::Spec->canonpath("/");
+					my %seenRawRelPath;
+					my @rawRelPathVariants;
+					for my $relPath ($preferCodepageFirst ? ($relTrackURLcpNfc, $relTrackURLcpNfd, $relTrackURLnfc, $relTrackURLnfd) : ($relTrackURLnfc, $relTrackURLnfd, $relTrackURLcpNfc, $relTrackURLcpNfd)) {
+						next unless $relPath;
+						next if $seenRawRelPath{$relPath}++;
+						push @rawRelPathVariants, $relPath;
+					}
+					foreach my $mediaDir (@{$lmsmusicdirs}) {
+						if ($preferCodepageFirst) {
+							push @candidateURLs, map { Slim::Utils::Misc::fileURLFromPath($mediaDir.$dirSep.$_) } @rawRelPathVariants;
+							push @candidateURLs, Slim::Utils::Misc::fileURLFromPath($mediaDir.$dirSep).$relTrackURL;
+						} else {
+							push @candidateURLs, Slim::Utils::Misc::fileURLFromPath($mediaDir.$dirSep).$relTrackURL;
+							push @candidateURLs, map { Slim::Utils::Misc::fileURLFromPath($mediaDir.$dirSep.$_) } @rawRelPathVariants;
+						}
+					}
+				}
+				main::DEBUGLOG && $log->is_debug && $log->debug('Candidate URLs for this track: '.Data::Dump::dump(\@candidateURLs));
+
+				my @urlmd5Candidates;
+				push @urlmd5Candidates, $backupTrackURLmd5 if $backupTrackURLmd5;
+				for my $candidateURL (@candidateURLs) {
+					my $freshUrlmd5 = md5_hex($candidateURL);
 					push @urlmd5Candidates, $freshUrlmd5 unless grep { $_ eq $freshUrlmd5 } @urlmd5Candidates;
 					if (Slim::Utils::Misc->can('safe_md5_hex')) {
-						my $freshSafeUrlmd5 = Slim::Utils::Misc::safe_md5_hex($trackURL);
+						my $freshSafeUrlmd5 = Slim::Utils::Misc::safe_md5_hex($candidateURL);
 						push @urlmd5Candidates, $freshSafeUrlmd5 unless grep { $_ eq $freshSafeUrlmd5 } @urlmd5Candidates;
 					}
+				}
 
-					if (!$track) {
-						for my $urlmd5Candidate (@urlmd5Candidates) {
-							$track = Slim::Schema->rs('Track')->single({'urlmd5' => $urlmd5Candidate});
-							if ($track) {
-								$trackURLmd5 = $urlmd5Candidate;
-								last;
+				if (!@urlmd5Candidates && !$backupTrackMBID) {
+					$unidentifiableCount++;
+					main::INFOLOG && $log->is_info && $log->info("No valid urlmd5, url or musicbrainz id for this track - can't restore values. Backup URL was: ".Data::Dump::dump($fullTrackURL));
+				} else {
+					main::DEBUGLOG && $log->is_debug && $log->debug("Setting rating ".($rating100ScaleValue // 'NULL')." for track: ".Data::Dump::dump($fullTrackURL));
+					my $dbh = Slim::Schema->dbh;
+					my $updated = 0;
+
+					for my $urlmd5Candidate (@urlmd5Candidates) {
+						if ($urlmd5Candidate !~ /^[a-f0-9]{32}$/i) {
+							$log->error("Invalid urlmd5 in backup file, skipping candidate: $urlmd5Candidate");
+							next;
+						}
+						my $rowsAffected = eval { $dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where urlmd5 = ?', undef, $rating100ScaleValue, $lastRatedValue, $previousRatingValue, $urlmd5Candidate) };
+						if ($@) {
+							$log->error("Database error: $@");
+							$restoreErrors++;
+							next;
+						}
+						if ($rowsAffected && $rowsAffected > 0) {
+							$updated = 1;
+							$restoreCount++;
+							last;
+						}
+					}
+
+					if (!$updated && $backupTrackMBID) {
+						if ($backupTrackMBID !~ /^[a-zA-Z0-9\-]+$/) {
+							$log->error("Invalid MBID in backup file, skipping track: $backupTrackMBID");
+						} else {
+							my $rowsAffected = eval { $dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where musicbrainz_id = ?', undef, $rating100ScaleValue, $lastRatedValue, $previousRatingValue, $backupTrackMBID) };
+							if ($@) {
+								$log->error("Database error: $@");
+								$restoreErrors++;
+							} elsif ($rowsAffected && $rowsAffected > 0) {
+								$updated = 1;
+								$restoreCount++;
 							}
 						}
 					}
 
-					$trackURLmd5 = $urlmd5Candidates[0] unless $trackURLmd5;
-				}
-
-				if (!$trackURL && !$trackURLmd5 && !$backupTrackMBID) {
-					$log->warn("No valid urlmd5, url or musicbrainz id for this track. Can't restore values for file with restore URL = ".Data::Dump::dump($fullTrackURL));
-					$restoreErrors++;
-				} else {
-					if ($trackURLmd5 && $trackURLmd5 !~ /^[a-f0-9]{32}$/i) {
-						$log->error("Invalid urlmd5 value, skipping track: $trackURLmd5");
-						$restoreErrors++;
-					} else {
-						main::DEBUGLOG && $log->is_debug && $log->debug("Setting rating ".($rating100ScaleValue // 'NULL')." for track: ".Data::Dump::dump($trackURL));
-						my $writeSuccess = writeRatingToDB(undef, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, 1, $lastRatedValue, $previousRatingValue, 1);
-						if ($writeSuccess) {
-							$restoreCount++;
-						} else {
-							$restoreErrors++;
-						}
+					unless ($updated) {
+						$unmatchedCount++;
+						push @unmatchedTrackURLs, $fullTrackURL || '(no URL in backup entry)';
+						main::DEBUGLOG && $log->is_debug && $log->debug("Could not find a matching track in the current library for this track - tried urlmd5 candidates: ".Data::Dump::dump(\@urlmd5Candidates)." ## musicbrainz id: ".Data::Dump::dump($backupTrackMBID)." ## backup URL was: ".Data::Dump::dump($fullTrackURL));
 					}
 				}
 			}
@@ -3092,6 +3223,18 @@ sub logRatedTrack {
 	close $output;
 }
 
+sub writeUnmatchedTracksToFile {
+	my $filename = catfile($prefs->get('rlfolderpath'), 'RL_Restore-Unmatched-Tracks.txt');
+	my $output = FileHandle->new($filename, '>:utf8') or do {
+		$log->error('Could not open '.$filename.' for writing. Does the RatingsLight folder exist? Does LMS have read/write permissions (755) for the (parent) folder?');
+		return;
+	};
+	print $output strftime("%Y-%m-%d -- %H:%M:%S", localtime time)."\n";
+	print $output scalar(@unmatchedTrackURLs)." track(s) could not be matched during the last restore:\n\n";
+	print $output $_."\n" foreach @unmatchedTrackURLs;
+	close $output;
+}
+
 sub clearAllRatings {
 	my $dontRefresh = shift;
 	if (Slim::Music::Import->stillScanning) {
@@ -3121,11 +3264,11 @@ sub clearAllRatings {
 }
 
 
-###### set/get rating ######
+## set/get rating
 
 sub writeRatingToDB {
-	my ($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, $dontlogthis, $restoreLastRated, $restorePrevRating, $isRestoreCall) = @_;
-	main::DEBUGLOG && $log->is_debug && $log->debug("trackID = ".Data::Dump::dump($trackID)."\ntrackURL = ".Data::Dump::dump($trackURL)."\ntrackURLmd5 = ".Data::Dump::dump($trackURLmd5)."\ntrack obj = ".($track ? 1 : 0)."\nrating = ".Data::Dump::dump($rating100ScaleValue)."\ndontlogthis = ".Data::Dump::dump($dontlogthis)."\nlast rated restore value = ".Data::Dump::dump($restoreLastRated)."\nprevious rating restore value = ".Data::Dump::dump($restorePrevRating)."\nisRestoreCall = ".Data::Dump::dump($isRestoreCall));
+	my ($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, $dontlogthis) = @_;
+	main::DEBUGLOG && $log->is_debug && $log->debug("trackID = ".Data::Dump::dump($trackID)."\ntrackURL = ".Data::Dump::dump($trackURL)."\ntrackURLmd5 = ".Data::Dump::dump($trackURLmd5)."\ntrack obj = ".($track ? 1 : 0)."\nrating = ".Data::Dump::dump($rating100ScaleValue)."\ndontlogthis = ".Data::Dump::dump($dontlogthis));
 
 	if (defined($rating100ScaleValue) && (($rating100ScaleValue < 0) || ($rating100ScaleValue > 100))) {
 		$rating100ScaleValue = adjustRating($rating100ScaleValue, 1);
@@ -3145,41 +3288,39 @@ sub writeRatingToDB {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Found track obj using trackURL');
 	}
 
-	if ($track && blessed $track && (UNIVERSAL::isa($track, 'Slim::Schema::Track') || UNIVERSAL::isa($track, 'Slim::Schema::RemoteTrack'))) {
-		main::DEBUGLOG && $log->is_debug && $log->debug("Trying to set rating ".($rating100ScaleValue // 'NULL')." for: ".$track->url);
-		my $previousRating100ScaleValue = defined($restorePrevRating) ? $restorePrevRating : ($isRestoreCall ? undef : getRatingFromDB($track, 1));
-		if (!$isRestoreCall && defined($rating100ScaleValue) && ($rating100ScaleValue == $previousRating100ScaleValue)) {
-			main::DEBUGLOG && $log->is_debug && $log->debug("Skipping database write - track rating not updated: requested value matches existing.");
-			return 1;
-		}
-
-		my $ratingTime = defined($restoreLastRated) ? toIntTimestamp($restoreLastRated) : ($isRestoreCall ? undef : int(time()));
-		my $dbh = Slim::Schema->dbh;
-		eval {
-			$dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where urlmd5 = ?',
-				undef, $rating100ScaleValue, $ratingTime, $previousRating100ScaleValue, $track->urlmd5);
-		};
-		if ($@) {
-			$log->warn("Database error: $@");
-			return 0;
-		}
-
-		# confirm and log new rating value
-		unless ($dontlogthis) {
-			my $newTrackRating = getRatingFromDB($track, 1);
-			if (defined $newTrackRating && $newTrackRating == $rating100ScaleValue) {
-				main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.")");
-				logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue) if $prefs->get('uselogfile');
-				addToRecentlyRatedPlaylist($track) if $prefs->get('userecentlyratedplaylist');
-			} else {
-				main::DEBUGLOG && $log->is_debug && $log->debug("Couldn't confirm that the track was successfully rated. Won't add track to rating log file or recently rated playlist. Please check manually if the new track rating has been set.");
-			}
-		}
-		return 1;
-	} else {
-		$log->error("Couldn't find blessed track (local or remote). Rating failed.");
+	if (!$track || !blessed($track) || !(UNIVERSAL::isa($track, 'Slim::Schema::Track') || UNIVERSAL::isa($track, 'Slim::Schema::RemoteTrack'))) {
+		$log->error("Couldn't find blessed track (local or remote). Rating failed. trackID: ".Data::Dump::dump($trackID)." ## trackURL: ".Data::Dump::dump($trackURL)." ## trackURLmd5: ".Data::Dump::dump($trackURLmd5));
 		return 0;
 	}
+
+	main::DEBUGLOG && $log->is_debug && $log->debug("Trying to set rating ".($rating100ScaleValue // 'NULL')." for: ".$track->url);
+	my $previousRating100ScaleValue = getRatingFromDB($track, 1);
+	if (defined($rating100ScaleValue) && ($rating100ScaleValue == $previousRating100ScaleValue)) {
+		main::DEBUGLOG && $log->is_debug && $log->debug('Skipping database write - track rating not updated: requested value matches existing.');
+		return 1;
+	}
+
+	my $dbh = Slim::Schema->dbh;
+	eval {
+		$dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where urlmd5 = ?', undef, $rating100ScaleValue, int(time()), $previousRating100ScaleValue, $track->urlmd5);
+	};
+	if ($@) {
+		$log->warn("Database error while writing rating for track '".$track->url."': $@");
+		return 0;
+	}
+
+	# confirm and log new rating value
+	unless ($dontlogthis) {
+		my $newTrackRating = getRatingFromDB($track, 1);
+		if (defined($newTrackRating) && $newTrackRating == $rating100ScaleValue) {
+			main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.')');
+			logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue) if $prefs->get('uselogfile');
+			addToRecentlyRatedPlaylist($track) if $prefs->get('userecentlyratedplaylist');
+		} else {
+			$log->warn("Couldn't confirm that the track was successfully rated. Won't add track to rating log file or recently rated playlist. Track: ".$track->url);
+		}
+	}
+	return 1;
 }
 
 sub getRatingFromDB {
@@ -3320,8 +3461,7 @@ sub ratingValidator {
 }
 
 
-
-# title formats
+## title formats
 
 sub getTitleFormat_Rating {
 	my $track = shift;
@@ -3393,7 +3533,7 @@ sub refreshTitleFormats {
 
 
 
-# misc
+## misc
 
 sub updatePersistentTable {
 	if (Slim::Music::Import->stillScanning) {
@@ -3524,8 +3664,5 @@ sub padnum {
 	use integer;
 	sprintf("%02d", $_[0]);
 }
-
-*escape = \&URI::Escape::uri_escape_utf8;
-*unescape = \&URI::Escape::uri_unescape;
 
 1;

@@ -92,6 +92,7 @@ PLUGIN_RATINGSLIGHT_RATEALBUM_OPTIONS_UNRATED_ALL
 	DE	Bewerte alle <b>un</b>bewerteten Titel
 
 
+
 PLUGIN_RATINGSLIGHT_SETTINGS_SUBPAGE
 	EN	Settings Section
 	DE	Einstellungsbereich
@@ -220,6 +221,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_VARIOUS_DEBUGVERBOSE_DESC
 	EN	If enabled, the <b>debug</b> log level also includes messages that are not absolutely necessary for debugging issues in most cases. Disabled by default.
 
 
+
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_TO_FILES
 	EN	Export rated tracks<br>from this library (view)<br>to playlist files
 	DE	Bewertete Titel dieser Sammlung in Wiedergabelisten exportieren
@@ -293,6 +295,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_FILTERBYRATINGCHANGE_DECREASED
 	EN	Only tracks with decreased ratings
 
 
+
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_PLAYLISTS_ONLY_DIFF
 	EN	Export only tracks with rating values different from file tag ratings
 	DE	Exportiere nur Titel mit Bewertungen, die sich von den Datei-Tag-Bewertungen unterscheiden
@@ -336,6 +339,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONEXCEPTIONS
 PLUGIN_RATINGSLIGHT_SETTINGS_EXPORT_EXTENSIONEXCEPTIONS_DESC
 	EN	If you replace file extensions when exporting your playlist, you can specify here which extensions should be ignored, i.e. they won't be replaced. For example, if they already belong to a lossy format.<br><b>Multiple</b> extensions have to be separated with a <b>comma</b>.
 	DE	Falls Dateiendungen ersetzt werden, kann hier spezifiziert werden, welche Endungen nicht ersetzt werden sollen. Die Endungen müssen mit einem Komma voneinader getrennt werden.
+
 
 
 PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_PLAYLISTS
@@ -451,6 +455,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_IMPORT_COMMENTTAGS_RATING_KEYWORD_DESC
 	DE	Sie müssen wenigstens ein Bewertungs-Schlüsselwort festlegen.<br>Bis zu 30 Zeichen, ohne Groß-/Kleinschreibung, keine Zahlen oder Sonderzeichen.<br>Bewertungswerte müssen ganzzahlig auf einer Skala von 0 bis 5 sein, keine Halb-Sterne-Bewertungen.
 
 
+
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP
 	EN	Backup
 	DE	Sicherung
@@ -530,6 +535,8 @@ PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_BACKUPMINFILESTOKEEP_DESC
 	EN	Keep at least this number of backup files, regardless of their creation date.<br>If you don't create scheduled or regular manual backups, this will prevent RL from accidentally deleting <b>all</b> of your old backup files.
 	DE	Behalte mindestens diese Anzahl von Sicherungsdateien, unabhängig von deren Alter.<br>Wenn du keine geplanten oder regelmäßigen manuellen Sicherungen machst, verhindert diese Einstellung, das RL versehentliche <b>ALLE</b> Sicherungsdateien löscht.
 
+
+
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE
 	EN	Restore
 	DE	Wiederherstellen
@@ -539,12 +546,12 @@ PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE
 	DE	Wähle eine Sicherungsdatei zur Wiederherstellung aus
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SELECTFILE_DESC
-	EN	Select a backup file (created with <i>Ratings Light</i>) to restore your ratings values from.<br><br><b>Please note:</b> Restoring from old <i>TrackStat</i> backup files will <b>only</b> work if the <b>URLs / file paths of the music files have not changed</b>.<br>Relative file path guessing is <b>only</b> supported for backups created with <i>Ratings Light</i>.
-	DE	Wähle eine Sicherungsdatei (die mit Ratings Light erstellt wurde) aus, von der deine Bewertungen wiederhergestellt werden sollen. <br>Bitte beachten: </b>Die Wiederherstellung anhand alter TrackStat-Sicherungsdateien funktioniert nur, wenn sich die <b>URLs / Dateipfade der Musikdateien nicht geändert haben</b>.<br>Das Herleiten relativer Dateipfade wird nur von Sicherungsdateien unterstützt, die mit Ratings Light erzeugt wurden.
+	EN	Select a backup file (created with <i>Ratings Light</i>) to restore your ratings values from.<br><br><b>Please note:</b> Restoring from old <i>TrackStat</i> backup files will <b>only</b> work if the <b>URLs / file paths of the music files have not changed</b>.<br>Relative file path guessing is <b>only</b> supported for backups created with <i>Ratings Light</i>.<br><br>Restoring from a backup created on a different operating system is supported; a small number of tracks whose file names use characters not allowed on this operating system may remain unmatched - see the server log for details.<br><br>For details on restoring across different operating systems, see <a href="https://github.com/AF-1/sobras/wiki/Restoring-backups-across-operating-systems" target="_blank">this wiki page</a>.
+	DE	Wähle eine Sicherungsdatei (die mit Ratings Light erstellt wurde) aus, von der deine Bewertungen wiederhergestellt werden sollen. <br>Bitte beachten: </b>Die Wiederherstellung anhand alter TrackStat-Sicherungsdateien funktioniert nur, wenn sich die <b>URLs / Dateipfade der Musikdateien nicht geändert haben</b>.<br>Das Herleiten relativer Dateipfade wird nur von Sicherungsdateien unterstützt, die mit Ratings Light erzeugt wurden.<br><br>Die Wiederherstellung aus einer auf einem anderen Betriebssystem erstellten Sicherung wird unterstützt; eine kleine Anzahl Tracks, deren Dateinamen auf diesem Betriebssystem nicht erlaubte Zeichen enthalten, kann dabei unzuordenbar bleiben - Details siehe Server-Log.
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_BUTTON
 	EN	Restore now
-	DE	Jetzt wiedeherstellen
+	DE	Jetzt wiederherstellen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_MISSINGFILE
 	EN	You have to select a file first!
@@ -573,6 +580,10 @@ PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_SUCCESS
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_ERROR
 	EN	Restore failed - please check the server log
 	DE	Wiederherstellung fehlgeschlagen - bitte Server-Log prüfen
+
+PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_PARTIAL
+	EN	Restore completed but some tracks were skipped - please check the server log
+	DE	Wiederherstellung abgeschlossen, aber einige Titel wurden übersprungen - bitte Server-Log prüfen
 
 PLUGIN_RATINGSLIGHT_SETTINGS_BACKUP_LMSSCANINPROGRESS
 	EN	Active LMS scan detected - backup/restore temporarily disabled
@@ -605,6 +616,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_CLEARALLBEFORE
 PLUGIN_RATINGSLIGHT_SETTINGS_RESTORE_CLEARALLBEFORE_DESC
 	EN	This will clear all rating data in the database (ratings, previous ratings) before starting the restore process. All rating values in your database will be reset to the values from the backup. In other words, rating data not contained in the backup will be lost.
 	DE	Dadurch werden alle Bewertungsdaten (Bewertungen, vorherige Bewertungen) aus der Datenbank gelöscht, bevor die Wiederherstellung gestartet wird. Alle Bewertungen werden auf die Werte aus dem Backup zurückgesetzt. Das heißt, Bewertungsdaten, die nicht im Backup enthalten sind, gehen so verloren.
+
 
 
 PLUGIN_RATINGSLIGHT_MENUS_RATED_TRACKS_MENU_FOLDER
@@ -770,6 +782,7 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
 	DE	Begrenzt die Anzahl der angezeigten Titel in Kontextmenüs des Material-Skins und im PiCorePlayer, SB Touch und SB Radio. Diese 'Zeige bewertete Titel'-Kontextmenüs sind verfügbar für Interpret, Album, Stilrichtung, Jahr, Jahrzent, Wiedergabeliste und auf der Titeldetails-Seite.
 
 
+
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_PERCENTAGE_RATED
 	EN	Percentage of rated songs
 	DE	Anteil bewerteter Titel in Prozent
@@ -829,6 +842,39 @@ PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_EXCLUDEDGENRES_DESC
 PLUGIN_RATINGSLIGHT_SETTINGS_DSTM_CHOOSEEXLUDEGENRES
 	EN	Choose genres to exclude
 	DE	Auszuschließende Stilrichtungen
+
+PLUGIN_RATINGSLIGHT_DSTM_RATED
+	EN	Ratings Light - rated tracks
+	DE	Ratings Light - bewertete Titel
+
+PLUGIN_RATINGSLIGHT_DSTM_TOPRATED
+	EN	Ratings Light - rated tracks (with % of top rated)
+	DE	Ratings Light - bewertete Titel (mit Anteil TOP bewerteter)
+
+PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE
+	EN	Ratings Light - rated tracks (similar genres)
+	DE	Ratings Light - bewertete Titel (ähnliche Stilrichtungen)
+
+PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE_TOPRATED
+	EN	Ratings Light - rated tracks (similar genres, with % of top rated)
+	DE	Ratings Light - bewertete Titel (ähnliche Stilrichtungen, mit Anteil TOP bewerteter)
+
+PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED
+	EN	Ratings Light - unrated tracks (with % of rated)
+	DE	Ratings Light - unbewertete Titel (mit Anteil bewerteter)
+
+PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_GENRE
+	EN	Ratings Light - unrated tracks (similar genres, with % of rated)
+	DE	Ratings Light - unbewertete Titel (ähnliche Stilrichtungen, mit Anteil bewerteter)
+
+PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED
+	EN	Ratings Light - unrated tracks (unplayed with % of rated)
+	DE	Ratings Light - unbewertete Titel (nie gespielt mit Anteil bewerteter)
+
+PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED_GENRE
+	EN	Ratings Light - unrated tracks (unplayed, similar genres, with % of rated)
+	DE	Ratings Light - unbewertete Titel (nie gespielt, ähnliche Stilrichtungen, mit Anteil bewerteter)
+
 
 
 PLUGIN_RATINGSLIGHT_VLNAME_RATEDTRACKS
@@ -966,36 +1012,3 @@ PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_APPEND_MSG_ALL
 PLUGIN_RATINGSLIGHT_MENUS_RATEDTRACKS_MENU_MOREINFO
 	EN	More information
 	DE	Mehr Informationen
-
-
-PLUGIN_RATINGSLIGHT_DSTM_RATED
-	EN	Ratings Light - rated tracks
-	DE	Ratings Light - bewertete Titel
-
-PLUGIN_RATINGSLIGHT_DSTM_TOPRATED
-	EN	Ratings Light - rated tracks (with % of top rated)
-	DE	Ratings Light - bewertete Titel (mit Anteil TOP bewerteter)
-
-PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE
-	EN	Ratings Light - rated tracks (similar genres)
-	DE	Ratings Light - bewertete Titel (ähnliche Stilrichtungen)
-
-PLUGIN_RATINGSLIGHT_DSTM_RATED_GENRE_TOPRATED
-	EN	Ratings Light - rated tracks (similar genres, with % of top rated)
-	DE	Ratings Light - bewertete Titel (ähnliche Stilrichtungen, mit Anteil TOP bewerteter)
-
-PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED
-	EN	Ratings Light - unrated tracks (with % of rated)
-	DE	Ratings Light - unbewertete Titel (mit Anteil bewerteter)
-
-PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_GENRE
-	EN	Ratings Light - unrated tracks (similar genres, with % of rated)
-	DE	Ratings Light - unbewertete Titel (ähnliche Stilrichtungen, mit Anteil bewerteter)
-
-PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED
-	EN	Ratings Light - unrated tracks (unplayed with % of rated)
-	DE	Ratings Light - unbewertete Titel (nie gespielt mit Anteil bewerteter)
-
-PLUGIN_RATINGSLIGHT_DSTM_UNRATED_RATED_UNPLAYED_GENRE
-	EN	Ratings Light - unrated tracks (unplayed, similar genres, with % of rated)
-	DE	Ratings Light - unbewertete Titel (nie gespielt, ähnliche Stilrichtungen, mit Anteil bewerteter)
