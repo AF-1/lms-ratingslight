@@ -3302,7 +3302,10 @@ sub writeRatingToDB {
 
 	my $dbh = Slim::Schema->dbh;
 	eval {
-		$dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where urlmd5 = ?', undef, $rating100ScaleValue, int(time()), $previousRating100ScaleValue, $track->urlmd5);
+		my $rowsAffected = $dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where urlmd5 = ?', undef, $rating100ScaleValue, int(time()), $previousRating100ScaleValue, $track->urlmd5);
+		if (!defined($rowsAffected) || $rowsAffected == 0) {
+			$log->warn("No tracks_persistent row for urlmd5 '".$track->urlmd5."' (track: '".$track->url."') - rating not saved. This can happen when another track in the library shares the same MusicBrainz ID tag.");
+		}
 	};
 	if ($@) {
 		$log->warn("Database error while writing rating for track '".$track->url."': $@");
