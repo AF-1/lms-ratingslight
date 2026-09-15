@@ -314,7 +314,7 @@ sub setRating {
 		return;
 	}
 	my $trackURL = $track->url;
-	my $trackURLmd5 = $track->urlmd5 || md5_hex($trackURL);
+	my $trackURLmd5 = $track->urlmd5;
 
 	# check if remote track is part of online library
 	if ((Slim::Music::Info::isRemoteURL($trackURL) == 1) && (!defined($track->extid))) {
@@ -386,7 +386,7 @@ sub VFD_deviceRating {
 		return;
 	}
 
-	my $trackURLmd5 = $track->urlmd5 || md5_hex($trackURL);
+	my $trackURLmd5 = $track->urlmd5;
 
 	writeRatingToDB($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue);
 
@@ -712,36 +712,29 @@ sub trackInfoHandlerRating {
 		my $returnVal = 0;
 		my ($persistentRating, $persistentLastRated, $persistentPreviousRating);
 		my $dbh = Slim::Schema->dbh;
-		my @urlmd5Candidates;
-		if ($track->urlmd5) {
-			push @urlmd5Candidates, $track->urlmd5;
-		} else {
-			push @urlmd5Candidates, md5_hex($url);
-			if (Slim::Utils::Misc->can('safe_md5_hex')) {
-				push @urlmd5Candidates, Slim::Utils::Misc::safe_md5_hex($url);
-			}
-		}
+		my $found = 0;
 
-		my $matchedUrlmd5;
-		my $sth = $dbh->prepare('select tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating from tracks_persistent where tracks_persistent.urlmd5 = ?');
-		for my $urlmd5Candidate (@urlmd5Candidates) {
-			eval {
-				$sth->execute($urlmd5Candidate);
-				$sth->bind_columns(undef, \$persistentRating, \$persistentLastRated, \$persistentPreviousRating);
-				if ($sth->fetch()) {
-					$matchedUrlmd5 = $urlmd5Candidate;
-				}
-			};
+		eval {
+			my $sth = $dbh->prepare('select tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating from tracks_persistent where tracks_persistent.urlmd5 = ?');
+			$sth->execute($track->urlmd5);
+			$sth->bind_columns(undef, \$persistentRating, \$persistentLastRated, \$persistentPreviousRating);
+			$found = $sth->fetch() ? 1 : 0;
 			$sth->finish();
-			if ($@) {
-				$log->error("Database error: $@");
+			if (!$found) {
+				$sth = $dbh->prepare('select tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating from tracks_persistent where tracks_persistent.url = ?');
+				$sth->execute($url);
+				$sth->bind_columns(undef, \$persistentRating, \$persistentLastRated, \$persistentPreviousRating);
+				$found = $sth->fetch() ? 1 : 0;
+				$sth->finish();
 			}
-			last if $matchedUrlmd5;
+		};
+		if ($@) {
+			$log->error("Database error: $@");
 		}
 		main::DEBUGLOG && $log->is_debug && $log->debug('persistentRating = '.Data::Dump::dump($persistentRating).' ## persistentLastRated = '.Data::Dump::dump($persistentLastRated).' ## persistentPreviousRating = '.Data::Dump::dump($persistentPreviousRating));
 
 		if (!defined($persistentLastRated)) {
-			if (!defined($matchedUrlmd5)) {
+			if (!$found) {
 				$log->warn("Couldn't retrieve information for this track.\nCould be part of a (client) playlist whose track references are no longer valid after a *rescan*.\nTrack url = ".$url."\nTrack urlmd5 = ".Data::Dump::dump($track->urlmd5));
 				return;
 			}
@@ -764,7 +757,7 @@ sub trackInfoHandlerRating {
 			type => 'text',
 			name => $displayText,
 			trackid => $track->id,
-			urlmd5 => $matchedUrlmd5 // $urlmd5Candidates[0],
+			urlmd5 => $track->urlmd5,
 			infoitem => $infoItem,
 		};
 		return $item;
@@ -2547,10 +2540,6 @@ sub handleEndElement {
 				for my $candidateURL (@candidateURLs) {
 					my $freshUrlmd5 = md5_hex($candidateURL);
 					push @urlmd5Candidates, $freshUrlmd5 unless grep { $_ eq $freshUrlmd5 } @urlmd5Candidates;
-					if (Slim::Utils::Misc->can('safe_md5_hex')) {
-						my $freshSafeUrlmd5 = Slim::Utils::Misc::safe_md5_hex($candidateURL);
-						push @urlmd5Candidates, $freshSafeUrlmd5 unless grep { $_ eq $freshSafeUrlmd5 } @urlmd5Candidates;
-					}
 				}
 
 				if (!@urlmd5Candidates && !$backupTrackMBID) {
@@ -3301,9 +3290,13 @@ sub writeRatingToDB {
 	}
 
 	my $dbh = Slim::Schema->dbh;
+	my $rowsAffected = 0;
 	eval {
-		my $rowsAffected = $dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where urlmd5 = ?', undef, $rating100ScaleValue, int(time()), $previousRating100ScaleValue, $track->urlmd5);
-		if (!defined($rowsAffected) || $rowsAffected == 0) {
+		$rowsAffected = $dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where urlmd5 = ?', undef, $rating100ScaleValue, int(time()), $previousRating100ScaleValue, $track->urlmd5);
+		if (!$rowsAffected || $rowsAffected == 0) {
+			$rowsAffected = $dbh->do('update tracks_persistent set rating = ?, lastRated = ?, prevRating = ? where url = ?', undef, $rating100ScaleValue, int(time()), $previousRating100ScaleValue, $track->url);
+		}
+		if (!$rowsAffected || $rowsAffected == 0) {
 			$log->warn("No tracks_persistent row for urlmd5 '".$track->urlmd5."' (track: '".$track->url."') - rating not saved. This can happen when another track in the library shares the same MusicBrainz ID tag.");
 		}
 	};
@@ -3353,16 +3346,26 @@ sub getRatingFromDB {
 
 	# use sqlite instead of LMS method in case library has tracks with identical MusicBrainz IDs
 	main::DEBUGLOG && $log->is_debug && $log->debug('Trying to get rating with sqlite and url: '.$track->url) if $debugVerbose;
-	my $urlmd5 = $track->urlmd5 || md5_hex($track->url);
+	my $trackURL = $track->url;
+	my $foundRating;
 	my $dbh = Slim::Schema->dbh;
-
 	eval {
 		my $sth = $dbh->prepare('select rating from tracks_persistent where urlmd5 = ?');
-		$sth->execute($urlmd5);
-		$rating100ScaleValue = $sth->fetchrow || 0;
+		$sth->execute($track->urlmd5);
+		$sth->bind_columns(undef, \$foundRating);
+		$sth->fetch();
 		$sth->finish();
+		if (!defined $foundRating) {
+			$sth = $dbh->prepare('select rating from tracks_persistent where url = ?');
+			$sth->execute($trackURL);
+			$sth->bind_columns(undef, \$foundRating);
+			$sth->fetch();
+			$sth->finish();
+		}
 	};
 	if ($@) { main::DEBUGLOG && $log->is_debug && $log->debug("error: $@"); }
+	$rating100ScaleValue = $foundRating || 0;
+
 	main::DEBUGLOG && $log->is_debug && $log->debug("Found rating $rating100ScaleValue for url: ".$track->url) if $debugVerbose;
 	return $raw ? $rating100ScaleValue : adjustRating($rating100ScaleValue);
 }

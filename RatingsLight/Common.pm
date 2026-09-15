@@ -59,7 +59,7 @@ sub createBackup {
 	$backupQueue = [];
 	$ignoredTracksCount = 0;
 	eval {
-		my $sth = $dbh->prepare("select tracks.url, tracks.urlmd5, tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating, tracks.remote, tracks.extid, tracks_persistent.musicbrainz_id from tracks_persistent join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating > 0 or tracks_persistent.lastRated is not null)");
+		my $sth = $dbh->prepare("select tracks_persistent.url, tracks_persistent.urlmd5, tracks_persistent.rating, tracks_persistent.lastRated, tracks_persistent.prevRating, tracks.remote, tracks.extid, tracks_persistent.musicbrainz_id from tracks_persistent left join tracks on tracks.urlmd5 = tracks_persistent.urlmd5 where (tracks_persistent.rating > 0 or tracks_persistent.lastRated is not null)");
 		$sth->execute();
 		$sth->bind_columns(undef, \$trackURL, \$trackURLmd5, \$trackRating, \$trackLastRated, \$trackPrevRating, \$trackRemote, \$trackExtid, \$trackMBID);
 		while ($sth->fetch()) {
