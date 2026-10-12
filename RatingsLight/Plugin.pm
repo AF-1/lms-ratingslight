@@ -1176,7 +1176,7 @@ sub getRatedTracks {
 		$sqlstatement .= ' join genre_track on genre_track.track = tracks.id and genre_track.genre = ?';
 		push @bind_params, $objectID;
 	} elsif ($objectType eq 'playlist') {
-		$sqlstatement .= ' join playlist_track on playlist_track.track = tracks.url and playlist_track.playlist = ?';
+		$sqlstatement .= ' join playlist_track on tracks.url = playlist_track.track and playlist_track.playlist = ?';
 		push @bind_params, $objectID;
 	} elsif ($objectType eq 'composer' || $objectType eq 'artistcomposer') {
 		$sqlstatement .= ' join contributor_track on tracks.id = contributor_track.track and contributor_track.contributor = ? and contributor_track.role = 2';

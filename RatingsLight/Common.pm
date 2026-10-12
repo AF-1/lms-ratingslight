@@ -63,7 +63,7 @@ sub createBackup {
 		$sth->execute();
 		$sth->bind_columns(undef, \$trackURL, \$trackURLmd5, \$trackRating, \$trackLastRated, \$trackPrevRating, \$trackRemote, \$trackExtid, \$trackMBID);
 		while ($sth->fetch()) {
-			push (@{$backupQueue}, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'lastRated' => $trackLastRated, 'prevRating' => $trackPrevRating, 'remote' => $trackRemote, 'extid' => $trackExtid, 'musicbrainzid' => $trackMBID});
+			push (@{$backupQueue}, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'lastRated' => $trackLastRated, 'prevRating' => $trackPrevRating, 'remote' => $trackRemote // 0, 'extid' => $trackExtid, 'musicbrainzid' => $trackMBID});
 		}
 		$sth->finish();
 	};
