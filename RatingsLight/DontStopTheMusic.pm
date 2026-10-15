@@ -365,8 +365,9 @@ drop table randomweightedratingscombined;";
 	my $dstm_playedtrackstokeep = $prefs->get('dstm_playedtrackstokeep');
 	if ($songIndex) {
 		for (my $i = 0; $i < $songIndex - $dstm_playedtrackstokeep; $i++) {
-			my $request = $client->execute(['playlist', 'delete', 0]);
+			my $request = Slim::Control::Request->new($client->id(), ['playlist', 'delete', 0]);
 			$request->source('PLUGIN_RATINGSLIGHT');
+			$request->execute() if $request->isStatusDispatchable();
 		}
 	}
 

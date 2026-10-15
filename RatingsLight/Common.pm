@@ -63,7 +63,7 @@ sub createBackup {
 		$sth->execute();
 		$sth->bind_columns(undef, \$trackURL, \$trackURLmd5, \$trackRating, \$trackLastRated, \$trackPrevRating, \$trackRemote, \$trackExtid, \$trackMBID);
 		while ($sth->fetch()) {
-			push (@{$backupQueue}, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'lastRated' => $trackLastRated, 'prevRating' => $trackPrevRating, 'remote' => $trackRemote // 0, 'extid' => $trackExtid, 'musicbrainzid' => $trackMBID});
+			push (@{$backupQueue}, {'url' => $trackURL, 'urlmd5' => $trackURLmd5, 'rating' => $trackRating, 'lastRated' => $trackLastRated, 'prevRating' => $trackPrevRating, 'remote' => $trackRemote // (Slim::Music::Info::isFileURL($trackURL) ? 0 : 1), 'inlib' => defined($trackRemote) ? 1 : 0, 'extid' => $trackExtid, 'musicbrainzid' => $trackMBID});
 		}
 		$sth->finish();
 	};
@@ -76,7 +76,7 @@ sub createBackup {
 
 	if (@{$backupQueue}) {
 		$backupQueueOriginalSize = scalar(@{$backupQueue});
-		$backupTotalCount = scalar(grep { !(($_->{'remote'} == 1) && (!defined($_->{'extid'}))) } @{$backupQueue});
+		$backupTotalCount = scalar(grep { !($_->{'inlib'} && ($_->{'remote'} == 1) && (!defined($_->{'extid'}))) } @{$backupQueue});
 		my $filename = catfile($backupDir, 'RL_Backup_'.$filename_timestamp.'.xml');
 		$backupOutput = FileHandle->new($filename, '>:utf8') or do {
 			$log->error('Could not open '.$filename.' for writing. Does the RatingsLight folder exist? Does LMS have read/write permissions (755) for the (parent) folder?');
@@ -113,7 +113,7 @@ sub createBackup {
 sub writeBackupChunk {
 	if (my $ratedTrack = shift(@{$backupQueue})) {
 		my $BACKUPtrackURL = $ratedTrack->{'url'};
-		if (($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) {
+		if ($ratedTrack->{'inlib'} && ($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) {
 			main::INFOLOG && $log->is_info && $log->info('Warning: ignoring this track. Track is remote but not part of LMS library: '.$BACKUPtrackURL);
 			$ignoredTracksCount++;
 			_advanceBackupProgress();
@@ -217,8 +217,7 @@ sub importRatingsFromCommentTags {
 			where (tracks_persistent.rating > 0
 				and tracks_persistent.urlmd5 in (
 					select tracks.urlmd5 from tracks
-					left join comments on comments.track = tracks.id
-					where (comments.value not like ? or comments.value is null))
+					where not exists (select 1 from comments where comments.track = tracks.id and comments.value like ?))
 			)", undef, $ratingTime, $ratingkeyword_unrate);
 	};
 	if ($@) {
@@ -310,14 +309,15 @@ sub getBackupCodepage {
 sub getRelFilePath {
 	main::DEBUGLOG && $log->is_debug && $log->debug('Getting relative file url/path.');
 	my $fullTrackURL = shift;
+	return unless Slim::Music::Info::isFileURL($fullTrackURL);
 	my $relFilePath;
 	my $lmsmusicdirs = getMusicDirs();
 	main::DEBUGLOG && $log->is_debug && $log->debug('Valid LMS music dirs = '.Data::Dump::dump($lmsmusicdirs));
+	my $fullTrackPath = Slim::Utils::Misc::pathFromFileURL($fullTrackURL);
+	my $dirSep = File::Spec->canonpath("/");
 
 	foreach (@{$lmsmusicdirs}) {
-		my $dirSep = File::Spec->canonpath("/");
 		my $mediaDirPath = $_.$dirSep;
-		my $fullTrackPath = Slim::Utils::Misc::pathFromFileURL($fullTrackURL);
 		my $match = checkInFolder($fullTrackPath, $mediaDirPath);
 
 		main::DEBUGLOG && $log->is_debug && $log->debug("Full file path \"$fullTrackPath\" is".($match == 1 ? "" : " NOT")." part of media dir \"".$mediaDirPath."\"");

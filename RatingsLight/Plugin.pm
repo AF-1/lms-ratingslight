@@ -1818,7 +1818,7 @@ sub exportRatingsToPlaylistFiles {
 				}
 				my $ratingkeyword;
 				if ($rating100ScaleValue) {
-					$sql .= ' and tracks.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where (comments.value not like ? or comments.value is null))';
+					$sql .= ' and tracks.urlmd5 in (select tracks.urlmd5 from tracks where not exists (select 1 from comments where comments.track = tracks.id and comments.value like ?))';
 					$ratingkeyword = '%%'.$rating_keyword_prefix.($rating100ScaleValue/20).$rating_keyword_suffix.'%%';
 				} else {
 					$sql .= ' and tracks.urlmd5 in (select tracks.urlmd5 from tracks left join comments on comments.track = tracks.id where comments.value like ?)';
@@ -2440,13 +2440,12 @@ sub handleEndElement {
 			if (defined($rating100ScaleValue) || defined($lastRatedValue)) {
 				my $fullTrackURL = Encode::decode('utf8', unescape($fullTrackURLraw));
 
-				# encode_locale() matches whatever byte encoding this LMS instance itself used when it scanned
-				# local files (UTF-8 on Linux/macOS, the active ANSI codepage on Windows) - falls back to plain
-				# UTF-8 encoding on LMS versions that lack this function
+				# encode_locale() matches whatever byte encoding this LMS instance itself used when it scanned local files (UTF-8 on Linux/macOS, the active ANSI codepage on Windows)
+				# falls back to plain UTF-8 encoding on LMS versions that lack this function
 				my $encodeForLocalPath = Slim::Utils::Unicode->can('encode_locale') ? \&Slim::Utils::Unicode::encode_locale : sub { return Encode::encode('utf8', $_[0]); };
 
-				# a Windows source backup names its own codepage; without that field, still try the common
-				# Western default unless the source is positively known to be non-Windows (Darwin/Linux)
+				# a Windows source backup names its own codepage; without that field, still try the common Western default
+				# unless the source is positively known to be non-Windows (Darwin/Linux)
 				my $sourceCodepage = $backupSourceCodepage || ((!defined $backupSourceOS || $backupSourceOS eq 'Windows') ? 'cp1252' : undef);
 
 				# builds NFC and NFD variants from already-decoded text, re-encoded for this machine's locale;
@@ -2456,7 +2455,7 @@ sub handleEndElement {
 					return (undef, undef) unless defined $decodedText;
 					my $nfc = $encodeForLocalPath->(Unicode::Normalize::NFC($decodedText));
 					my $nfd = $encodeForLocalPath->(Unicode::Normalize::NFD($decodedText));
-					if ($isFullURL) {
+					if ($isFullURL && Slim::Music::Info::isFileURL($nfc)) {
 						$nfc = Slim::Utils::Misc::fileURLFromPath(Slim::Utils::Misc::pathFromFileURL($nfc));
 						$nfd = Slim::Utils::Misc::fileURLFromPath(Slim::Utils::Misc::pathFromFileURL($nfd));
 					}
@@ -2469,9 +2468,8 @@ sub handleEndElement {
 
 					($fullTrackURLnfc, $fullTrackURLnfd) = $buildNfcNfdVariants->(Encode::decode('utf8', $fullTrackURLrawBytes), 1);
 
-					# a Windows source may have written its own file:// URL using the active ANSI codepage
-					# instead of UTF-8 (e.g. a single 0xE3 byte for one accented character) - decode with that
-					# codepage instead of UTF-8, then build the same NFC/NFD variants as above
+					# a Windows source may have written its own file:// URL using the active ANSI codepage instead of UTF-8 (e.g. a single 0xE3 byte for one accented character)
+					# decode with that codepage instead of UTF-8, then build the same NFC/NFD variants as above
 					if ($sourceCodepage) {
 						my $fullTrackURLcpDecoded = eval { Encode::decode($sourceCodepage, $fullTrackURLrawBytes) };
 						main::DEBUGLOG && $log->is_debug && $log->debug("Could not decode full track URL as $sourceCodepage: $@") if $@;
@@ -2484,9 +2482,9 @@ sub handleEndElement {
 					$relTrackURL = Encode::decode('utf8', unescape($relTrackURLraw));
 					$relTrackURL =~ s/^\.\///;
 
-					# second unescape pass fully resolves double-encoded backup entries down to raw bytes;
-					# NFC/NFD-normalizes to cover both migration directions (macOS decomposes, most other
-					# filesystems compose), re-encoded for this machine's locale for a consistent fileURLFromPath() call
+					# second unescape pass fully resolves double-encoded backup entries down to raw bytes
+					# NFC/NFD-normalizes to cover both migration directions (macOS decomposes, most other filesystems compose)
+					# re-encoded for this machine's locale for a consistent fileURLFromPath() call
 					my $relTrackURLrawBytes = unescape(unescape($relTrackURLraw));
 					my $relTrackURLdecoded = Encode::decode('utf8', $relTrackURLrawBytes);
 					$relTrackURLdecoded =~ s/^\.\///;
