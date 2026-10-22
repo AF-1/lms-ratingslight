@@ -42,7 +42,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(displayratingchar usehalfstarratings showratedtracksmenus browsemenus_artists browsemenus_genres browsemenus_tracks browsemenus_sourceVL_id ratingcontextmenupos displayratinghistory ratedtracksweblimit ratedtrackscontextmenulimit));
+	return ($prefs, qw(displayratingchar usehalfstarratings showratedtracksmenus browsemenus_artists browsemenus_albums browsemenus_genres browsemenus_tracks browsemenus_sourceVL_id ratingcontextmenupos displayratinghistory ratedtracksweblimit ratedtrackscontextmenulimit));
 }
 
 sub beforeRender {
@@ -76,6 +76,14 @@ sub beforeRender {
 		sortName => "Complete Library",
 		library_id => undef,
 	};
+	# keep a stored but currently unregistered source library selectable. Saving the page would otherwise reset it
+	if (defined($currentLibrary) && $currentLibrary ne '' && !grep {defined($_->{library_id}) && $_->{library_id} eq $currentLibrary} @items) {
+		splice @items, 1, 0, {
+			name => string("PLUGIN_RATINGSLIGHT_LANGSTRING_SOURCEVL_UNAVAILABLE"),
+			sortName => "Unavailable Library",
+			library_id => $currentLibrary,
+		};
+	}
 	main::DEBUGLOG && $log->is_debug && $log->debug("libraries for settings page: ".Data::Dump::dump(\@items));
 	$paramRef->{virtuallibraries} = \@items;
 }

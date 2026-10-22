@@ -23,6 +23,12 @@
 		<option [% IF prefs.browsemenus_artists %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
 	</select>
 	<br><br>
+	[% "PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_ALBUMS_MENU" | string %]&nbsp;&nbsp;
+	<select class="stdedit" name="pref_browsemenus_albums" id="browsemenus_albums">
+		<option [% IF NOT prefs.browsemenus_albums %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+		<option [% IF prefs.browsemenus_albums %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+	</select>
+	<br><br>
 	[% "PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_GENRES_MENU" | string %]&nbsp;&nbsp;
 	<select class="stdedit" name="pref_browsemenus_genres" id="browsemenus_genres">
 		<option [% IF NOT prefs.browsemenus_genres %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
@@ -44,6 +50,8 @@
 		[% END %]
 	</select>
 [% END %]
+[% ELSE %]
+<input type="hidden" name="pref_browsemenus_sourceVL_id" value="[% prefs.browsemenus_sourceVL_id %]">
 [% END %]
 <br>
 
