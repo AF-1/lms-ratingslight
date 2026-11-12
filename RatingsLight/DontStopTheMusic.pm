@@ -67,10 +67,10 @@ sub dontStopTheMusic {
 	my $sqlstatement;
 
 	### shared sql
-	# track min duration, library view
-	my $shared_curlib_sql = " join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where audio=1 and tracks.secs >= $dstm_minTrackDuration";
-	# track min duration
-	my $shared_completelib_sql = " where audio=1 and tracks.secs >= $dstm_minTrackDuration";
+	# track min duration, no non-track rows, library view
+	my $shared_curlib_sql = " join library_track on library_track.track = tracks.id and library_track.library = \"$currentLibrary\" where audio=1 and tracks.secs >= $dstm_minTrackDuration and ifnull(tracks.content_type, '') not in ('cpl', 'src', 'ssp', 'dir')";
+	# track min duration, no non-track rows
+	my $shared_completelib_sql = " where audio=1 and tracks.secs >= $dstm_minTrackDuration and ifnull(tracks.content_type, '') not in ('cpl', 'src', 'ssp', 'dir')";
 	# excluded genres
 	my $excludegenre_sql = " and not exists (select * from tracks t2,genre_track,genres where t2.id=tracks.id and tracks.id=genre_track.track and genre_track.genre=genres.id and genres.namesearch in ($excludedgenrelist))";
 

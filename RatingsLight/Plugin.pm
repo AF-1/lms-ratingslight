@@ -49,6 +49,7 @@ my ($restorestarted, $restoreTotalCount, $restoreProcessedCount, $restoreDone, $
 my ($restoreCount, $restoreErrors, $unidentifiableCount, $unmatchedCount, $backupSourceOS, $backupSourceCodepage, $preferCodepageFirst) = (0, 0, 0, 0, undef, undef, 0);
 my @unmatchedTrackURLs;
 my %vlSignatures;
+my %nonTrackContentTypes = map {$_ => 1} qw(ssp cpl src dir); # content types of non-playable rows in the tracks table
 my $sourceVLfingerprint = '';
 my $syncRetries = 0;
 our $syncRunning = 0;
@@ -329,6 +330,8 @@ sub setRating {
 		return;
 	}
 
+	return if _isNonTrackRow($track);
+
 	# check for dead/moved local tracks
 	if ((Slim::Music::Info::isRemoteURL($trackURL) != 1) && (!defined($track->filesize))) {
 		$log->error("Can't set rating. Track dead or moved? Track URL: ".$trackURL);
@@ -386,6 +389,8 @@ sub VFD_deviceRating {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Track is remote but not part of LMS library. Track URL: '.$track->url);
 		return;
 	}
+
+	return if _isNonTrackRow($track);
 
 	# check for dead/moved local tracks
 	if ((Slim::Music::Info::isRemoteURL($track->url) != 1) && (!defined($track->filesize))) {
@@ -656,6 +661,8 @@ sub trackInfoHandlerRating {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Track is remote but not part of LMS library. Track URL: '.$url);
 		return;
 	}
+
+	return if _isNonTrackRow($track);
 
 	# check for dead/moved local tracks
 	if ((Slim::Music::Info::isRemoteURL($url) != 1) && (!defined($track->filesize))) {
@@ -986,6 +993,8 @@ sub objectInfoHandler {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Track is remote but not part of LMS library. Track URL: '.$url);
 			return;
 		}
+
+		return if _isNonTrackRow($obj);
 
 		# check for dead/moved local tracks
 		if ((Slim::Music::Info::isRemoteURL($url) != 1) && (!defined($obj->filesize))) {
@@ -3529,6 +3538,14 @@ sub refreshAll {
 	Slim::Music::Info::clearFormatDisplayCache();
 	refreshTitleFormats();
 	refreshVLtimer();
+}
+
+sub _isNonTrackRow {
+	my $track = shift;
+	my $contentType = blessed($track) ? $track->content_type : undef;
+	return 0 unless $contentType && $nonTrackContentTypes{$contentType};
+	main::DEBUGLOG && $log->is_debug && $log->debug('Ignoring non-track row. Content type: '.$contentType.' ## URL: '.($track->url // 'n/a'));
+	return 1;
 }
 
 sub quickCountSQL {
