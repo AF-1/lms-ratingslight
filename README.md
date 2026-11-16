@@ -2,7 +2,7 @@ Ratings Light
 ====
 ![Min. LMS Version](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2FAF-1%2Fsobras%2Fmain%2Frepos%2Flms%2Fpublic.xml&cacheSeconds=172800&query=%2F%2F*%5Blocal-name()%3D'plugin'%20and%20%40name%3D'RatingsLight'%5D%2F%40minTarget&label=Min.%20LMS%20Version%20Required&color=darkgreen)<br>
 
-<img src="RatingsLight/HTML/EN/plugins/RatingsLight/html/images/rl_repo_icon.png" align="right" width="70px">**Ratings Light** takes care of rating tracks in your LMS library. See [**features**](#features) section for details.
+<img src="screenshots/rl_repo_icon.png" align="right" width="70px">**Ratings Light** takes care of rating tracks in your LMS library. See [**features**](#features) section for details.
 <br><br clear="right">
 
 <a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
