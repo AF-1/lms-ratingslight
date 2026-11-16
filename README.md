@@ -2,7 +2,7 @@ Ratings Light
 ====
 ![Min. LMS Version](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2FAF-1%2Fsobras%2Fmain%2Frepos%2Flms%2Fpublic.xml&cacheSeconds=172800&query=%2F%2F*%5Blocal-name()%3D'plugin'%20and%20%40name%3D'RatingsLight'%5D%2F%40minTarget&label=Min.%20LMS%20Version%20Required&color=darkgreen)<br>
 
-<img src="RatingsLight/HTML/EN/plugins/RatingsLight/html/images/rl_icon.png" align="right" width="70px">**Ratings Light** takes care of rating tracks in your LMS library. See [**features**](#features) section for details.
+<img src="RatingsLight/HTML/EN/plugins/RatingsLight/html/images/rl_repo_icon.png" align="right" width="70px">**Ratings Light** takes care of rating tracks in your LMS library. See [**features**](#features) section for details.
 <br><br clear="right">
 
 <a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
@@ -198,8 +198,8 @@ So please make sure that <b>LMS has read/write permissions (755) for the <i>pare
 
 <details><summary>»<b>Can Ratings Light sync track ratings to <i>music streaming providers</i> or other <i>online services</i>?</b>«</summary><br><p>Short answer: no. Many music streaming providers and online services now use a binary scheme (e.g. called <i>like</i> or <i>heart</i>) to "rate" tracks, albums or artists. But even if some still supported a 5-star rating scale, I simply would not have the time to keep RL compatible with possible (API) changes of all those different services in the long run.<br>If you wanted to reduce star track ratings to binary likes or hearts and sync them to a specific online service, this should be done by the LMS plugin for this specific online services.</p></details><br>
 
-<details><summary>»<b>Can I use CLI commands to set ratings?</b>«</summary><br><p>
-Explained in the <a href="https://github.com/AF-1/lms-ratingslight/wiki/CLI-commands">wiki</a>.
+<details><summary>»<b>Can I use CLI commands to set or get ratings?</b>«</summary><br><p>
+Explained in the <a href="https://github.com/AF-1/lms-ratingslight/wiki/External-API">wiki</a>.
 </p></details><br>
 
 <details><summary>»<b>How is the <i>Recently Rated playlist</i> different from the <i>Recently Rated log</i> file?</b>«</summary><br><p>
