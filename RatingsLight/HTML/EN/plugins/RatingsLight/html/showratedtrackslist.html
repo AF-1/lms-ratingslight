@@ -83,16 +83,16 @@
 					<a class="tracktitle underline-on-hover" href="[% webroot %]songinfo.html?item=[% ratedtrack.trackid %]&amp;player=[% playerURI %]">[% ratedtrack.tracktitle %]</a>
 				[% IF objecttype == 'album' %]
 				<br>
-				<a class="artistname underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=artists&artist_id=[% ratedtrack.artistID %]&linktitle=[% pagetitle %]&player=[% playerURI %]/index.html?index=0">[% ratedtrack.artistname %]</a>
+				[% IF ratedtrack.artistID %]<a class="artistname underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=artists&artist_id=[% ratedtrack.artistID %]&linktitle=[% pagetitle %]&player=[% playerURI %]/index.html?index=0">[% ratedtrack.artistname %]</a>[% ELSE %][% ratedtrack.artistname %][% END %]
 				[% END %]
 				[% IF objecttype == 'artist' %]
 				<br>
-				<a class="albumtitle underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=albums&album_id=[% ratedtrack.albumID %]&linktitle=[% pagetitle %]&player=[% playerURI %]/index.html?index=0">[% ratedtrack.albumname %]</a>
+				[% IF ratedtrack.albumID %]<a class="albumtitle underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=albums&album_id=[% ratedtrack.albumID %]&linktitle=[% pagetitle %]&player=[% playerURI %]/index.html?index=0">[% ratedtrack.albumname %]</a>[% ELSE %][% ratedtrack.albumname %][% END %]
 				[% END %]
 				[% IF objecttype == 'genre' || objecttype == 'year' || objecttype == 'decade' || objecttype == 'playlist' || objecttype == 'composer' || objecttype == 'artistcomposer' %]
 				<br>
-				<a class="secondline underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=albums&artist_id=[% ratedtrack.artistID %]&linktitle=[% pagetitle %]&player=[% playerURI %]">[% ratedtrack.artistname %]</a> &#x2022;
-				<a class="secondline underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=tracks&album_id=[% ratedtrack.albumID %]&linktitle=[% pagetitle %]&player=[% playerURI %]">[% ratedtrack.albumname %]</a>
+				[% IF ratedtrack.artistID %]<a class="secondline underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=albums&artist_id=[% ratedtrack.artistID %]&linktitle=[% pagetitle %]&player=[% playerURI %]">[% ratedtrack.artistname %]</a>[% ELSE %][% ratedtrack.artistname %][% END %] &#x2022;
+				[% IF ratedtrack.albumID %]<a class="secondline underline-on-hover" href="[% webroot %]clixmlbrowser/clicmd=browselibrary+items&mode=tracks&album_id=[% ratedtrack.albumID %]&linktitle=[% pagetitle %]&player=[% playerURI %]">[% ratedtrack.albumname %]</a>[% ELSE %][% ratedtrack.albumname %][% END %]
 				[% END %]
 			</span>
 		</span>

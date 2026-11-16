@@ -42,7 +42,7 @@ sub pages {
 }
 
 sub prefs {
-	return ($prefs, qw(displayratingchar usehalfstarratings showratedtracksmenus browsemenus_artists browsemenus_albums browsemenus_genres browsemenus_tracks browsemenus_sourceVL_id ratingcontextmenupos displayratinghistory ratedtracksweblimit ratedtrackscontextmenulimit));
+	return ($prefs, qw(displayratingchar usehalfstarratings showratedtracksmenus browsemenus_artists browsemenus_albums browsemenus_genres browsemenus_tracks browsemenus_sourceVL_id ratingcontextmenupos displayratinghistory ratedtrackslimit));
 }
 
 sub beforeRender {

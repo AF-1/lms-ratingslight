@@ -49,6 +49,7 @@ my ($restorestarted, $restoreTotalCount, $restoreProcessedCount, $restoreDone, $
 my ($restoreCount, $restoreErrors, $unidentifiableCount, $unmatchedCount, $backupSourceOS, $backupSourceCodepage, $preferCodepageFirst) = (0, 0, 0, 0, undef, undef, 0);
 my @unmatchedTrackURLs;
 my %vlSignatures;
+my %validObjectTypes = map {$_ => 1} ('artist', 'album', 'genre', 'year', 'decade', 'playlist', 'composer', 'artistcomposer');
 my %nonTrackContentTypes = map {$_ => 1} qw(ssp cpl src dir); # content types of non-playable rows in the tracks table
 my $sourceVLfingerprint = '';
 my $syncRetries = 0;
@@ -67,8 +68,9 @@ sub initPlugin {
 	Slim::Control::Request::addDispatch(['ratingslight', 'getrating', '_trackid'], [0, 1, 0, \&getRating]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbumoptions', '_albumid'], [1, 1, 1, \&rateAlbumTracksOptions_jive]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratingmenu', '_trackid', '_isalbum', '_unratedonly'], [0, 1, 1, \&getRatingMenu]);
-	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbum', '_albumid', '_rating', '_unratedonly'], [1, 1, 1, \&_rateAlbumTracks]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'ratealbum', '_albumid', '_rating', '_unratedonly'], [0, 1, 1, \&_rateAlbumTracks]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'ratedtracksmenu'], [0, 1, 1, \&getRatedTracksMenu]);
+	Slim::Control::Request::addDispatch(['ratingslight', 'ratedtracks'], [0, 1, 1, \&getRatedTracksAPI]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'actionsmenu'], [0, 1, 1, \&getActionsMenu]);
 	Slim::Control::Request::addDispatch(['ratingslight', 'changedrating', '_url', '_trackid', '_rating', '_ratingpercent', '_urlmd5'], [0, 0, 0, undef]);
 	Slim::Control::Request::addDispatch(['ratingslightchangedratingupdate'], [0, 1, 0, undef]);
@@ -143,8 +145,7 @@ sub initPrefs {
 		showratedtracksmenus => 0,
 		displayratingchar => 0,
 		recentlymaxcount => 30,
-		ratedtracksweblimit => 80,
-		ratedtrackscontextmenulimit => 80,
+		ratedtrackslimit => 100,
 		dstm_minTrackDuration => 90,
 		dstm_percentagerated => 30,
 		dstm_percentagetoprated => 30,
@@ -221,8 +222,7 @@ sub initPrefs {
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 365}, 'backupsdaystokeep');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 1, 'high' => 100}, 'backupfilesmin');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 2, 'high' => 200}, 'recentlymaxcount');
-	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 200}, 'ratedtracksweblimit');
-	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 200}, 'ratedtrackscontextmenulimit');
+	$prefs->setValidate({'validator' => 'intlimit', 'low' => 5, 'high' => 200}, 'ratedtrackslimit');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 0, 'high' => 1800}, 'dstm_minTrackDuration');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 0, 'high' => 100}, 'dstm_percentagerated');
 	$prefs->setValidate({'validator' => 'intlimit', 'low' => 0, 'high' => 100}, 'dstm_percentagetoprated');
@@ -366,6 +366,7 @@ sub setRating {
 		}
 	}
 
+	$rating100ScaleValue = adjustRating($rating100ScaleValue, 1);
 	writeRatingToDB($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue);
 
 	Slim::Control::Request::notifyFromArray($client, ['ratingslight', 'changedrating', $trackURL, $trackID, $rating100ScaleValue/20, $rating100ScaleValue, $trackURLmd5]);
@@ -580,31 +581,46 @@ sub _rateAlbumTracks {
 		$request->setStatusBadDispatch();
 		return;
 	}
-	if (!defined $client) {
-		$log->warn('client required!');
-		$request->setStatusNeedsClient();
+
+	if (Slim::Music::Import->stillScanning) {
+		$log->warn('Warning: access to rating values blocked until library scan is completed');
+		$request->addResult('count', 0);
+		$request->addResult('scanning', 1);
+		$request->setStatusDone();
 		return;
 	}
+
 	my $albumID = $request->getParam('_albumid');
 	my $albumRatingValue = $request->getParam('_rating');
-	main::DEBUGLOG && $log->is_debug && $log->debug('albumID = '.$albumID.' ## albumRatingValue = '.$albumRatingValue);
-	return unless $albumID && defined($albumRatingValue);
 	my $unratedOnly = $request->getParam('_unratedonly');
+	$albumID =~ s/^album_id:// if defined $albumID;
+	$albumRatingValue =~ s/^rating:// if defined $albumRatingValue;
+	$unratedOnly =~ s/^unratedonly:// if defined $unratedOnly;
+	main::DEBUGLOG && $log->is_debug && $log->debug('albumID = '.Data::Dump::dump($albumID).' ## albumRatingValue = '.Data::Dump::dump($albumRatingValue));
 
-	my $ratingSuccess = _rateAlbum($albumID, $albumRatingValue, $unratedOnly);
-	my $message = '';
-	if ($ratingSuccess) {
-		$message = string('PLUGIN_RATINGSLIGHT_RATEALBUM_SUCCESS');
-	} else {
-		$message = string('PLUGIN_RATINGSLIGHT_RATEALBUM_FAILED');
+	if (!defined($albumID) || $albumID !~ /^\d+\z/ || !defined($albumRatingValue) || $albumRatingValue !~ /^\d+\z/ || $albumRatingValue > 100) {
+		$request->setStatusBadParams();
+		return;
 	}
 
-	if (Slim::Buttons::Common::mode($client) !~ /^SCREENSAVER./) {
-		$client->showBriefly({'line' => [string('PLUGIN_RATINGSLIGHT'), $message]}, 5);
+	my $count = _rateAlbum($albumID, $albumRatingValue, $unratedOnly);
+
+	if ($client) {
+		my $message = $count ? string('PLUGIN_RATINGSLIGHT_RATEALBUM_SUCCESS') : string('PLUGIN_RATINGSLIGHT_RATEALBUM_FAILED');
+		if (Slim::Buttons::Common::mode($client) !~ /^SCREENSAVER./) {
+			$client->showBriefly({'line' => [string('PLUGIN_RATINGSLIGHT'), $message]}, 5);
+		}
+		if ($material_enabled) {
+			Slim::Control::Request::executeRequest(undef, ['material-skin', 'send-notif', 'type:info', 'msg:'.$message, 'client:'.$client->id, 'timeout:5']);
+		}
 	}
-	if ($material_enabled) {
-		Slim::Control::Request::executeRequest(undef, ['material-skin', 'send-notif', 'type:info', 'msg:'.$message, 'client:'.$client->id, 'timeout:5']);
+
+	if (!$count) {
+		$log->warn("Can't rate album. Album not found for ID: $albumID");
+		$request->setStatusBadParams();
+		return;
 	}
+	$request->addResult('count', $count + 0);
 	$request->setStatusDone();
 }
 
@@ -612,6 +628,10 @@ sub _rateAlbum {
 	my ($albumID, $albumRatingValue, $unratedOnly) = @_;
 
 	my $album = Slim::Schema->resultset('Album')->single({'id' => $albumID});
+	return 0 unless $album;
+
+	my $count = 0;
+	my @playlistTracks = ();
 	my @albumTracks = $album->tracks;
 
 	if (scalar @albumTracks > 0) {
@@ -624,11 +644,13 @@ sub _rateAlbum {
 				}
 			}
 			main::DEBUGLOG && $log->is_debug && $log->debug('Setting rating of track "'.$_->title.'" to '.$albumRatingValue);
-			writeRatingToDB($_->id, $_->url, $_->urlmd5, $_, $albumRatingValue);
+			$count++ if writeRatingToDB($_->id, $_->url, $_->urlmd5, $_, $albumRatingValue, undef, \@playlistTracks);
 		}
 	}
+	addToRecentlyRatedPlaylist(@playlistTracks) if @playlistTracks;
 	refreshAll();
-	return 1;
+	# '0E0' is true and numeric zero, i.e. album found but no track rated
+	return $count || '0E0';
 }
 
 
@@ -854,7 +876,7 @@ sub getRatingMenu {
 }
 
 
-## common subs
+## common subs / API
 
 sub regTrackInfoHandlerRating {
 	my $refresh = shift;
@@ -1172,8 +1194,6 @@ sub getRatedTracks {
 	my ($countOnly, $client, $objectType, $objectID, $currentTrackID, $listlimit) = @_;
 	main::DEBUGLOG && $log->is_debug && $log->debug('objectType = '.$objectType.' ## countOnly = '.$countOnly.' ## trackID = '.$currentTrackID.' ## thisID = '.$objectID);
 
-	my %validObjectTypes = map {$_ => 1} ('artist', 'album', 'genre', 'year', 'decade', 'playlist', 'composer', 'artistcomposer');
-
 	unless ($validObjectTypes{$objectType}) {
 		$log->warn('No valid objectType');
 		return 0;
@@ -1259,12 +1279,50 @@ sub getRatedTracks {
 	}
 }
 
+sub getRatedTracksAPI {
+	my $request = shift;
+
+	if ($request->isNotQuery([['ratingslight'],['ratedtracks']])) {
+		$request->setStatusBadDispatch();
+		return;
+	}
+
+	my $objectType = $request->getParam('objecttype');
+	my $objectID = $request->getParam('objectid');
+	my $trackID = $request->getParam('trackid') || 0;
+	my $limit = $request->getParam('limit') || $prefs->get('ratedtrackslimit');
+
+	if (!$objectType || !$validObjectTypes{$objectType} || !defined $objectID || $objectID !~ /^\d+$/ || $trackID !~ /^\d+$/ || $limit !~ /^\d+$/) {
+		$request->setStatusBadParams();
+		return;
+	}
+	$objectID = floor($objectID / 10) * 10 if $objectType eq 'decade';
+	$limit = 200 if $limit > 200;
+
+	if (Slim::Music::Import->stillScanning) {
+		$request->addResult('count', 0);
+		$request->addResult('scanning', 1);
+		$request->setStatusDone();
+		return;
+	}
+
+	my $client = $request->client();
+	my $count = getRatedTracks(1, $client, $objectType, $objectID, $trackID, undef);
+	$request->addResult('count', $count);
+
+	if ($count > 0 && !$request->getParam('countonly')) {
+		my $ratedtracks = getRatedTracks(0, $client, $objectType, $objectID, $trackID, $limit);
+		$request->addResult('track_ids', join(',', map {$_->id} grep {defined} @{$ratedtracks}));
+	}
+	$request->setStatusDone();
+}
+
 
 ## show rated tracks menus - WEB
 
 sub handleRatedWebTrackList {
 	my ($client, $params, $callback, $httpClient, $response) = @_;
-	my $ratedtracksweblimit = $prefs->get('ratedtracksweblimit');
+	my $ratedtrackslimit = $prefs->get('ratedtrackslimit');
 
 	## execute action if action and action track id(s) provided
 	my $action = $params->{'action'};
@@ -1286,7 +1344,7 @@ sub handleRatedWebTrackList {
 	my $objectName = $params->{objectname};
 	main::DEBUGLOG && $log->is_debug && $log->debug('objectType = '.$objectType.' ## objectID = '.$objectID.' ## trackID = '.$trackID);
 
-	my $ratedtracks = getRatedTracks(0, $client, $objectType, $objectID, $trackID, $ratedtracksweblimit);
+	my $ratedtracks = getRatedTracks(0, $client, $objectType, $objectID, $trackID, $ratedtrackslimit);
 	if (!scalar @{$ratedtracks}) {
 		$log->warn('No rated tracks found for objectType = '.Data::Dump::dump($objectType).' ## objectID = '.Data::Dump::dump($objectID));
 		return;
@@ -1299,11 +1357,11 @@ sub handleRatedWebTrackList {
 		my $track_id = $ratedtrack->id;
 		my $ratingtext = getRatingTextLine(getRatingFromDB($ratedtrack), 'appended');
 		my $tracktitle = trimStringLength($ratedtrack->title, 70).$ratingtext;
-		my $artworkID = $ratedtrack->album->artwork;
-		my $artistname = trimStringLength($ratedtrack->artist->name, 80);
-		my $artistID = $ratedtrack->artist->id;
-		my $albumname = trimStringLength($ratedtrack->album->name, 80);
-		my $albumID = $ratedtrack->album->id;
+		my $artworkID = $ratedtrack->album ? $ratedtrack->album->artwork : undef;
+		my $artistname = $ratedtrack->artist ? trimStringLength($ratedtrack->artist->name, 80) : string('NO_ARTIST');
+		my $artistID = $ratedtrack->artist ? $ratedtrack->artist->id : '';
+		my $albumname = $ratedtrack->album ? trimStringLength($ratedtrack->album->name, 80) : string('NO_ALBUM');
+		my $albumID = $ratedtrack->album ? $ratedtrack->album->id : '';
 
 		if ($objectType eq 'album') {
 			push (@ratedtracks_webpage, {trackid => $track_id, tracktitle => $tracktitle, artistname => $artistname, artistID => $artistID, artworkid => $artworkID});
@@ -1345,7 +1403,7 @@ sub handleRatedWebTrackList {
 ## show rated tracks menus - JIVE
 
 sub getRatedTracksMenu {
-	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
+	my $ratedtrackslimit = $prefs->get('ratedtrackslimit');
 	my $request = shift;
 	my $client = $request->client();
 
@@ -1366,7 +1424,7 @@ sub getRatedTracksMenu {
 	my $titlemore = $request->getParam('titlemore');
 	main::DEBUGLOG && $log->is_debug && $log->debug('paramsCopy = '.Data::Dump::dump($request->getParamsCopy())) if $debugVerbose;
 
-	my $ratedtracks = getRatedTracks(0, $client, $objectType, $thisID, $trackID, $ratedtrackscontextmenulimit);
+	my $ratedtracks = getRatedTracks(0, $client, $objectType, $thisID, $trackID, $ratedtrackslimit);
 	if (!scalar @{$ratedtracks}) {
 		$log->warn('No rated tracks found for objectType = '.Data::Dump::dump($objectType).' ## objectID = '.Data::Dump::dump($thisID));
 		$request->setStatusDone();
@@ -1427,19 +1485,15 @@ sub getRatedTracksMenu {
 		$tracktitle = trimStringLength($ratedtrack->title, 60);
 
 		if ($objectType eq 'album') {
-			my $artistname = $ratedtrack->artist->name;
-			$artistname = trimStringLength($artistname, 70);
+			my $artistname = $ratedtrack->artist ? trimStringLength($ratedtrack->artist->name, 70) : string('NO_ARTIST');
 			$returntext = $tracktitle.$ratingtext."\n".$artistname;
 		} elsif ($objectType eq 'artist') {
-			my $albumname = $ratedtrack->album->name;
-			$albumname = trimStringLength($albumname, 70);
+			my $albumname = $ratedtrack->album ? trimStringLength($ratedtrack->album->name, 70) : string('NO_ALBUM');
 			$returntext = $tracktitle.$ratingtext."\n".$albumname;
 		} else {
 			my $sepchar = HTML::Entities::decode_entities('&#x2022;'); # "bullet" - HTML Entity (hex): &#x2022;
-			my $artistname = $ratedtrack->artist->name;
-			$artistname = trimStringLength($artistname, 70);
-			my $albumname = $ratedtrack->album->name;
-			$albumname = trimStringLength($albumname, 70);
+			my $artistname = $ratedtrack->artist ? trimStringLength($ratedtrack->artist->name, 70) : string('NO_ARTIST');
+			my $albumname = $ratedtrack->album ? trimStringLength($ratedtrack->album->name, 70) : string('NO_ALBUM');
 			$returntext = $tracktitle.$ratingtext."\n".$artistname.' '.$sepchar.' '.$albumname;
 		}
 
@@ -1578,10 +1632,10 @@ sub getActionsMenu {
 
 sub VFD_ratedtracks {
 	my ($client, $objectType, $thisID, $trackID) = @_;
-	my $ratedtrackscontextmenulimit = $prefs->get('ratedtrackscontextmenulimit');
+	my $ratedtrackslimit = $prefs->get('ratedtrackslimit');
 	main::DEBUGLOG && $log->is_debug && $log->debug('objectType = '.$objectType.' ## thisID = '.$thisID.' ## trackID = '.$trackID);
 
-	my $ratedtracks = getRatedTracks(0, $client, $objectType, $thisID, $trackID, $ratedtrackscontextmenulimit);
+	my $ratedtracks = getRatedTracks(0, $client, $objectType, $thisID, $trackID, $ratedtrackslimit);
 	my @vfd_ratedtracks = ();
 	my @alltrackids = ();
 
@@ -3051,44 +3105,44 @@ sub mapKeyHold {
 ## rating log, playlist
 
 sub addToRecentlyRatedPlaylist {
-	my $track = shift;
+	my @newTracks = @_;
 	my $playlistname = 'Recently Rated Tracks (Ratings Light)';
 	my $recentlymaxcount = $prefs->get('recentlymaxcount');
-	my $trackAlreadyInPL;
 
 	my $playlist = Slim::Schema->search('Playlist', {'title' => $playlistname })->first();
 	if (!$playlist) {
 		Slim::Control::Request::executeRequest(undef, ['playlists', 'new', 'name:'.$playlistname]);
 		$playlist = Slim::Schema->search('Playlist', {'title' => $playlistname })->first();
 	}
+	return unless $playlist;
 
 	my @PLtracks = $playlist->tracks;
-	if (scalar @PLtracks > 0) {
-		for my $PLtrack (@PLtracks) {
-			if ($PLtrack->id eq $track->id) {
-				$trackAlreadyInPL = 1;
-				main::DEBUGLOG && $log->is_debug && $log->debug('Track "'.$track->title.'" is already in "Recently Rated Tracks" playlist. Won\'t add duplicate.');
-				last;
-			}
-		}
-	}
+	my %trackIDsInPL = map {$_->id => 1} @PLtracks;
+	my $addedCount = 0;
 
-	unless ($trackAlreadyInPL) {
-		my $PLtrackCount = $playlist->tracks->count;
-		if (($PLtrackCount > 1) && (($PLtrackCount + 1) > $recentlymaxcount)) {
-			my $deleteTrackCount = $PLtrackCount + 1 - $recentlymaxcount;
-			$deleteTrackCount = 1 if $deleteTrackCount < 1;
-			splice(@PLtracks, 0, $deleteTrackCount);
-			main::DEBUGLOG && $log->is_debug && $log->debug("Current playlist track count = $PLtrackCount. Max. allowed playlist track count = $recentlymaxcount. Will remove $deleteTrackCount track(s) from the start of the playlist *before* adding new recently rated track.");
+	foreach my $track (@newTracks) {
+		if ($trackIDsInPL{$track->id}) {
+			main::DEBUGLOG && $log->is_debug && $log->debug('Track "'.$track->title.'" is already in "Recently Rated Tracks" playlist. Won\'t add duplicate.');
+			next;
 		}
-
 		push @PLtracks, $track;
-		$playlist->setTracks(\@PLtracks);
-		$playlist->update;
-		main::idleStreams();
-		Slim::Player::Playlist::scheduleWriteOfPlaylist(undef, $playlist);
-		main::DEBUGLOG && $log->is_debug && $log->debug('Added track "'.$track->title.'" to "Recently Rated Tracks" playlist');
+		$trackIDsInPL{$track->id} = 1;
+		$addedCount++;
 	}
+	return unless $addedCount;
+
+	# keep only the newest tracks
+	if ((scalar @PLtracks > 1) && (scalar @PLtracks > $recentlymaxcount)) {
+		my $deleteTrackCount = scalar @PLtracks - $recentlymaxcount;
+		main::DEBUGLOG && $log->is_debug && $log->debug("Max. allowed playlist track count = $recentlymaxcount. Will remove $deleteTrackCount track(s) from the start of the playlist.");
+		splice(@PLtracks, 0, $deleteTrackCount);
+	}
+
+	$playlist->setTracks(\@PLtracks);
+	$playlist->update;
+	main::idleStreams();
+	Slim::Player::Playlist::scheduleWriteOfPlaylist(undef, $playlist);
+	main::DEBUGLOG && $log->is_debug && $log->debug('Added '.$addedCount.($addedCount == 1 ? ' track' : ' tracks').' to "Recently Rated Tracks" playlist');
 }
 
 sub logRatedTrack {
@@ -3173,7 +3227,7 @@ sub clearAllRatings {
 ## set/get rating
 
 sub writeRatingToDB {
-	my ($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, $dontlogthis) = @_;
+	my ($trackID, $trackURL, $trackURLmd5, $track, $rating100ScaleValue, $dontlogthis, $deferredPlaylistTracks) = @_;
 	main::DEBUGLOG && $log->is_debug && $log->debug("trackID = ".Data::Dump::dump($trackID)."\ntrackURL = ".Data::Dump::dump($trackURL)."\ntrackURLmd5 = ".Data::Dump::dump($trackURLmd5)."\ntrack obj = ".($track ? 1 : 0)."\nrating = ".Data::Dump::dump($rating100ScaleValue)."\ndontlogthis = ".Data::Dump::dump($dontlogthis));
 
 	if (defined($rating100ScaleValue) && (($rating100ScaleValue < 0) || ($rating100ScaleValue > 100))) {
@@ -3228,7 +3282,13 @@ sub writeRatingToDB {
 		if (defined($newTrackRating) && $newTrackRating == $rating100ScaleValue) {
 			main::DEBUGLOG && $log->is_debug && $log->debug('Rating successful. Track title: '.$track->title.' ## New rating = '.($rating100ScaleValue/20).' ('.$rating100ScaleValue.')');
 			logRatedTrack($track, $rating100ScaleValue, $previousRating100ScaleValue) if $prefs->get('uselogfile');
-			addToRecentlyRatedPlaylist($track) if $prefs->get('userecentlyratedplaylist');
+			if ($prefs->get('userecentlyratedplaylist')) {
+				if ($deferredPlaylistTracks) {
+					push @{$deferredPlaylistTracks}, $track;
+				} else {
+					addToRecentlyRatedPlaylist($track);
+				}
+			}
 		} else {
 			$log->warn("Couldn't confirm that the track was successfully rated. Won't add track to rating log file or recently rated playlist. Track: ".$track->url);
 		}
@@ -3316,10 +3376,41 @@ sub getRating {
 		$request->setStatusBadParams();
 		return;
 	}
-	my $rating100ScaleValue = getRatingFromDB($track);
+	my $rawRating = getRatingFromDB($track, 1);
+	my $rating100ScaleValue = adjustRating($rawRating);
 
 	$request->addResult('rating', $rating100ScaleValue/20);
 	$request->addResult('ratingpercentage', $rating100ScaleValue);
+	$request->addResult('rawratingpercentage', $rawRating) if $rawRating != $rating100ScaleValue;
+
+	# rating history is optional, omit missing values
+	my ($lastRated, $prevRating);
+	eval {
+		my $dbh = Slim::Schema->dbh;
+		my $sth = $dbh->prepare('select lastRated, prevRating from tracks_persistent where urlmd5 = ?');
+		$sth->execute($track->urlmd5);
+		$sth->bind_columns(undef, \$lastRated, \$prevRating);
+		my $found = $sth->fetch();
+		$sth->finish();
+		if (!$found) {
+			$sth = $dbh->prepare('select lastRated, prevRating from tracks_persistent where url = ?');
+			$sth->execute($track->url);
+			$sth->bind_columns(undef, \$lastRated, \$prevRating);
+			$sth->fetch();
+			$sth->finish();
+		}
+	};
+	if ($@) {
+		$log->warn("Database error while retrieving rating history: $@");
+	}
+	if (defined($lastRated) && $lastRated =~ /^\d+(\.\d+)?\z/) {
+		$request->addResult('lastrated', $lastRated + 0);
+	}
+	if (defined($prevRating) && $prevRating =~ /^\d+(\.\d+)?\z/) {
+		my $prevRatingAdjusted = adjustRating($prevRating);
+		$request->addResult('previousrating', $prevRatingAdjusted/20);
+		$request->addResult('previousratingpercentage', $prevRatingAdjusted);
+	}
 	$request->setStatusDone();
 }
 

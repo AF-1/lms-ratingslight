@@ -785,21 +785,13 @@ PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_DISPLAYRATINGHISTORY
 PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_DISPLAYRATINGHISTORY_DESC
 	EN	Display values for date last rated and previous rating in a track's context menu if available.
 
-PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_WEB_LIMIT
-	EN	Show more rated tracks - web UI limit
-	DE	Zeige mehr bewertete Titel - Weboberfläche Begrenzung
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_LIMIT
+	EN	Show more rated tracks - limit
+	DE	Zeige mehr bewertete Titel - Begrenzung
 
-PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_WEB_LIMIT_DESC
-	EN	Limits the number of tracks in Ratings Light <b>web UI</b> context menus. These context menus ("<i>Show rated tracks</i>") are available for artist, album, genre, year, decade, playlist, and on the song details page.
-	DE	Begrenzt die Anzahl der Titel in den 'Ratings-Light'-Weboberflächen-Kontextmenüs. Diese Kontextmenüs 'Zeige bewertete Titel' sind verfügbar für Interpret, Album, Stilrichtung, Jahr, Jahrzent, Wiedergabeliste und auf der Titel-Detailseite.
-
-PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT
-	EN	Show more rated tracks - menu limit
-	DE	Zeige mehr bewertete Titel - Menü Begrenzung
-
-PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_CONTEXTMENU_LIMIT_DESC
-	EN	Limits the number of tracks in <b>context</b> menus in <b>Material skin</b> and on <b>piCorePlayer, SB Touch, SB Radio</b>. These context menus ("<i>Show rated tracks</i>") are available for artist, album, genre, year, decade, playlist, and on the song details page.
-	DE	Begrenzt die Anzahl der angezeigten Titel in Kontextmenüs des Material-Skins und im PiCorePlayer, SB Touch und SB Radio. Diese 'Zeige bewertete Titel'-Kontextmenüs sind verfügbar für Interpret, Album, Stilrichtung, Jahr, Jahrzent, Wiedergabeliste und auf der Titeldetails-Seite.
+PLUGIN_RATINGSLIGHT_SETTINGS_MENUS_RATEDTRACKSBYARTIST_LIMIT_DESC
+	EN	Limits the number of tracks in the <b>web UI</b>, in <b>Material skin</b> and on <b>piCorePlayer, SB Touch, SB Radio</b>. These context menus ("<i>Show rated tracks</i>") are available for artist, album, genre, year, decade, playlist, and on the song details page. The <b>external API</b> uses this value as its default limit.
+	DE	Begrenzt die Anzahl der angezeigten Titel in der Weboberfläche, im Material-Skin und im PiCorePlayer, SB Touch und SB Radio. Diese 'Zeige bewertete Titel'-Kontextmenüs sind verfügbar für Interpret, Album, Stilrichtung, Jahr, Jahrzent, Wiedergabeliste und auf der Titeldetails-Seite. Die <b>externe API</b> nutzt diesen Wert als Standardlimit.
 
 
 
