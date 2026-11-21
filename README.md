@@ -5,6 +5,9 @@ Ratings Light
 <img src="screenshots/rl_repo_icon.png" align="right" width="70px">**Ratings Light** takes care of rating tracks in your LMS library. See [**features**](#features) section for details.
 <br><br clear="right">
 
+> [!TIP]
+> **External API:** This plugin provides an external API for developers. See the [External API wiki page](https://github.com/AF-1/lms-ratingslight/wiki/External-API) for details.
+
 <a href="https://github.com/AF-1/">⬅️ <b>Back to the list of all plugins</b></a>
 <br><br>
 
