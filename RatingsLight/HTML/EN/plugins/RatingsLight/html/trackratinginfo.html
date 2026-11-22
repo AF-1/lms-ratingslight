@@ -92,14 +92,27 @@
 	visibility: hidden;
 }
 #unratebtn {
-	visibility:[% IF item.itemvalue > 0 %]visible[% ELSE %]hidden[% END %];
+	visibility:[% IF item.itemvalue > 0 && !item.scanning %]visible[% ELSE %]hidden[% END %];
 }
 #unratebtn .rating__label .rating__icon--none {
 	font-size: 11px !important;
 	margin-bottom: 1px !important;
 }
+[% IF item.scanning %]
+.ratingreadonly,
+.ratingreadonly .rating__label {
+	cursor: default;
+}
+.ratingreadonly .rating-group:hover .rating__label .rating__icon--star,
+.ratingreadonly .rating__input:hover ~ .rating__label .rating__icon--star {
+	color: [% IF systemSkin == "DarkDefault" || systemSkin == "DarkLogic" %]#ddd[% ELSE %]black[% END %];
+}
+.ratingreadonly .rating__input:checked ~ .rating__label .rating__icon--star {
+	color: [% IF systemSkin == "DarkDefault" || systemSkin == "DarkLogic" %]black[% ELSE %]#ddd[% END %];
+}
+[% END %]
 </style>
-<div class="ratingwrapper">
+<div class="ratingwrapper[% IF item.scanning %] ratingreadonly[% END %]">
 	<span class="ratingtitle">
 		[% "PLUGIN_RATINGSLIGHT_RATING" | string %]
 	</span>
@@ -132,10 +145,12 @@
 		<input class="rating__input rating__input--none" name="trackrating" id="ratinghalfstars-0x" value="0" type="radio">
 		<label aria-label="Unrate" title="Unrate" class="rating__label" for="ratinghalfstars-0x"><i class="rating__icon rating__icon--none fa fa-remove"></i></label>
 	</span>
+	[% IF item.scanning %]<span class="ratingtitle">[% "PLUGIN_RATINGSLIGHT_BLOCKED" | string %]</span>[% END %]
 </div>
 <script type="text/javascript">
 	let currentRating = [% item.itemvalue %];
 	var ratings = document.getElementsByName('trackrating');
+	[% IF item.scanning %]ratings.forEach(function(r) { r.disabled = true; });[% END %]
 	for (var i = 0; i < ratings.length; i++) {
 		ratings[i].addEventListener('click', function() {
 			ratings.forEach((trackrating) => {

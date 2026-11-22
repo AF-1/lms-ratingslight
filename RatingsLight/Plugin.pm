@@ -264,7 +264,10 @@ sub setRating {
 	my $request = shift;
 	main::DEBUGLOG && $log->is_debug && $log->debug('request params = '.Data::Dump::dump($request->getParamsCopy()));
 	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: access to rating values blocked until library scan is completed');
+		main::DEBUGLOG && $log->is_debug && $log->debug('Access to rating values blocked until library scan is completed');
+		scanBlockedMessage($request->client());
+		$request->addResult('scanning', 1);
+		$request->setStatusDone();
 		return;
 	}
 
@@ -378,9 +381,30 @@ sub setRating {
 	refreshAll();
 }
 
+sub scanBlockedMessage {
+	my $client = shift;
+	return unless $client;
+	my $message = string('PLUGIN_RATINGSLIGHT_BLOCKED');
+	if (Slim::Buttons::Common::mode($client) !~ /^SCREENSAVER./) {
+		$client->showBriefly({'line' => [string('PLUGIN_RATINGSLIGHT'), $message]}, 3);
+	}
+	if ($material_enabled) {
+		Slim::Control::Request::executeRequest(undef, ['material-skin', 'send-notif', 'type:info', 'msg:'.$message, 'client:'.$client->id, 'timeout:3']);
+	}
+}
+
 sub VFD_deviceRating {
 	my ($client, $callback, $params, $trackID, $trackURL, $track, $rating100ScaleValue) = @_;
 	main::DEBUGLOG && $log->is_debug && $log->debug('trackID = '.$trackID.' ## trackURL = '.$trackURL.' ## rating = '.$rating100ScaleValue.' ## callback = '.Data::Dump::dump($callback));
+
+	if (Slim::Music::Import->stillScanning) {
+		if ($callback) {
+			$callback->([{type => 'text', name => string('PLUGIN_RATINGSLIGHT_BLOCKED'), showBriefly => 1, popback => 3}]);
+		} else {
+			scanBlockedMessage($client);
+		}
+		return;
+	}
 
 	$track = Slim::Schema->resultset('Track')->find($trackID) if (!$track && defined($trackID));
 	$track = Slim::Schema->rs('Track')->objectForUrl($trackURL) if (!$track && defined($trackURL));
@@ -429,7 +453,7 @@ sub rateAlbumContextMenu {
 	$tags ||= {};
 
 	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: not available until library scan is completed');
+		main::DEBUGLOG && $log->is_debug && $log->debug('Not available until library scan is completed');
 		return;
 	}
 	return if defined($filter->{'work_id'}); # no context menu for works
@@ -583,7 +607,7 @@ sub _rateAlbumTracks {
 	}
 
 	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: access to rating values blocked until library scan is completed');
+		main::DEBUGLOG && $log->is_debug && $log->debug('Access to rating values blocked until library scan is completed');
 		$request->addResult('count', 0);
 		$request->addResult('scanning', 1);
 		$request->setStatusDone();
@@ -663,20 +687,7 @@ sub trackInfoHandlerRating {
 	my $text = string('PLUGIN_RATINGSLIGHT_RATING');
 	$tags ||= {};
 
-	if (Slim::Music::Import->stillScanning) {
-		if ($tags->{menuMode}) {
-			return {
-				type => 'text',
-				name => $text.' '.string('PLUGIN_RATINGSLIGHT_BLOCKED'),
-				jive => {},
-			};
-		} else {
-			return {
-				type => 'text',
-				name => $text.' '.string('PLUGIN_RATINGSLIGHT_BLOCKED'),
-			};
-		}
-	}
+	my $scanning = Slim::Music::Import->stillScanning;
 
 	# check if remote track is part of online library
 	if ((Slim::Music::Info::isRemoteURL($url) == 1) && (!defined($track->extid))) {
@@ -693,8 +704,15 @@ sub trackInfoHandlerRating {
 	}
 
 	if ($infoItem eq 'rating') {
-		$rating100ScaleValue = getRatingFromDB($track);
+		$rating100ScaleValue = getRatingFromDB($track, 0);
 		$text = string('PLUGIN_RATINGSLIGHT_RATING').' '.(getRatingTextLine($rating100ScaleValue));
+
+		if ($scanning && $tags->{menuMode}) {
+			return {
+				type => 'text',
+				name => $text,
+			};
+		}
 
 		if ($tags->{menuMode}) {
 			return {
@@ -716,6 +734,7 @@ sub trackInfoHandlerRating {
 				itemvalue => $rating100ScaleValue,
 				usehalfstars => $usehalfstarratings,
 				itemid => $track->id,
+				scanning => $scanning ? 1 : 0,
 				web => {
 					'type' => 'htmltemplate',
 					'value' => 'plugins/RatingsLight/html/trackratinginfo.html'
@@ -723,6 +742,7 @@ sub trackInfoHandlerRating {
 			};
 
 			delete $item->{type};
+			return $item if $scanning;
 			my @ratingValues = ();
 			if ($usehalfstarratings) {
 				@ratingValues = qw(100 90 80 70 60 50 40 30 20 10 0);
@@ -771,7 +791,7 @@ sub trackInfoHandlerRating {
 
 		if (!defined($persistentLastRated)) {
 			if (!$found) {
-				$log->warn("Couldn't retrieve information for this track.\nCould be part of a (client) playlist whose track references are no longer valid after a *rescan*.\nTrack url = ".$url."\nTrack urlmd5 = ".Data::Dump::dump($track->urlmd5));
+				$log->warn("Couldn't retrieve information for this track.\nCould be part of a (client) playlist whose track references are no longer valid after a *rescan*.\nTrack url = ".$url."\nTrack urlmd5 = ".Data::Dump::dump($track->urlmd5)) if !$scanning;
 				return;
 			}
 			main::DEBUGLOG && $log->is_debug && $log->debug('Track "'.$track->title.'" has no rating history recorded.') if $debugVerbose;
@@ -816,6 +836,15 @@ sub getRatingMenu {
 		$request->setStatusNeedsClient();
 		return;
 	}
+
+	if (Slim::Music::Import->stillScanning) {
+		scanBlockedMessage($client);
+		$request->addResult('count', 0);
+		$request->addResult('scanning', 1);
+		$request->setStatusDone();
+		return;
+	}
+
 	my $track_id = $request->getParam('_trackid');
 
 	my $isAlbum = $request->getParam('_isalbum');
@@ -994,7 +1023,7 @@ sub objectInfoHandler {
 	$tags ||= {};
 	main::DEBUGLOG && $log->is_debug && $log->debug('objectType = '.$objectType.' ## url = '.Data::Dump::dump($url));
 	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: not available until library scan is completed');
+		main::DEBUGLOG && $log->is_debug && $log->debug('Not available until library scan is completed');
 		return;
 	}
 
@@ -1417,6 +1446,14 @@ sub getRatedTracksMenu {
 		$request->setStatusNeedsClient();
 		return;
 	}
+
+	if (Slim::Music::Import->stillScanning) {
+		$request->addResult('count', 0);
+		$request->addResult('scanning', 1);
+		$request->setStatusDone();
+		return;
+	}
+
 	my $trackID = $request->getParam('trackid') || 0;
 	my $thisID = $request->getParam('objectid');
 	my $objectName = $request->getParam('objectname');
@@ -1725,7 +1762,7 @@ sub VFD_execActions {
 sub importRatingsFromPlaylist {
 	my $playlistimport_maxtracks = $prefs->get('playlistimport_maxtracks');
 	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: access to rating values blocked until library scan is completed');
+		main::DEBUGLOG && $log->is_debug && $log->debug('Access to rating values blocked until library scan is completed');
 		return;
 	}
 	if ($prefs->get('status_batchratingplaylisttracks') == 1) {
@@ -2204,7 +2241,7 @@ sub backupScheduler {
 
 sub restoreFromBackup {
 	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: access to rating values blocked until library scan is completed');
+		main::DEBUGLOG && $log->is_debug && $log->debug('Access to rating values blocked until library scan is completed');
 		return;
 	}
 	if ($prefs->get('status_backuprestore')) {
@@ -3018,7 +3055,7 @@ sub getFunctions {
 			my ($client, $button, $digit) = @_;
 
 			if (Slim::Music::Import->stillScanning) {
-				$log->warn('Warning: access to rating values blocked until library scan is completed');
+				main::DEBUGLOG && $log->is_debug && $log->debug('Access to rating values blocked until library scan is completed');
 				$client->showBriefly({'line' => [string('PLUGIN_RATINGSLIGHT'),string('PLUGIN_RATINGSLIGHT_BLOCKED')]}, 3);
 				return;
 			}
@@ -3198,7 +3235,7 @@ sub writeUnmatchedTracksToFile {
 sub clearAllRatings {
 	my $dontRefresh = shift;
 	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: access to rating values blocked until library scan is completed');
+		main::DEBUGLOG && $log->is_debug && $log->debug('Access to rating values blocked until library scan is completed');
 		return;
 	}
 
@@ -3300,11 +3337,6 @@ sub getRatingFromDB {
 	my ($track, $raw) = @_;
 	my $rating100ScaleValue = 0;
 
-	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: access to rating values blocked until library scan is completed');
-		return $rating100ScaleValue;
-	}
-
 	if ($track && !blessed($track)) {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Track is not blessed');
 		$track = Slim::Schema->find('Track', $track->{id});
@@ -3350,10 +3382,8 @@ sub getRatingFromDB {
 sub getRating {
 	my $request = shift;
 	main::DEBUGLOG && $log->is_debug && $log->debug('request params = '.Data::Dump::dump($request->getParamsCopy()));
-	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: access to rating values blocked until library scan is completed');
-		return;
-	}
+
+	my $scanning = Slim::Music::Import->stillScanning;
 
 	if ($request->isNotQuery([['ratingslight'],['getrating']])) {
 		$log->error('incorrect command');
@@ -3372,13 +3402,20 @@ sub getRating {
 
 	my $track = Slim::Schema->find('Track', $trackID);
 	if (!$track) {
+		if ($scanning) {
+			$request->addResult('scanning', 1);
+			$request->setStatusDone();
+			return;
+		}
 		$log->error("Can't get rating. Track not found for ID: $trackID");
 		$request->setStatusBadParams();
 		return;
 	}
+
 	my $rawRating = getRatingFromDB($track, 1);
 	my $rating100ScaleValue = adjustRating($rawRating);
 
+	$request->addResult('scanning', 1) if $scanning;
 	$request->addResult('rating', $rating100ScaleValue/20);
 	$request->addResult('ratingpercentage', $rating100ScaleValue);
 	$request->addResult('rawratingpercentage', $rawRating) if $rawRating != $rating100ScaleValue;
@@ -3482,11 +3519,6 @@ sub getTitleFormat_Rating {
 	my $appended = shift;
 	my $ratingtext = HTML::Entities::decode_entities('&#xa0;'); # "NO-BREAK SPACE" - HTML Entity (hex): &#xa0;
 
-	if (Slim::Music::Import->stillScanning) {
-		$log->warn('Warning: access to rating values blocked until library scan is completed');
-		return $ratingtext;
-	}
-
 	# get local track if unblessed
 	if ($track && !blessed($track)) {
 		main::DEBUGLOG && $log->is_debug && $log->debug('Track is not blessed');
@@ -3511,7 +3543,7 @@ sub getTitleFormat_Rating {
 	}
 
 	if ($track) {
-		my $rating100ScaleValue = getRatingFromDB($track);
+		my $rating100ScaleValue = getRatingFromDB($track, 0);
 		if ($rating100ScaleValue > 4) {
 			$ratingtext = getRatingTextLine($rating100ScaleValue, $appended ? 'appended' : () );
 		}
@@ -3551,7 +3583,7 @@ sub refreshTitleFormats {
 
 sub updatePersistentTable {
 	if (Slim::Music::Import->stillScanning) {
-		$log->warn("Warning: can't update tracks_persistent table until library scan is completed");
+		main::DEBUGLOG && $log->is_debug && $log->debug("Can't update tracks_persistent table until library scan is completed");
 		setUpdatePersistentTableTimer();
 		return;
 	}
