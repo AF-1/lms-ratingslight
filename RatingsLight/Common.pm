@@ -36,7 +36,7 @@ my $log = logger('plugin.ratingslight');
 my $prefs = preferences('plugin.ratingslight');
 my $serverPrefs = preferences('server');
 
-my ($backupQueue, $backupOutput, $backupStarted, $backupQueueOriginalSize, $backupTotalCount, $ignoredTracksCount);
+my ($backupQueue, $backupOutput, $backupFile, $backupStarted, $backupQueueOriginalSize, $backupTotalCount, $ignoredTracksCount);
 
 sub createBackup {
 	my $importerCall = shift;
@@ -69,19 +69,17 @@ sub createBackup {
 	};
 	if ($@) {
 		$log->error("Database error during backup: $@");
-		$prefs->set('backuprestoreresult', 2);
-		$prefs->set('status_backuprestore', 0);
+		_abortBackup();
 		return;
 	}
 
 	if (@{$backupQueue}) {
 		$backupQueueOriginalSize = scalar(@{$backupQueue});
 		$backupTotalCount = scalar(grep { !($_->{'inlib'} && ($_->{'remote'} == 1) && (!defined($_->{'extid'}))) } @{$backupQueue});
-		my $filename = catfile($backupDir, 'RL_Backup_'.$filename_timestamp.'.xml');
-		$backupOutput = FileHandle->new($filename, '>:utf8') or do {
-			$log->error('Could not open '.$filename.' for writing. Does the RatingsLight folder exist? Does LMS have read/write permissions (755) for the (parent) folder?');
-			$prefs->set('backuprestoreresult', 2);
-			$prefs->set('status_backuprestore', 0);
+		$backupFile = catfile($backupDir, 'RL_Backup_'.$filename_timestamp.'.xml');
+		$backupOutput = FileHandle->new($backupFile, '>:utf8') or do {
+			$log->error('Could not open '.$backupFile.' for writing. Does the RatingsLight folder exist? Does LMS have read/write permissions (755) for the (parent) folder?');
+			_abortBackup();
 			return;
 		};
 		main::DEBUGLOG && $log->is_debug && $log->debug('Found '.$backupTotalCount.' track(s) with rating data in the LMS persistent database');
@@ -111,6 +109,14 @@ sub createBackup {
 }
 
 sub writeBackupChunk {
+	my $more = eval { _writeBackupChunk() };
+	return $more unless $@;
+	$log->error("Backup aborted: $@");
+	_abortBackup();
+	return 0;
+}
+
+sub _writeBackupChunk {
 	if (my $ratedTrack = shift(@{$backupQueue})) {
 		my $BACKUPtrackURL = $ratedTrack->{'url'};
 		if ($ratedTrack->{'inlib'} && ($ratedTrack->{'remote'} == 1) && (!defined($ratedTrack->{'extid'}))) {
@@ -147,6 +153,17 @@ sub writeBackupChunk {
 	$prefs->set('backuprestoreresult', 1);
 	$prefs->set('status_backuprestore', 0);
 	return 0;
+}
+
+sub _abortBackup {
+	if ($backupOutput) {
+		close($backupOutput);
+		unlink($backupFile) if $backupFile;
+	}
+	$backupOutput = undef;
+	$backupQueue = [];
+	$prefs->set('backuprestoreresult', 2);
+	$prefs->set('status_backuprestore', 0);
 }
 
 sub _advanceBackupProgress {
